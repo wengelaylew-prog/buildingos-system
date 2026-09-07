@@ -1,0 +1,6 @@
+{
+  "name": "Building & Tenant Management System",
+  "description": "Production-grade property, building, unit, tenant, contract, and document management system powered by PostgreSQL and Firebase Auth.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
