@@ -148,11 +148,15 @@ function MainLayout() {
   );
 }
 
+import { TelegramApp } from './components/telegram/TelegramApp.tsx';
+
 export default function App() {
+  const isTelegram = window.location.pathname.startsWith('/telegram');
+
   return (
     <LanguageProvider>
       <AuthProvider>
-        <MainLayout />
+        {isTelegram ? <TelegramApp /> : <MainLayout />}
       </AuthProvider>
     </LanguageProvider>
   );

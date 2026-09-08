@@ -36,6 +36,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       const profile = await api.getCurrentUser();
       setUser(profile);
+      if (profile) {
+        setRoleState(profile.roleCode);
+      }
     } catch {
       // Graceful fallback handled by API client role headers
     } finally {

@@ -357,4 +357,11 @@ export const api = {
     request<any>('/api/v1/seed', {
       method: 'POST',
     }),
+
+  // Telegram
+  linkTelegramAccount: (initData: string) =>
+    request<any>('/api/v1/telegram/auth', {
+      method: 'POST',
+      body: JSON.stringify({ initData }),
+    }),
 };

@@ -384,6 +384,22 @@ export const messages = pgTable('messages', {
 
 
 
+// 17. TELEGRAM ACCOUNTS (Phase TMA-1)
+export const telegramAccounts = pgTable('telegram_accounts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  telegramUserId: text('telegram_user_id').notNull().unique(),
+  username: text('username'),
+  firstName: text('first_name'),
+  lastName: text('last_name'),
+  photoUrl: text('photo_url'),
+  lastAuthenticatedAt: timestamp('last_authenticated_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('idx_telegram_accounts_user_id').on(table.userId),
+}));
+
 // DRIZZLE RELATIONS DEFINITIONS
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   users: many(users),
@@ -497,6 +513,13 @@ export const permissionsRelations = relations(permissions, ({ many }) => ({
   rolePermissions: many(rolePermissions),
 }));
 
+export const telegramAccountsRelations = relations(telegramAccounts, ({ one }) => ({
+  user: one(users, {
+    fields: [telegramAccounts.userId],
+    references: [users.id],
+  }),
+}));
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   role: one(roles, {
     fields: [users.roleId],
@@ -504,4 +527,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
   userRoles: many(userRoles),
   uploadedDocuments: many(documents),
+  telegramAccount: one(telegramAccounts, {
+    fields: [users.id],
+    references: [telegramAccounts.userId],
+  }),
 }));

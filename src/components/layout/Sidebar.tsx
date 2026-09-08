@@ -109,7 +109,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSel
           id="role-selector-dropdown"
           value={activeRole}
           onChange={(e) => setActiveRole(e.target.value)}
-          className="w-full text-xs font-medium bg-slate-950 text-slate-200 rounded-md border border-slate-700 py-1.5 px-2 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+          disabled={!!user?.uid && !user.uid.includes('demo')}
+          className="w-full text-xs font-medium bg-slate-950 text-slate-200 rounded-md border border-slate-700 py-1.5 px-2 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {AVAILABLE_ROLES.map((r) => (
             <option key={r.code} value={r.code}>

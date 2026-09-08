@@ -42,6 +42,7 @@ import { maintenanceRouter } from './src/modules/maintenance/maintenance.routes.
 import { messagingRouter } from './src/modules/messaging/messaging.routes.ts';
 import { reportsRouter } from './src/modules/reports/reports.routes.ts';
 import { adminRouter } from './src/modules/admin/admin.routes.ts';
+import { telegramRouter } from './src/modules/telegram/telegram.routes.ts';
 import { corsMiddleware, securityHeaders, rateLimiter, validateEnvironment } from './src/middleware/security.ts';
 
 async function startServer() {
@@ -684,6 +685,9 @@ async function startServer() {
 
   // 15. SAAS ADMIN MODULE (PHASE 9)
   app.use('/api/v1/admin', adminRouter);
+
+  // 16. TELEGRAM MINI APP (PHASE TMA-1)
+  app.use('/api/v1/telegram', telegramRouter);
 
   // VITE MIDDLEWARE SETUP
   if (process.env.NODE_ENV !== 'production') {

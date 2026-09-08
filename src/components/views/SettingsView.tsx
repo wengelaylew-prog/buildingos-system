@@ -133,10 +133,11 @@ export const SettingsView: React.FC = () => {
               key={r}
               type="button"
               onClick={() => setActiveRole(r)}
+              disabled={!!user?.uid && !user.uid.includes('demo')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                 activeRole === r
                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed'
               }`}
             >
               {r.replace('_', ' ')}

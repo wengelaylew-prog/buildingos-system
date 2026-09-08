@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { adminAuth } from '../lib/firebase-admin.ts';
 import { db } from '../db/index.ts';
-import { users, roles, permissions, rolePermissions, auditLogs, organizations } from '../db/schema.ts';
+import { users, roles, permissions, rolePermissions, auditLogs, organizations, telegramAccounts } from '../db/schema.ts';
 import { eq, and } from 'drizzle-orm';
+import { validateTelegramWebAppData } from '../lib/telegram.ts';
 
 export interface AuthenticatedUser {
   id: string;
@@ -57,6 +58,75 @@ export const authenticate = async (
   const isProduction = process.env.NODE_ENV === 'production';
 
   try {
+    // 0. Telegram Mini App Auth
+    if (authHeader && authHeader.toUpperCase().startsWith('TMA ')) {
+      const initData = authHeader.substring(4);
+      const botToken = process.env.TELEGRAM_BOT_TOKEN || 'test-bot-token'; // Fallback for tests if needed
+
+      if (!validateTelegramWebAppData(initData, botToken)) {
+        return res.status(401).json({
+          error: { code: 'UNAUTHENTICATED', message: 'Invalid or expired Telegram authentication data' },
+          success: false, data: null, message: 'Invalid or expired Telegram authentication data', errors: []
+        });
+      }
+
+      const urlParams = new URLSearchParams(initData);
+      const userStr = urlParams.get('user');
+      if (!userStr) {
+        return res.status(401).json({
+          error: { code: 'UNAUTHENTICATED', message: 'Missing user data in Telegram initData' },
+          success: false, data: null, message: 'Missing user data in Telegram initData', errors: []
+        });
+      }
+
+      let tgUser;
+      try { tgUser = JSON.parse(userStr); } catch (e) {
+        return res.status(400).json({ success: false, message: 'Invalid user JSON', data: null, errors: [] });
+      }
+
+      const telegramUserId = tgUser.id.toString();
+      const tgAccount = (await db.select().from(telegramAccounts).where(eq(telegramAccounts.telegramUserId, telegramUserId)))[0];
+
+      if (!tgAccount) {
+        return res.status(401).json({
+          success: false,
+          error: { code: 'TELEGRAM_NOT_LINKED', message: 'Telegram account not linked to any BuildingOS user' },
+          data: null,
+          message: 'Telegram account not linked to any BuildingOS user',
+          errors: []
+        });
+      }
+
+      let dbUser = (await db.select().from(users).where(eq(users.id, tgAccount.userId)))[0];
+      if (!dbUser || !dbUser.isActive) {
+        return res.status(403).json({
+          error: { code: 'ACCOUNT_DISABLED', message: 'Your linked user account is disabled or missing.' },
+          success: false, data: null, message: 'Your linked user account is disabled.', errors: []
+        });
+      }
+
+      // Update last_authenticated_at
+      await db.update(telegramAccounts).set({ lastAuthenticatedAt: new Date() }).where(eq(telegramAccounts.id, tgAccount.id));
+
+      const userRole = dbUser.roleId ? (await db.select().from(roles).where(eq(roles.id, dbUser.roleId)))[0] : null;
+      const roleCode = userRole?.code || 'PROPERTY_MANAGER';
+      const perms = userRole ? await getPermissionsForRole(userRole.id, roleCode) : [];
+      let userOrg = dbUser.organizationId ? (await db.select().from(organizations).where(eq(organizations.id, dbUser.organizationId)))[0] : null;
+
+      req.user = {
+        id: dbUser.id,
+        uid: dbUser.uid,
+        email: dbUser.email,
+        fullName: dbUser.fullName,
+        roleCode,
+        roleName: userRole?.name || 'Property Manager',
+        permissions: perms,
+        organizationId: userOrg?.id || DEFAULT_ORG_ID,
+        organizationName: userOrg?.name || 'Apex Properties',
+      };
+      return next();
+    }
+
     // 1. Real Firebase Auth Token Check
     if (authHeader && authHeader.startsWith('Bearer ') && !authHeader.includes('demo_token')) {
       const token = authHeader.split('Bearer ')[1];
