@@ -1,5 +1,5 @@
 import { db } from '../../db/index.ts';
-import { tenants, tenantUnits, units, buildings, contracts, maintenanceRequests, notifications, payments, invoices, telegramAccounts } from '../../db/schema.ts';
+import { tenants, tenantUnits, units, buildings, floors, contracts, maintenanceRequests, notifications, payments, invoices, telegramAccounts } from '../../db/schema.ts';
 import { eq, and, desc } from 'drizzle-orm';
 import { validateTelegramWebAppData } from '../../lib/telegram.ts';
 
@@ -81,6 +81,22 @@ export class TelegramService {
       .orderBy(payments.paymentDate);
     const nextPayment = pendingPayments[0] || null;
 
+    // Get recent invoice
+    const recentInvoices = await db.select().from(invoices)
+      .where(eq(invoices.tenantId, tenant.id))
+      .orderBy(desc(invoices.issueDate));
+    const recentInvoice = recentInvoices[0] || null;
+
+    // Get recent maintenance request
+    const recentMaint = await db.select().from(maintenanceRequests)
+      .where(eq(maintenanceRequests.tenantId, tenant.id))
+      .orderBy(desc(maintenanceRequests.createdAt));
+    const recentMaintenance = recentMaint[0] || null;
+
+    // Get unread notifications count
+    const unreadNotifs = await db.select().from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+
     return {
       tenantName: tenant.fullName,
       buildingName: bldgData?.name || 'N/A',
@@ -90,6 +106,9 @@ export class TelegramService {
       balance,
       nextPaymentDate: nextPayment?.paymentDate || null,
       nextPaymentAmount: nextPayment?.amount || null,
+      recentInvoice: recentInvoice ? { id: recentInvoice.id, number: recentInvoice.invoiceNumber, amount: recentInvoice.amount, status: recentInvoice.status } : null,
+      recentMaintenance: recentMaintenance ? { id: recentMaintenance.id, title: recentMaintenance.title, status: recentMaintenance.status } : null,
+      unreadNotifications: unreadNotifs.length,
     };
   }
 
@@ -102,8 +121,9 @@ export class TelegramService {
 
     const unit = (await db.select().from(units).where(eq(units.id, lease.unitId)))[0];
     const building = (await db.select().from(buildings).where(eq(buildings.id, unit.buildingId)))[0];
+    const floor = (await db.select().from(floors).where(eq(floors.id, unit.floorId)))[0];
 
-    return { building, unit };
+    return { building, unit, floor };
   }
 
   static async getLease(userId: string) {
