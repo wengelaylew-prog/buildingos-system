@@ -132,7 +132,48 @@ export class TelegramService {
       .where(and(eq(contracts.tenantId, tenant.id), eq(contracts.contractStatus, 'ACTIVE'))))[0];
     
     if (!lease) throw new Error('No active lease found');
-    return lease;
+
+    // Compute derived fields from the lease dates (stored as text YYYY-MM-DD)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(lease.endDate);
+    endDate.setHours(0, 0, 0, 0);
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const daysRemaining = Math.ceil((endDate.getTime() - today.getTime()) / msPerDay);
+
+    // Compute next payment due: 1st of next month based on today
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const nextPaymentDate = nextMonth.toISOString().split('T')[0];
+
+    // Renewal eligibility: within 60 days of expiry and still ACTIVE
+    const isExpiringSoon = daysRemaining <= 60 && daysRemaining > 0;
+    const renewalEligible = isExpiringSoon && lease.contractStatus === 'ACTIVE';
+
+    return {
+      ...lease,
+      daysRemaining,
+      nextPaymentDate,
+      isExpiringSoon,
+      renewalEligible,
+    };
+  }
+
+  static async requestRenewal(userId: string) {
+    const tenant = await this.getTenantForUser(userId);
+    const lease = (await db.select().from(contracts)
+      .where(and(eq(contracts.tenantId, tenant.id), eq(contracts.contractStatus, 'ACTIVE'))))[0];
+    if (!lease) throw new Error('No active lease found');
+
+    // For now, record the renewal request by creating a notification
+    // (Full renewal workflow is Phase 5+)
+    await db.insert(notifications).values({
+      organizationId: tenant.organizationId,
+      userId,
+      title: 'Lease Renewal Requested',
+      message: `Tenant ${tenant.fullName} has requested renewal for contract ${lease.contractNumber}.`,
+      type: 'INFO',
+    });
+    return { requested: true, contractNumber: lease.contractNumber };
   }
 
   static async getBilling(userId: string) {

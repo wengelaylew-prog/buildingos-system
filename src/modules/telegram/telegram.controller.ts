@@ -89,6 +89,16 @@ export class TelegramController {
     }
   }
 
+  static async requestRenewal(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return sendError(res, 401, 'Unauthorized');
+      const data = await TelegramService.requestRenewal(req.user.id);
+      return sendSuccess(res, data, 'Renewal request submitted successfully');
+    } catch (err: any) {
+      return sendError(res, 400, err.message, [err.message]);
+    }
+  }
+
   static async getNotifications(req: AuthRequest, res: Response) {
     try {
       if (!req.user) return sendError(res, 401, 'Unauthorized');

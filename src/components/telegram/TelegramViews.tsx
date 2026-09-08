@@ -277,8 +277,12 @@ export function PropertyView({ initData, startParam }: { initData: string | null
 }
 
 export function LeaseView({ initData }: { initData: string | null }) {
+  const { locale } = useLanguage();
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
+  const [renewalLoading, setRenewalLoading] = useState(false);
+  const [renewalDone, setRenewalDone] = useState(false);
+  const [renewalError, setRenewalError] = useState('');
 
   useEffect(() => {
     tmaFetch('/api/v1/telegram/lease', initData)
@@ -286,33 +290,145 @@ export function LeaseView({ initData }: { initData: string | null }) {
       .catch((err) => setError(err.message));
   }, [initData]);
 
-  if (error) return <div className="text-red-500 p-4">{error}</div>;
-  if (!data) return <div className="p-4 opacity-70">Loading lease...</div>;
+  const handleRenew = async () => {
+    setRenewalLoading(true);
+    setRenewalError('');
+    try {
+      await tmaFetch('/api/v1/telegram/lease/renew', initData, { method: 'POST' });
+      setRenewalDone(true);
+    } catch (err: any) {
+      setRenewalError(err.message);
+    } finally {
+      setRenewalLoading(false);
+    }
+  };
+
+  const am = locale === 'am';
+
+  // Status badge config
+  const statusConfig: Record<string, { bg: string; text: string; label: string; labelAm: string }> = {
+    ACTIVE:      { bg: 'bg-green-100',  text: 'text-green-800',  label: 'Active',      labelAm: 'ንቁ'        },
+    EXPIRING:    { bg: 'bg-amber-100',  text: 'text-amber-800',  label: 'Expiring',    labelAm: 'ሊጠናቀቅ'   },
+    EXPIRED:     { bg: 'bg-red-100',    text: 'text-red-800',    label: 'Expired',     labelAm: 'ጊዜው አልፏል' },
+    TERMINATED:  { bg: 'bg-slate-100',  text: 'text-slate-600',  label: 'Terminated',  labelAm: 'ተቋርጧል'   },
+    DRAFT:       { bg: 'bg-blue-100',   text: 'text-blue-800',   label: 'Draft',       labelAm: 'ረቂቅ'       },
+  };
+
+  const fmt = (num: string | number) => parseFloat(String(num)).toLocaleString();
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-4">
+        <AlertCircle size={48} className="text-red-500 opacity-80" />
+        <h2 className="text-xl font-bold">{am ? 'ስህተት ተከስቷል' : 'Error Loading Lease'}</h2>
+        <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{error}</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-6 space-y-4">
+        <div className="w-8 h-8 border-4 border-[var(--tg-theme-button-color,#3b82f6)] border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">
+          {am ? 'ውል እየተጫነ ነው...' : 'Loading lease details...'}
+        </p>
+      </div>
+    );
+  }
+
+  const status = data.contractStatus as string;
+  const badge = statusConfig[status] || { bg: 'bg-slate-100', text: 'text-slate-700', label: status, labelAm: status };
+  const effectiveStatus = data.isExpiringSoon && status === 'ACTIVE' ? statusConfig['EXPIRING'] : badge;
+
+  const Row = ({ label, labelAm, value }: { label: string; labelAm: string; value: React.ReactNode }) => (
+    <div className="flex justify-between items-center py-3 border-b border-[var(--tg-theme-hint-color,#e2e8f0)] last:border-0">
+      <span className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{am ? labelAm : label}</span>
+      <span className="font-medium text-right max-w-[58%]">{value}</span>
+    </div>
+  );
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold px-2">Current Lease</h2>
-      <div className="bg-[var(--tg-theme-bg-color,#ffffff)] p-4 rounded-xl shadow-sm border border-[var(--tg-theme-hint-color,#e2e8f0)] space-y-4">
-        <div className="flex justify-between items-center">
-          <span className="text-[var(--tg-theme-hint-color,#64748b)]">Status</span>
-          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">{data.contractStatus}</span>
+    <div className="space-y-4 pb-6">
+      {/* Header */}
+      <div className="flex items-center justify-between px-2">
+        <h2 className="text-xl font-bold">{am ? 'የኔ ውል' : 'My Lease'}</h2>
+        <span className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${effectiveStatus.bg} ${effectiveStatus.text}`}>
+          {am ? effectiveStatus.labelAm : effectiveStatus.label}
+        </span>
+      </div>
+
+      {/* Expiry warning banner */}
+      {data.isExpiringSoon && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <AlertCircle size={18} className="text-amber-500 mt-0.5 shrink-0" />
+          <p className="text-sm text-amber-800">
+            {am
+              ? `ውልዎ በ ${data.daysRemaining} ቀናት ውስጥ ያበቃል። ማደስ ያስቡ።`
+              : `Your lease expires in ${data.daysRemaining} day${data.daysRemaining !== 1 ? 's' : ''}. Consider requesting renewal.`}
+          </p>
         </div>
-        <div className="flex justify-between items-center">
-          <span className="text-[var(--tg-theme-hint-color,#64748b)]">Start Date</span>
-          <span className="font-medium">{data.startDate}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-[var(--tg-theme-hint-color,#64748b)]">End Date</span>
-          <span className="font-medium">{data.endDate}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-[var(--tg-theme-hint-color,#64748b)]">Monthly Rent</span>
-          <span className="font-medium">{parseFloat(data.monthlyRent).toLocaleString()} ETB</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-[var(--tg-theme-hint-color,#64748b)]">Deposit</span>
-          <span className="font-medium">{parseFloat(data.deposit).toLocaleString()} ETB</span>
-        </div>
+      )}
+
+      {/* Details card */}
+      <div className="bg-[var(--tg-theme-bg-color,#ffffff)] rounded-xl shadow-sm border border-[var(--tg-theme-hint-color,#e2e8f0)] px-4">
+        <Row label="Contract No."   labelAm="ውል ቁጥር"      value={<span className="font-mono text-sm">{data.contractNumber}</span>} />
+        <Row label="Start Date"     labelAm="የጀመረበት ቀን"   value={data.startDate} />
+        <Row label="End Date"       labelAm="የሚያበቃበት ቀን"  value={data.endDate} />
+        <Row label="Days Remaining" labelAm="ቀሪ ቀናት"       value={
+          <span className={data.daysRemaining <= 30 ? 'text-red-600 font-bold' : data.daysRemaining <= 60 ? 'text-amber-600 font-semibold' : ''}>
+            {data.daysRemaining > 0 ? (am ? `${data.daysRemaining} ቀን` : `${data.daysRemaining} days`) : (am ? 'ጊዜው አልፏል' : 'Expired')}
+          </span>
+        } />
+      </div>
+
+      {/* Financial card */}
+      <div className="bg-[var(--tg-theme-bg-color,#ffffff)] rounded-xl shadow-sm border border-[var(--tg-theme-hint-color,#e2e8f0)] px-4">
+        <Row label="Monthly Rent"    labelAm="ወርሃዊ ክፍያ"    value={`${fmt(data.monthlyRent)} ETB`} />
+        <Row label="Security Deposit" labelAm="ዋስትና ገንዘብ" value={`${fmt(data.deposit)} ETB`} />
+        <Row label="Payment Frequency" labelAm="የክፍያ ዑደት"  value={data.paymentFrequency} />
+        <Row label="Next Payment Due" labelAm="ቀጣዩ ክፍያ"    value={data.nextPaymentDate} />
+      </div>
+
+      {/* Actions */}
+      <div className="space-y-2">
+        {/* View lease document — placeholder */}
+        <button
+          disabled
+          className="w-full flex items-center justify-center gap-2 py-3 border border-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-color,#3b82f6)] rounded-xl font-medium text-sm opacity-50 cursor-not-allowed"
+        >
+          <FileText size={16} />
+          {am ? 'ውሉን ይመልከቱ (ሰነድ ቀርቧል)' : 'View Lease Document (coming soon)'}
+        </button>
+
+        {/* Renewal action */}
+        {data.renewalEligible && !renewalDone && (
+          <button
+            onClick={handleRenew}
+            disabled={renewalLoading}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-text-color,#ffffff)] rounded-xl font-medium transition-all active:scale-[0.98] disabled:opacity-60"
+          >
+            {renewalLoading ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <CheckCircle size={16} />
+            )}
+            {am ? 'ማደስ ይጠይቁ' : 'Request Renewal'}
+          </button>
+        )}
+
+        {renewalDone && (
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+            <CheckCircle size={18} className="text-green-600 shrink-0" />
+            <p className="text-sm text-green-800 font-medium">
+              {am ? 'የማደስ ጥያቄዎ ተልኳል!' : 'Renewal request submitted!'}
+            </p>
+          </div>
+        )}
+
+        {renewalError && (
+          <p className="text-sm text-red-500 text-center">{renewalError}</p>
+        )}
       </div>
     </div>
   );
