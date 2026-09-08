@@ -272,3 +272,4 @@ export function MaintenanceView({ initData }: { initData: string | null }) {
     </div>
   );
 }
+

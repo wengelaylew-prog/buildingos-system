@@ -32,3 +32,4 @@ export function validateTelegramWebAppData(initData: string, botToken: string): 
     return false;
   }
 }
+
