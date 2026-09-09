@@ -80,6 +80,17 @@ export class TelegramController {
     }
   }
 
+  static async getPaymentStatus(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return sendError(res, 401, 'Unauthorized');
+      const { id } = req.params;
+      const data = await TelegramService.getPaymentStatus(req.user.id, id);
+      return sendSuccess(res, data);
+    } catch (err: any) {
+      return sendError(res, 404, err.message, [err.message]);
+    }
+  }
+
   static async getMaintenanceRequests(req: AuthRequest, res: Response) {
     try {
       if (!req.user) return sendError(res, 401, 'Unauthorized');
@@ -115,6 +126,37 @@ export class TelegramController {
       if (!req.user) return sendError(res, 401, 'Unauthorized');
       const data = await TelegramService.getNotifications(req.user.id);
       return sendSuccess(res, data);
+    } catch (err: any) {
+      return sendError(res, 400, err.message, [err.message]);
+    }
+  }
+
+  static async markNotificationRead(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return sendError(res, 401, 'Unauthorized');
+      const { id } = req.params;
+      const data = await TelegramService.markNotificationRead(req.user.id, id);
+      return sendSuccess(res, data, 'Notification marked as read');
+    } catch (err: any) {
+      return sendError(res, 400, err.message, [err.message]);
+    }
+  }
+
+  static async getProfile(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return sendError(res, 401, 'Unauthorized');
+      const data = await TelegramService.getProfile(req.user.id);
+      return sendSuccess(res, data);
+    } catch (err: any) {
+      return sendError(res, 400, err.message, [err.message]);
+    }
+  }
+
+  static async disconnectTelegram(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return sendError(res, 401, 'Unauthorized');
+      const data = await TelegramService.disconnectTelegram(req.user.id);
+      return sendSuccess(res, data, 'Telegram account disconnected');
     } catch (err: any) {
       return sendError(res, 400, err.message, [err.message]);
     }

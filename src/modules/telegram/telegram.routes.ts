@@ -15,7 +15,11 @@ telegramRouter.get('/lease', authenticate, TelegramController.getLease);
 telegramRouter.post('/lease/renew', authenticate, TelegramController.requestRenewal);
 telegramRouter.get('/billing', authenticate, TelegramController.getBilling);
 telegramRouter.get('/invoices/:id', authenticate, TelegramController.getInvoiceDetail);
+telegramRouter.get('/payments/:id/status', authenticate, TelegramController.getPaymentStatus);
 telegramRouter.get('/maintenance', authenticate, TelegramController.getMaintenanceRequests);
 telegramRouter.post('/maintenance', authenticate, TelegramController.createMaintenanceRequest);
 telegramRouter.get('/notifications', authenticate, TelegramController.getNotifications);
+telegramRouter.post('/notifications/:id/read', authenticate, TelegramController.markNotificationRead);
+telegramRouter.get('/profile', authenticate, TelegramController.getProfile);
+telegramRouter.post('/disconnect', authenticate, TelegramController.disconnectTelegram);
 

@@ -1,7 +1,8 @@
 import { db } from '../../db/index.ts';
-import { tenants, tenantUnits, units, buildings, floors, contracts, maintenanceRequests, notifications, payments, invoices, receipts, telegramAccounts } from '../../db/schema.ts';
+import { tenants, tenantUnits, units, buildings, floors, contracts, maintenanceRequests, notifications, payments, invoices, receipts, telegramAccounts, users } from '../../db/schema.ts';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { validateTelegramWebAppData } from '../../lib/telegram.ts';
+import { MessagingService } from '../messaging/messaging.service.ts';
 
 export class TelegramService {
   /**
@@ -261,6 +262,52 @@ export class TelegramService {
     };
   }
 
+  static async getPaymentStatus(userId: string, paymentId: string) {
+    const tenant = await this.getTenantForUser(userId);
+
+    // Ownership is enforced in the query itself — never trust paymentId alone.
+    const payment = (await db.select().from(payments)
+      .where(and(eq(payments.id, paymentId), eq(payments.tenantId, tenant.id))))[0];
+    if (!payment) throw new Error('Payment not found');
+
+    const invoice = payment.invoiceId
+      ? (await db.select().from(invoices).where(eq(invoices.id, payment.invoiceId)))[0]
+      : null;
+
+    // The DB only records the statuses actually produced by the system today (PAID/PENDING/OVERDUE).
+    // PROCESSING/FAILED/CANCELLED will populate once the Phase 5 gateway webhook is live —
+    // the status shown here always reflects real backend state, never a frontend assumption.
+    let status: 'PENDING' | 'PROCESSING' | 'PAID' | 'FAILED' | 'CANCELLED' | 'EXPIRED';
+    if (payment.status === 'PAID') {
+      status = 'PAID';
+    } else if (payment.status === 'OVERDUE') {
+      status = 'EXPIRED';
+    } else {
+      status = 'PENDING';
+    }
+
+    let receiptUrl: string | null = null;
+    if (status === 'PAID') {
+      const receipt = (await db.select().from(receipts).where(eq(receipts.paymentId, payment.id)))[0];
+      receiptUrl = receipt?.receiptUrl || null;
+    }
+
+    const RETRYABLE_STATUSES: readonly string[] = ['FAILED', 'CANCELLED', 'EXPIRED'];
+
+    return {
+      id: payment.id,
+      amount: payment.amount,
+      invoiceId: payment.invoiceId,
+      invoiceNumber: invoice?.invoiceNumber || null,
+      paymentMethod: payment.paymentMethod,
+      referenceNumber: payment.referenceNumber,
+      paymentDate: payment.paymentDate,
+      status,
+      canRetry: RETRYABLE_STATUSES.includes(status),
+      receiptUrl,
+    };
+  }
+
   static async getMaintenanceRequests(userId: string) {
     const tenant = await this.getTenantForUser(userId);
     return await db.select().from(maintenanceRequests)
@@ -299,6 +346,49 @@ export class TelegramService {
     return await db.select().from(notifications)
       .where(eq(notifications.userId, userId))
       .orderBy(desc(notifications.createdAt));
+  }
+
+  static async markNotificationRead(userId: string, notificationId: string) {
+    // Ownership (eq(notifications.userId, userId)) is enforced inside MessagingService — never trust notificationId alone.
+    return MessagingService.markNotificationRead(notificationId, userId);
+  }
+
+  static async getProfile(userId: string) {
+    const tenant = await this.getTenantForUser(userId);
+    const user = (await db.select().from(users).where(eq(users.id, userId)))[0];
+
+    const lease = (await db.select().from(contracts)
+      .where(and(eq(contracts.tenantId, tenant.id), eq(contracts.contractStatus, 'ACTIVE'))))[0];
+
+    let unit = null;
+    let building = null;
+    if (lease) {
+      unit = (await db.select().from(units).where(eq(units.id, lease.unitId)))[0] || null;
+      if (unit) {
+        building = (await db.select().from(buildings).where(eq(buildings.id, unit.buildingId)))[0] || null;
+      }
+    }
+
+    const telegramAccount = (await db.select().from(telegramAccounts).where(eq(telegramAccounts.userId, userId)))[0];
+
+    return {
+      fullName: tenant.fullName,
+      email: user?.email || tenant.email || null,
+      phone: tenant.phone || null,
+      buildingName: building?.name || null,
+      unitNumber: unit?.unitNumber || null,
+      accountStatus: user?.isActive === false ? 'INACTIVE' : 'ACTIVE',
+      emergencyContactName: tenant.emergencyContactName || null,
+      emergencyContactPhone: tenant.emergencyContactPhone || null,
+      telegramUsername: telegramAccount?.username || null,
+      telegramLinkedAt: telegramAccount?.createdAt || null,
+    };
+  }
+
+  static async disconnectTelegram(userId: string) {
+    // Ownership enforced by scoping the delete to the caller's own userId.
+    await db.delete(telegramAccounts).where(eq(telegramAccounts.userId, userId));
+    return { disconnected: true };
   }
 }
 
