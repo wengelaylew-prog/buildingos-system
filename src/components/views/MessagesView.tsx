@@ -5,7 +5,7 @@ import { useLanguage } from '../../context/LanguageContext.tsx';
 import { Send, Bell, Check, Clock, AlertCircle, Info, MessageSquare } from 'lucide-react';
 
 export const MessagesView: React.FC = () => {
-  const { roleCode } = useAuth();
+  const { activeRole } = useAuth();
   const { t } = useLanguage();
   
   const [messages, setMessages] = useState<any[]>([]);
@@ -103,8 +103,8 @@ export const MessagesView: React.FC = () => {
               </div>
             ) : (
               messages.map(msg => (
-                <div key={msg.id} className={`flex ${msg.sender.id === roleCode ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${msg.sender.id === roleCode ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-100 text-slate-800 rounded-bl-none'}`}>
+                <div key={msg.id} className={`flex ${msg.sender.id === activeRole ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${msg.sender.id === activeRole ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-100 text-slate-800 rounded-bl-none'}`}>
                     <div className="text-[10px] font-medium opacity-70 mb-1">
                       {msg.sender.fullName} • {new Date(msg.createdAt).toLocaleTimeString()}
                     </div>

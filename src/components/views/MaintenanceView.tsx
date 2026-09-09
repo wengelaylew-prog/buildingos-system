@@ -18,7 +18,7 @@ import { useAuth } from '../../context/AuthContext.tsx';
 import { useLanguage } from '../../context/LanguageContext.tsx';
 
 export const MaintenanceView: React.FC = () => {
-  const { hasPermission, role } = useAuth();
+  const { hasPermission } = useAuth();
   const { t } = useLanguage();
   const [requestsList, setRequestsList] = useState<MaintenanceRequest[]>([]);
   const [buildingsList, setBuildingsList] = useState<Building[]>([]);

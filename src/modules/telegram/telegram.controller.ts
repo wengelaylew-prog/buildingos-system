@@ -69,6 +69,17 @@ export class TelegramController {
     }
   }
 
+  static async getInvoiceDetail(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return sendError(res, 401, 'Unauthorized');
+      const { id } = req.params;
+      const data = await TelegramService.getInvoiceDetail(req.user.id, id);
+      return sendSuccess(res, data);
+    } catch (err: any) {
+      return sendError(res, 404, err.message, [err.message]);
+    }
+  }
+
   static async getMaintenanceRequests(req: AuthRequest, res: Response) {
     try {
       if (!req.user) return sendError(res, 401, 'Unauthorized');

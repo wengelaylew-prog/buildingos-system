@@ -6,7 +6,7 @@ import { Server, Globe, Shield, Power, Users } from 'lucide-react';
 import { Badge } from '../common/Badge.tsx';
 
 export const SuperAdminView: React.FC = () => {
-  const { roleCode } = useAuth();
+  const { activeRole } = useAuth();
   const { t } = useLanguage();
   const [stats, setStats] = useState<any>(null);
   const [orgs, setOrgs] = useState<any[]>([]);
@@ -14,13 +14,13 @@ export const SuperAdminView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (roleCode === 'SUPER_ADMIN') {
+    if (activeRole === 'SUPER_ADMIN') {
       loadData();
     } else {
       setError('Forbidden: Super Administrator access required');
       setLoading(false);
     }
-  }, [roleCode]);
+  }, [activeRole]);
 
   const loadData = async () => {
     try {

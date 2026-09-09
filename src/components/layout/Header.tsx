@@ -29,7 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   setSearchQuery,
 }) => {
   const { hasPermission } = useAuth();
-  const { language, setLanguage } = useLanguage();
+  const { locale, setLocale } = useLanguage();
   const [internalQuery, setInternalQuery] = React.useState('');
   const query = searchQuery !== undefined ? searchQuery : internalQuery;
   const setQuery = setSearchQuery || setInternalQuery;
@@ -77,12 +77,12 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Language Switcher (EN / AM) */}
         <button
           type="button"
-          onClick={() => setLanguage(language === 'en' ? 'am' : 'en')}
+          onClick={() => setLocale(locale === 'en' ? 'am' : 'en')}
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors"
-          title={`Switch language (${language === 'en' ? 'Amharic' : 'English'})`}
+          title={`Switch language (${locale === 'en' ? 'Amharic' : 'English'})`}
         >
           <Globe className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="uppercase">{language}</span>
+          <span className="uppercase">{locale}</span>
         </button>
 
         {/* Bell Notification */}

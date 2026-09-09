@@ -1,6 +1,6 @@
 import { db } from '../../db/index.ts';
-import { tenants, tenantUnits, units, buildings, floors, contracts, maintenanceRequests, notifications, payments, invoices, telegramAccounts } from '../../db/schema.ts';
-import { eq, and, desc } from 'drizzle-orm';
+import { tenants, tenantUnits, units, buildings, floors, contracts, maintenanceRequests, notifications, payments, invoices, receipts, telegramAccounts } from '../../db/schema.ts';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { validateTelegramWebAppData } from '../../lib/telegram.ts';
 
 export class TelegramService {
@@ -182,13 +182,82 @@ export class TelegramService {
       .where(eq(payments.tenantId, tenant.id))
       .orderBy(desc(payments.paymentDate));
 
-    const balance = allPayments
-      .filter((p) => p.status === 'OVERDUE')
-      .reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0);
+    const allInvoices = await db.select().from(invoices)
+      .where(eq(invoices.tenantId, tenant.id))
+      .orderBy(desc(invoices.dueDate));
+
+    const outstandingInvoices = allInvoices.filter((i) => i.status === 'PENDING' || i.status === 'OVERDUE');
+    const balance = outstandingInvoices.reduce((sum, i) => sum + parseFloat(i.amount || '0'), 0);
+
+    // Current invoice: the earliest-due unpaid invoice, falling back to the most recent invoice
+    const currentInvoice =
+      outstandingInvoices.sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0] || allInvoices[0] || null;
 
     return {
       balance,
+      currentInvoice,
       payments: allPayments,
+    };
+  }
+
+  static async getInvoiceDetail(userId: string, invoiceId: string) {
+    const tenant = await this.getTenantForUser(userId);
+
+    // Ownership is enforced in the query itself — never trust invoiceId alone.
+    const invoice = (await db.select().from(invoices)
+      .where(and(eq(invoices.id, invoiceId), eq(invoices.tenantId, tenant.id))))[0];
+    if (!invoice) throw new Error('Invoice not found');
+
+    const unit = invoice.unitId ? (await db.select().from(units).where(eq(units.id, invoice.unitId)))[0] : null;
+    const building = unit ? (await db.select().from(buildings).where(eq(buildings.id, unit.buildingId)))[0] : null;
+
+    // Group sibling invoices from the same contract & billing period (issue month) into a single readable breakdown.
+    const billingPeriod = invoice.issueDate.slice(0, 7);
+    const periodInvoices = invoice.contractId
+      ? await db.select().from(invoices).where(
+          and(eq(invoices.contractId, invoice.contractId), sql`issue_date LIKE ${billingPeriod + '%'}`)
+        )
+      : [invoice];
+
+    const sumByType = (type: string) =>
+      periodInvoices.filter((i) => i.type === type).reduce((sum, i) => sum + parseFloat(i.amount || '0'), 0);
+
+    const rent = sumByType('RENT');
+    const utilities = sumByType('UTILITY');
+    const lateFees = sumByType('LATE_FEE');
+    const discounts = 0; // Not yet tracked as a distinct invoice type in the data model
+    const total = periodInvoices.reduce((sum, i) => sum + parseFloat(i.amount || '0'), 0);
+
+    const invoicePayments = await db.select().from(payments).where(eq(payments.invoiceId, invoice.id));
+    const amountPaid = invoicePayments
+      .filter((p) => p.status === 'PAID')
+      .reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0);
+    const remainingBalance = Math.max(0, parseFloat(invoice.amount || '0') - amountPaid);
+
+    let receiptUrl: string | null = null;
+    const paidPayment = invoicePayments.find((p) => p.status === 'PAID');
+    if (paidPayment) {
+      const receipt = (await db.select().from(receipts).where(eq(receipts.paymentId, paidPayment.id)))[0];
+      receiptUrl = receipt?.receiptUrl || null;
+    }
+
+    return {
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      billingPeriod,
+      tenantName: tenant.fullName,
+      buildingName: building?.name || 'N/A',
+      unitNumber: unit?.unitNumber || 'N/A',
+      rent,
+      utilities,
+      lateFees,
+      discounts,
+      total,
+      amountPaid,
+      remainingBalance,
+      dueDate: invoice.dueDate,
+      status: invoice.status,
+      receiptUrl,
     };
   }
 

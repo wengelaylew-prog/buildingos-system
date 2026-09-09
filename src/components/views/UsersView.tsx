@@ -6,20 +6,20 @@ import { Users, Shield, ShieldCheck } from 'lucide-react';
 import { Badge } from '../common/Badge.tsx';
 
 export const UsersView: React.FC = () => {
-  const { hasPermission, roleCode } = useAuth();
+  const { hasPermission, activeRole } = useAuth();
   const { t } = useLanguage();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (hasPermission('user.manage') || roleCode === 'SUPER_ADMIN') {
+    if (hasPermission('user.manage') || activeRole === 'SUPER_ADMIN') {
       loadUsers();
     } else {
       setError('Forbidden: You do not have permission to view users.');
       setLoading(false);
     }
-  }, [hasPermission, roleCode]);
+  }, [hasPermission, activeRole]);
 
   const loadUsers = async () => {
     try {

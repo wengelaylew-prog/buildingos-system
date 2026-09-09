@@ -137,7 +137,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Filter expiring or active contracts
   const expiringContractsList = contracts
-    .filter((c) => c.status === 'EXPIRING' || c.status === 'ACTIVE')
+    .filter((c) => c.contractStatus === 'EXPIRING' || c.contractStatus === 'ACTIVE')
     .slice(0, 4);
 
   const getActivityBadge = (action: string, entityType: string) => {

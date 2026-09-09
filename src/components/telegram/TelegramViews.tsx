@@ -14,7 +14,7 @@ async function tmaFetch(url: string, initData: string | null, options: any = {})
 }
 
 import { useLanguage } from '../../context/LanguageContext.tsx';
-import { Building, FileText, Wrench, Wallet, Bell, AlertCircle, CheckCircle } from 'lucide-react';
+import { Building, FileText, Wrench, Wallet, Bell, AlertCircle, CheckCircle, ArrowLeft, Receipt } from 'lucide-react';
 
 export function TenantHomeView({ initData }: { initData: string | null }) {
   const { t, locale, setLocale } = useLanguage();
@@ -392,13 +392,16 @@ export function LeaseView({ initData }: { initData: string | null }) {
 
       {/* Actions */}
       <div className="space-y-2">
-        {/* View lease document — placeholder */}
+        {/* View lease details / document */}
         <button
-          disabled
-          className="w-full flex items-center justify-center gap-2 py-3 border border-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-color,#3b82f6)] rounded-xl font-medium text-sm opacity-50 cursor-not-allowed"
+          onClick={() => data.documentUrl && window.open(data.documentUrl, '_blank', 'noopener,noreferrer')}
+          disabled={!data.documentUrl}
+          className="w-full flex items-center justify-center gap-2 py-3 border border-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-color,#3b82f6)] rounded-xl font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <FileText size={16} />
-          {am ? 'ውሉን ይመልከቱ (ሰነድ ቀርቧል)' : 'View Lease Document (coming soon)'}
+          {data.documentUrl
+            ? (am ? 'ሙሉ ውል ይመልከቱ' : 'View Lease Document')
+            : (am ? 'ሰነድ አልተያያዘም' : 'No Document Attached')}
         </button>
 
         {/* Renewal action */}
@@ -434,9 +437,20 @@ export function LeaseView({ initData }: { initData: string | null }) {
   );
 }
 
+const PAYMENT_GATEWAYS = [
+  { code: 'TELEBIRR', label: 'Telebirr', labelAm: 'ቴሌብር' },
+  { code: 'CHAPA', label: 'Chapa', labelAm: 'ቻፓ' },
+  { code: 'CBE_BIRR', label: 'CBE Birr', labelAm: 'ሲቢኢ ብር' },
+];
+
 export function BillingView({ initData }: { initData: string | null }) {
+  const { locale } = useLanguage();
+  const am = locale === 'am';
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
+  const [showGateways, setShowGateways] = useState(false);
+  const [selectedGateway, setSelectedGateway] = useState<string | null>(null);
+  const [viewInvoiceId, setViewInvoiceId] = useState<string | null>(null);
 
   useEffect(() => {
     tmaFetch('/api/v1/telegram/billing', initData)
@@ -444,28 +458,139 @@ export function BillingView({ initData }: { initData: string | null }) {
       .catch((err) => setError(err.message));
   }, [initData]);
 
-  if (error) return <div className="text-red-500 p-4">{error}</div>;
-  if (!data) return <div className="p-4 opacity-70">Loading billing...</div>;
+  if (viewInvoiceId) {
+    return <InvoiceDetailsView initData={initData} invoiceId={viewInvoiceId} onBack={() => setViewInvoiceId(null)} />;
+  }
+
+  const invoiceStatusStyle: Record<string, string> = {
+    PENDING: 'bg-amber-100 text-amber-800',
+    OVERDUE: 'bg-red-100 text-red-800',
+    PAID: 'bg-green-100 text-green-800',
+    CANCELLED: 'bg-slate-100 text-slate-600',
+  };
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-4">
+        <AlertCircle size={48} className="text-red-500 opacity-80" />
+        <h2 className="text-xl font-bold">{am ? 'ስህተት ተከስቷል' : 'Error Loading Billing'}</h2>
+        <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{error}</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-6 space-y-4">
+        <div className="w-8 h-8 border-4 border-[var(--tg-theme-button-color,#3b82f6)] border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">
+          {am ? 'የክፍያ መረጃ እየተጫነ ነው...' : 'Loading billing...'}
+        </p>
+      </div>
+    );
+  }
+
+  const invoice = data.currentInvoice;
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold px-2">Billing</h2>
-      
+    <div className="space-y-4 pb-6">
+      <h2 className="text-xl font-bold px-2">{am ? 'ክፍያ' : 'Billing'}</h2>
+
+      {/* Outstanding balance */}
       <div className="bg-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-text-color,#ffffff)] p-6 rounded-xl shadow-md text-center">
-        <p className="text-sm opacity-80 mb-1">Current Balance</p>
+        <p className="text-sm opacity-80 mb-1">{am ? 'ቀሪ ሂሳብ' : 'Outstanding Balance'}</p>
         <h1 className="text-3xl font-bold">{data.balance.toLocaleString()} ETB</h1>
-        <button disabled className="mt-4 w-full py-2 bg-white/20 rounded-lg text-sm font-medium">
-          Pay Now (Coming Soon)
+
+        <button
+          onClick={() => setShowGateways((v) => !v)}
+          disabled={data.balance <= 0}
+          className="mt-4 w-full py-2 bg-white/20 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {am ? 'አሁን ይክፈሉ' : 'Pay Now'}
         </button>
       </div>
 
-      <h3 className="font-semibold px-2 mt-6">Payment History</h3>
+      {/* Payment gateway selection — UI only, no live payment processing yet */}
+      {showGateways && (
+        <div className="bg-[var(--tg-theme-bg-color,#ffffff)] rounded-xl shadow-sm border border-[var(--tg-theme-hint-color,#e2e8f0)] p-4 space-y-3">
+          <h3 className="text-sm font-semibold">{am ? 'የክፍያ መንገድ ይምረጡ' : 'Select Payment Method'}</h3>
+          <div className="space-y-2">
+            {PAYMENT_GATEWAYS.map((g) => (
+              <button
+                key={g.code}
+                onClick={() => setSelectedGateway(g.code)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border text-sm font-medium transition-colors ${
+                  selectedGateway === g.code
+                    ? 'border-[var(--tg-theme-button-color,#3b82f6)] bg-blue-50 text-[var(--tg-theme-button-color,#3b82f6)]'
+                    : 'border-[var(--tg-theme-hint-color,#e2e8f0)]'
+                }`}
+              >
+                <span>{am ? g.labelAm : g.label}</span>
+                {selectedGateway === g.code && <CheckCircle size={16} />}
+              </button>
+            ))}
+          </div>
+
+          {selectedGateway && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <AlertCircle size={16} className="text-amber-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-800">
+                {am
+                  ? 'የክፍያ ማስተላለፊያ ገና አልተካተተም። ክፍያ በቅርቡ ይገኛል።'
+                  : 'Payment processing is not yet available. This gateway integration is coming soon.'}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Current invoice */}
+      <h3 className="font-semibold px-2 mt-6">{am ? 'የአሁኑ ደረሰኝ' : 'Current Invoice'}</h3>
+      {invoice ? (
+        <button
+          onClick={() => setViewInvoiceId(invoice.id)}
+          className="w-full text-left bg-[var(--tg-theme-bg-color,#ffffff)] rounded-xl shadow-sm border border-[var(--tg-theme-hint-color,#e2e8f0)] p-4 space-y-2 active:scale-[0.99] transition-transform"
+        >
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{am ? 'ቁጥር' : 'Invoice #'}</span>
+            <span className="font-mono text-sm font-medium">{invoice.invoiceNumber}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{am ? 'መጠን' : 'Amount'}</span>
+            <span className="font-medium">{parseFloat(invoice.amount).toLocaleString()} ETB</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{am ? 'የመክፈያ ቀን' : 'Due Date'}</span>
+            <span className="font-medium">{invoice.dueDate}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{am ? 'ሁኔታ' : 'Status'}</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${invoiceStatusStyle[invoice.status] || 'bg-slate-100 text-slate-700'}`}>
+              {invoice.status}
+            </span>
+          </div>
+          <p className="text-xs text-[var(--tg-theme-button-color,#3b82f6)] font-medium pt-1">{am ? 'ዝርዝር ይመልከቱ ›' : 'View Details ›'}</p>
+        </button>
+      ) : (
+        <p className="px-2 text-sm text-[var(--tg-theme-hint-color,#64748b)]">
+          {am ? 'ምንም ደረሰኝ አልተገኘም።' : 'No invoices found.'}
+        </p>
+      )}
+
+      {/* Payment history */}
+      <h3 className="font-semibold px-2 mt-6">{am ? 'የክፍያ ታሪክ' : 'Payment History'}</h3>
       <div className="space-y-2">
         {data.payments.length === 0 ? (
-          <p className="px-2 text-sm text-[var(--tg-theme-hint-color,#64748b)]">No payment history found.</p>
+          <p className="px-2 text-sm text-[var(--tg-theme-hint-color,#64748b)]">
+            {am ? 'ምንም የክፍያ ታሪክ አልተገኘም።' : 'No payment history found.'}
+          </p>
         ) : (
           data.payments.map((p: any) => (
-            <div key={p.id} className="bg-[var(--tg-theme-bg-color,#ffffff)] p-3 rounded-lg border border-[var(--tg-theme-hint-color,#e2e8f0)] flex justify-between items-center">
+            <div
+              key={p.id}
+              onClick={() => p.invoiceId && setViewInvoiceId(p.invoiceId)}
+              className={`bg-[var(--tg-theme-bg-color,#ffffff)] p-3 rounded-lg border border-[var(--tg-theme-hint-color,#e2e8f0)] flex justify-between items-center ${p.invoiceId ? 'cursor-pointer active:scale-[0.99] transition-transform' : ''}`}
+            >
               <div>
                 <p className="font-medium text-sm">{p.paymentDate}</p>
                 <p className="text-xs text-[var(--tg-theme-hint-color,#64748b)]">{p.paymentMethod}</p>
@@ -478,6 +603,161 @@ export function BillingView({ initData }: { initData: string | null }) {
           ))
         )}
       </div>
+    </div>
+  );
+}
+
+export function InvoiceDetailsView({
+  initData,
+  invoiceId,
+  onBack,
+}: {
+  initData: string | null;
+  invoiceId: string;
+  onBack: () => void;
+}) {
+  const { locale } = useLanguage();
+  const am = locale === 'am';
+  const [data, setData] = useState<any>(null);
+  const [error, setError] = useState('');
+  const [showGateways, setShowGateways] = useState(false);
+  const [selectedGateway, setSelectedGateway] = useState<string | null>(null);
+
+  useEffect(() => {
+    tmaFetch(`/api/v1/telegram/invoices/${invoiceId}`, initData)
+      .then(setData)
+      .catch((err) => setError(err.message));
+  }, [initData, invoiceId]);
+
+  const invoiceStatusStyle: Record<string, string> = {
+    PENDING: 'bg-amber-100 text-amber-800',
+    OVERDUE: 'bg-red-100 text-red-800',
+    PAID: 'bg-green-100 text-green-800',
+    CANCELLED: 'bg-slate-100 text-slate-600',
+  };
+
+  const fmt = (num: number) => num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const Row = ({ label, labelAm, value, bold }: { label: string; labelAm: string; value: React.ReactNode; bold?: boolean }) => (
+    <div className="flex justify-between items-center py-2.5 border-b border-[var(--tg-theme-hint-color,#e2e8f0)] last:border-0">
+      <span className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{am ? labelAm : label}</span>
+      <span className={`text-right ${bold ? 'font-bold text-base' : 'font-medium'}`}>{value}</span>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4 pb-6">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-sm font-medium text-[var(--tg-theme-button-color,#3b82f6)] px-1">
+        <ArrowLeft size={16} />
+        {am ? 'ተመለስ' : 'Back'}
+      </button>
+
+      {error && (
+        <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+          <AlertCircle size={48} className="text-red-500 opacity-80" />
+          <h2 className="text-xl font-bold">{am ? 'ስህተት ተከስቷል' : 'Error Loading Invoice'}</h2>
+          <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{error}</p>
+        </div>
+      )}
+
+      {!error && !data && (
+        <div className="flex flex-col items-center justify-center p-6 space-y-4">
+          <div className="w-8 h-8 border-4 border-[var(--tg-theme-button-color,#3b82f6)] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{am ? 'ደረሰኝ እየተጫነ ነው...' : 'Loading invoice...'}</p>
+        </div>
+      )}
+
+      {data && (
+        <>
+          <div className="flex items-center justify-between px-2">
+            <h2 className="text-xl font-bold">{am ? 'የደረሰኝ ዝርዝር' : 'Invoice Details'}</h2>
+            <span className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${invoiceStatusStyle[data.status] || 'bg-slate-100 text-slate-700'}`}>
+              {data.status}
+            </span>
+          </div>
+
+          {/* Identification */}
+          <div className="bg-[var(--tg-theme-bg-color,#ffffff)] rounded-xl shadow-sm border border-[var(--tg-theme-hint-color,#e2e8f0)] px-4">
+            <Row label="Invoice No." labelAm="ደረሰኝ ቁጥር" value={<span className="font-mono text-sm">{data.invoiceNumber}</span>} />
+            <Row label="Billing Period" labelAm="የክፍያ ወቅት" value={data.billingPeriod} />
+            <Row label="Tenant" labelAm="ተከራይ" value={data.tenantName} />
+            <Row label="Building" labelAm="ህንፃ" value={data.buildingName} />
+            <Row label="Unit" labelAm="ክፍል" value={data.unitNumber} />
+            <Row label="Due Date" labelAm="የመክፈያ ቀን" value={data.dueDate} />
+          </div>
+
+          {/* Financial breakdown */}
+          <div className="bg-[var(--tg-theme-bg-color,#ffffff)] rounded-xl shadow-sm border border-[var(--tg-theme-hint-color,#e2e8f0)] px-4">
+            <Row label="Rent" labelAm="ኪራይ" value={`${fmt(data.rent)} ETB`} />
+            <Row label="Utilities" labelAm="መገልገያዎች" value={`${fmt(data.utilities)} ETB`} />
+            <Row label="Late Fees" labelAm="የቅጣት ክፍያ" value={`${fmt(data.lateFees)} ETB`} />
+            <Row label="Discounts" labelAm="ቅናሽ" value={`-${fmt(data.discounts)} ETB`} />
+            <Row label="Total" labelAm="ጠቅላላ" value={`${fmt(data.total)} ETB`} bold />
+          </div>
+
+          {/* Payment status */}
+          <div className="bg-[var(--tg-theme-bg-color,#ffffff)] rounded-xl shadow-sm border border-[var(--tg-theme-hint-color,#e2e8f0)] px-4">
+            <Row label="Amount Paid" labelAm="የተከፈለ መጠን" value={`${fmt(data.amountPaid)} ETB`} />
+            <Row
+              label="Remaining Balance"
+              labelAm="ቀሪ ሂሳብ"
+              value={<span className={data.remainingBalance > 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{fmt(data.remainingBalance)} ETB</span>}
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="space-y-2">
+            <button
+              onClick={() => setShowGateways((v) => !v)}
+              disabled={data.remainingBalance <= 0}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-text-color,#ffffff)] rounded-xl font-medium transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {am ? 'ደረሰኙን ይክፈሉ' : 'Pay Invoice'}
+            </button>
+
+            <button
+              onClick={() => data.receiptUrl && window.open(data.receiptUrl, '_blank', 'noopener,noreferrer')}
+              disabled={!data.receiptUrl}
+              className="w-full flex items-center justify-center gap-2 py-3 border border-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-color,#3b82f6)] rounded-xl font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Receipt size={16} />
+              {data.receiptUrl ? (am ? 'ደረሰኝ ይመልከቱ' : 'View Receipt') : (am ? 'ደረሰኝ አልተገኘም' : 'No Receipt Available')}
+            </button>
+
+            {showGateways && (
+              <div className="bg-[var(--tg-theme-bg-color,#ffffff)] rounded-xl shadow-sm border border-[var(--tg-theme-hint-color,#e2e8f0)] p-4 space-y-3">
+                <h3 className="text-sm font-semibold">{am ? 'የክፍያ መንገድ ይምረጡ' : 'Select Payment Method'}</h3>
+                <div className="space-y-2">
+                  {PAYMENT_GATEWAYS.map((g) => (
+                    <button
+                      key={g.code}
+                      onClick={() => setSelectedGateway(g.code)}
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border text-sm font-medium transition-colors ${
+                        selectedGateway === g.code
+                          ? 'border-[var(--tg-theme-button-color,#3b82f6)] bg-blue-50 text-[var(--tg-theme-button-color,#3b82f6)]'
+                          : 'border-[var(--tg-theme-hint-color,#e2e8f0)]'
+                      }`}
+                    >
+                      <span>{am ? g.labelAm : g.label}</span>
+                      {selectedGateway === g.code && <CheckCircle size={16} />}
+                    </button>
+                  ))}
+                </div>
+                {selectedGateway && (
+                  <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <AlertCircle size={16} className="text-amber-500 mt-0.5 shrink-0" />
+                    <p className="text-xs text-amber-800">
+                      {am
+                        ? 'የክፍያ ማስተላለፊያ ገና አልተካተተም። ክፍያ በቅርቡ ይገኛል።'
+                        : 'Payment processing is not yet available. This gateway integration is coming soon.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -359,7 +359,7 @@ export const UnitDetailsDrawer: React.FC<UnitDetailsDrawerProps> = ({
                                 {details.contract.contractNumber}
                               </span>
                             </div>
-                            <Badge status={details.contract.status} size="sm" />
+                            <Badge status={details.contract.contractStatus} size="sm" />
                           </div>
 
                           <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-100">
