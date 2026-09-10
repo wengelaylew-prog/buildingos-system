@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { tmaAuthLogout } from '../../lib/tma-client.ts';
 
-// Common fetcher that uses the TMA header
-async function tmaFetch(url: string, initData: string | null, options: any = {}) {
-  if (!initData) throw new Error('Not authenticated with Telegram');
+// Common fetcher. `authHeader` is the fully resolved Authorization header value
+// (`TMA <initData>` for Telegram, or `TMASession <token>` for email/phone logins).
+async function tmaFetch(url: string, authHeader: string | null, options: any = {}) {
+  if (!authHeader) throw new Error('Not authenticated');
   const headers = new Headers(options.headers || {});
-  headers.set('Authorization', `TMA ${initData}`);
+  headers.set('Authorization', authHeader);
   headers.set('Content-Type', 'application/json');
 
   const res = await fetch(url, { ...options, headers });
@@ -1354,6 +1356,7 @@ export function ProfileView({
 
   const handleLogout = async () => {
     if (!window.confirm(am ? 'ከBuildingOS መለያዎ መውጣት ይፈልጋሉ?' : 'Are you sure you want to log out of BuildingOS?')) return;
+    await tmaAuthLogout();
     onLoggedOut?.();
   };
 

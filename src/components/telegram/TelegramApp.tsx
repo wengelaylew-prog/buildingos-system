@@ -3,6 +3,7 @@ import { TelegramLinkView } from './TelegramLinkView.tsx';
 import { TenantHomeView, PropertyView, LeaseView, BillingView, MaintenanceView, NotificationsView, ProfileView } from './TelegramViews.tsx';
 import { Building, Home, FileText, Wrench, Wallet, Bell, User } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext.tsx';
+import { getTmaAuthHeader } from '../../lib/tma-client.ts';
 
 export function TelegramApp() {
   const { locale } = useLanguage();
@@ -10,6 +11,7 @@ export function TelegramApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [initData, setInitData] = useState<string | null>(null);
   const [isLinked, setIsLinked] = useState<boolean>(false);
+  const [telegramError, setTelegramError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,27 +34,31 @@ export function TelegramApp() {
       setInitData(null);
     }
 
-    // Check link status using our new API
-    checkLinkStatus(tg?.initData || null);
+    // Check auth status against whatever credential is currently available
+    // (live Telegram initData, or a previously issued email/phone session token).
+    checkAuthStatus();
   }, []);
 
-  const checkLinkStatus = async (data: string | null) => {
-    if (!data) {
+  const checkAuthStatus = async () => {
+    const authHeader = getTmaAuthHeader((window as any).Telegram?.WebApp?.initData || null);
+    if (!authHeader) {
       setIsLinked(false);
       setLoading(false);
       return;
     }
     try {
-      // We ping `/api/v1/telegram/me` with the TMA token to see if it succeeds.
       const res = await fetch('/api/v1/telegram/me', {
-        headers: {
-          'Authorization': `TMA ${data}`
-        }
+        headers: { Authorization: authHeader },
       });
-      if (res.ok) {
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
         setIsLinked(true);
+        setTelegramError(null);
       } else {
         setIsLinked(false);
+        if (authHeader.startsWith('TMA ') && json?.error?.code === 'TELEGRAM_NOT_LINKED') {
+          setTelegramError(json.message || 'Telegram account not linked');
+        }
       }
     } catch (e) {
       console.error(e);
@@ -67,22 +73,34 @@ export function TelegramApp() {
   }
 
   if (!isLinked) {
-    return <TelegramLinkView initData={initData} onLinked={() => setIsLinked(true)} />;
+    return (
+      <TelegramLinkView
+        initData={initData}
+        telegramError={telegramError}
+        onRetryTelegram={checkAuthStatus}
+        onAuthenticated={() => {
+          setTelegramError(null);
+          checkAuthStatus();
+        }}
+      />
+    );
   }
+
+  const authHeader = getTmaAuthHeader(initData);
 
   // The actual Mini App Layout
   return (
     <div className="flex flex-col h-screen bg-[var(--tg-theme-bg-color,#f8fafc)] text-[var(--tg-theme-text-color,#000000)] overflow-hidden font-sans">
       <div className="flex-1 overflow-y-auto p-4 pb-20">
-        {activeTab === 'dashboard' && <TenantHomeView initData={initData} onOpenNotifications={() => setActiveTab('notifications')} />}
-        {activeTab === 'property' && <PropertyView initData={initData} />}
-        {activeTab === 'lease' && <LeaseView initData={initData} />}
-        {activeTab === 'billing' && <BillingView initData={initData} />}
-        {activeTab === 'maintenance' && <MaintenanceView initData={initData} />}
-        {activeTab === 'notifications' && <NotificationsView initData={initData} onBack={() => setActiveTab('dashboard')} />}
+        {activeTab === 'dashboard' && <TenantHomeView initData={authHeader} onOpenNotifications={() => setActiveTab('notifications')} />}
+        {activeTab === 'property' && <PropertyView initData={authHeader} />}
+        {activeTab === 'lease' && <LeaseView initData={authHeader} />}
+        {activeTab === 'billing' && <BillingView initData={authHeader} />}
+        {activeTab === 'maintenance' && <MaintenanceView initData={authHeader} />}
+        {activeTab === 'notifications' && <NotificationsView initData={authHeader} onBack={() => setActiveTab('dashboard')} />}
         {activeTab === 'profile' && (
           <ProfileView
-            initData={initData}
+            initData={authHeader}
             onDisconnected={() => setIsLinked(false)}
             onLoggedOut={() => {
               setIsLinked(false);

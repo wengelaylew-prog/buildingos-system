@@ -62,12 +62,17 @@ export const rolePermissions = pgTable(
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').references(() => organizations.id),
-  uid: text('uid').notNull().unique(), // Firebase Auth UID
+  uid: text('uid').notNull().unique(), // Firebase Auth UID (Admin Web only)
   email: text('email').notNull(),
   fullName: text('full_name').notNull(),
   avatarUrl: text('avatar_url'),
   roleId: uuid('role_id').references(() => roles.id),
   isActive: boolean('is_active').default(true).notNull(),
+  // Tenant TMA credential fields (independent of Firebase). Nullable: only accounts
+  // that opt into a given method populate the corresponding field.
+  passwordHash: text('password_hash'),
+  phone: text('phone'),
+  phoneVerified: boolean('phone_verified').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -398,6 +403,38 @@ export const telegramAccounts = pgTable('telegram_accounts', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
   userIdIdx: index('idx_telegram_accounts_user_id').on(table.userId),
+}));
+
+// 18. OTP CODES (Tenant TMA phone login)
+export const otpCodes = pgTable('otp_codes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  phone: text('phone').notNull(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  codeHash: text('code_hash').notNull(),
+  purpose: text('purpose').notNull().default('TMA_LOGIN'),
+  attempts: integer('attempts').notNull().default(0),
+  maxAttempts: integer('max_attempts').notNull().default(5),
+  expiresAt: timestamp('expires_at').notNull(),
+  consumedAt: timestamp('consumed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  requestIp: text('request_ip'),
+}, (table) => ({
+  phoneIdx: index('idx_otp_codes_phone').on(table.phone),
+  createdAtIdx: index('idx_otp_codes_created_at').on(table.createdAt),
+}));
+
+// 19. TMA SESSIONS (Tenant TMA email/phone authenticated sessions)
+export const tmaSessions = pgTable('tma_sessions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: text('token_hash').notNull().unique(),
+  method: text('method').notNull(), // EMAIL, PHONE
+  expiresAt: timestamp('expires_at').notNull(),
+  revokedAt: timestamp('revoked_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  lastUsedAt: timestamp('last_used_at'),
+}, (table) => ({
+  userIdIdx: index('idx_tma_sessions_user_id').on(table.userId),
 }));
 
 // DRIZZLE RELATIONS DEFINITIONS

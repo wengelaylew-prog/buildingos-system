@@ -4,6 +4,7 @@ import { db } from '../db/index.ts';
 import { users, roles, permissions, rolePermissions, auditLogs, organizations, telegramAccounts } from '../db/schema.ts';
 import { eq, and } from 'drizzle-orm';
 import { validateTelegramWebAppData } from '../lib/telegram.ts';
+import { resolveTmaSession } from '../lib/tma-session.ts';
 
 export interface AuthenticatedUser {
   id: string;
@@ -129,6 +130,45 @@ export const authenticate = async (
         fullName: dbUser.fullName,
         roleCode,
         roleName: userRole?.name || 'Property Manager',
+        permissions: perms,
+        organizationId: userOrg?.id || DEFAULT_ORG_ID,
+        organizationName: userOrg?.name || 'Apex Properties',
+      };
+      return next();
+    }
+
+    // 0b. Tenant TMA Email/Phone Authenticated Session (independent of Firebase)
+    if (authHeader && authHeader.toUpperCase().startsWith('TMASESSION ')) {
+      const token = authHeader.substring('TMASESSION '.length).trim();
+      const session = token ? await resolveTmaSession(token) : null;
+
+      if (!session) {
+        return res.status(401).json({
+          error: { code: 'UNAUTHENTICATED', message: 'Session expired or invalid. Please sign in again.' },
+          success: false, data: null, message: 'Session expired or invalid. Please sign in again.', errors: []
+        });
+      }
+
+      const dbUser = (await db.select().from(users).where(eq(users.id, session.userId)))[0];
+      if (!dbUser || !dbUser.isActive) {
+        return res.status(403).json({
+          error: { code: 'ACCOUNT_DISABLED', message: 'Your account is disabled or missing.' },
+          success: false, data: null, message: 'Your account is disabled.', errors: []
+        });
+      }
+
+      const userRole = dbUser.roleId ? (await db.select().from(roles).where(eq(roles.id, dbUser.roleId)))[0] : null;
+      const roleCode = userRole?.code || 'TENANT';
+      const perms = userRole ? await getPermissionsForRole(userRole.id, roleCode) : [];
+      const userOrg = dbUser.organizationId ? (await db.select().from(organizations).where(eq(organizations.id, dbUser.organizationId)))[0] : null;
+
+      req.user = {
+        id: dbUser.id,
+        uid: dbUser.uid,
+        email: dbUser.email,
+        fullName: dbUser.fullName,
+        roleCode,
+        roleName: userRole?.name || 'Tenant',
         permissions: perms,
         organizationId: userOrg?.id || DEFAULT_ORG_ID,
         organizationName: userOrg?.name || 'Apex Properties',

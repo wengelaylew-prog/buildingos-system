@@ -1,27 +1,287 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext.tsx';
+import { tmaAuthLoginEmail, tmaAuthSendOtp, tmaAuthVerifyOtp } from '../../lib/tma-client.ts';
+import { Send, Mail, Phone, Loader2, ArrowLeft } from 'lucide-react';
 
-export function TelegramLinkView({ initData, onLinked }: { initData: string | null; onLinked: () => void }) {
+type Mode = 'menu' | 'email' | 'phone' | 'phone-otp';
+
+interface TelegramLinkViewProps {
+  initData: string | null;
+  telegramError: string | null;
+  onRetryTelegram: () => void;
+  onAuthenticated: () => void;
+}
+
+// Tenant TMA login screen: Telegram / Email / Phone. Does not depend on Firebase.
+export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onAuthenticated }: TelegramLinkViewProps) {
   const { locale, setLocale } = useLanguage();
   const am = locale === 'am';
+  const [mode, setMode] = useState<Mode>('menu');
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
+
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  const inTelegram = !!initData || !!(window as any).Telegram?.WebApp;
+
+  const startCooldown = () => {
+    setCooldown(60);
+    const interval = setInterval(() => {
+      setCooldown((c) => {
+        if (c <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailError('');
+    setEmailLoading(true);
+    try {
+      await tmaAuthLoginEmail(email, password);
+      onAuthenticated();
+    } catch (err: any) {
+      setEmailError(err.message || (am ? 'ኢሜይል ወይም የይለፍ ቃል ትክክል አይደለም' : 'Invalid email or password'));
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPhoneError('');
+    setPhoneLoading(true);
+    try {
+      await tmaAuthSendOtp(phone);
+      setMode('phone-otp');
+      startCooldown();
+    } catch (err: any) {
+      setPhoneError(err.message || (am ? 'ኮድ መላክ አልተቻለም' : 'Unable to send verification code'));
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (cooldown > 0) return;
+    setPhoneError('');
+    try {
+      await tmaAuthSendOtp(phone);
+      startCooldown();
+    } catch (err: any) {
+      setPhoneError(err.message || (am ? 'ኮድ መላክ አልተቻለም' : 'Unable to send verification code'));
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPhoneError('');
+    setPhoneLoading(true);
+    try {
+      await tmaAuthVerifyOtp(phone, code);
+      onAuthenticated();
+    } catch (err: any) {
+      setPhoneError(err.message || (am ? 'የማረጋገጫ ኮድ ትክክል አይደለም' : 'Invalid or expired verification code'));
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const LanguageToggle = () => (
+    <div className="flex justify-end mb-2">
+      <button
+        type="button"
+        onClick={() => setLocale(am ? 'en' : 'am')}
+        className="text-xs font-medium px-2 py-1 rounded bg-stone-100 border border-stone-200 text-stone-700"
+      >
+        {am ? 'EN' : 'አማ'}
+      </button>
+    </div>
+  );
+
+  const BackButton = ({ onClick }: { onClick: () => void }) => (
+    <button type="button" onClick={onClick} className="flex items-center gap-1 text-sm text-stone-500 mb-4">
+      <ArrowLeft size={16} />
+      {am ? 'ተመለስ' : 'Back'}
+    </button>
+  );
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[var(--tg-theme-bg-color,#f8fafc)] text-[var(--tg-theme-text-color,#000000)]">
-      <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <div className="flex justify-end mb-2">
-          <button
-            type="button"
-            onClick={() => setLocale(am ? 'en' : 'am')}
-            className="text-xs font-medium px-2 py-1 rounded bg-slate-100 border border-slate-200 text-slate-700"
-          >
-            {am ? 'EN' : 'አማ'}
-          </button>
-        </div>
-        <h2 className="text-xl font-bold text-center mb-2">{am ? 'ቴሌግራም አልተገናኘም' : 'Telegram account not linked'}</h2>
-        <p className="text-sm text-slate-500 text-center mb-6">
-          {am ? 'የቴሌግራም መለያዎን እንዲያገናኙ የንብረት አስተዳዳሪዎን ያነጋግሩ።' : 'Ask your property manager to link this Telegram account to your BuildingOS tenant account.'}
-        </p>
-        {!initData && <p className="text-sm text-red-600 text-center">{am ? 'ይህን መተግበሪያ ከቴሌግራም ይክፈቱ።' : 'Open this app inside Telegram to authenticate.'}</p>}
+    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#faf7f2]">
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-stone-100 p-6">
+        <LanguageToggle />
+
+        {mode === 'menu' && (
+          <>
+            <h2 className="text-xl font-bold text-center mb-1">{am ? 'ወደ BuildingOS ይግቡ' : 'Sign in to BuildingOS'}</h2>
+            <p className="text-sm text-stone-500 text-center mb-6">
+              {am ? 'ለመቀጠል የመግቢያ መንገድ ይምረጡ' : 'Choose how you would like to sign in'}
+            </p>
+
+            {telegramError && (
+              <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-center">
+                <p className="text-sm font-medium text-amber-800">
+                  {am ? 'ቴሌግራም አልተገናኘም' : 'Telegram account not linked'}
+                </p>
+                <p className="text-xs text-amber-700 mt-1">
+                  {am
+                    ? 'የቴሌግራም መለያዎን እንዲያገናኙ የንብረት አስተዳዳሪዎን ያነጋግሩ፣ ወይም ከታች ባሉት ኢሜይል ወይም ስልክ ይግቡ።'
+                    : 'Ask your property manager to link this Telegram account, or sign in with email or phone below.'}
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {inTelegram && (
+                <button
+                  type="button"
+                  onClick={onRetryTelegram}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#0f5132] text-white font-semibold py-3 active:opacity-90"
+                >
+                  <Send size={18} />
+                  {am ? 'በቴሌግራም ይቀጥሉ' : 'Continue with Telegram'}
+                </button>
+              )}
+              {!inTelegram && (
+                <p className="text-xs text-red-600 text-center">
+                  {am ? 'ለቴሌግራም መግቢያ ይህን መተግበሪያ ከቴሌግራም ይክፈቱ።' : 'Open this app inside Telegram to use Telegram sign-in.'}
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setMode('email')}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-stone-300 text-stone-800 font-semibold py-3 active:bg-stone-50"
+              >
+                <Mail size={18} />
+                {am ? 'በኢሜይል ይቀጥሉ' : 'Continue with Email'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMode('phone')}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-stone-300 text-stone-800 font-semibold py-3 active:bg-stone-50"
+              >
+                <Phone size={18} />
+                {am ? 'በስልክ ቁጥር ይቀጥሉ' : 'Continue with Phone'}
+              </button>
+            </div>
+          </>
+        )}
+
+        {mode === 'email' && (
+          <>
+            <BackButton onClick={() => setMode('menu')} />
+            <h2 className="text-lg font-bold mb-4">{am ? 'በኢሜይል ይግቡ' : 'Sign in with Email'}</h2>
+            <form onSubmit={handleEmailSubmit} className="space-y-3">
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                placeholder={am ? 'ኢሜይል' : 'Email'}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f5132]"
+              />
+              <input
+                type="password"
+                required
+                autoComplete="current-password"
+                placeholder={am ? 'የይለፍ ቃል' : 'Password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f5132]"
+              />
+              {emailError && <p className="text-xs text-red-600">{emailError}</p>}
+              <button
+                type="submit"
+                disabled={emailLoading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#0f5132] text-white font-semibold py-3 disabled:opacity-60"
+              >
+                {emailLoading && <Loader2 size={16} className="animate-spin" />}
+                {am ? 'ግባ' : 'Sign In'}
+              </button>
+            </form>
+          </>
+        )}
+
+        {mode === 'phone' && (
+          <>
+            <BackButton onClick={() => setMode('menu')} />
+            <h2 className="text-lg font-bold mb-4">{am ? 'በስልክ ይግቡ' : 'Sign in with Phone'}</h2>
+            <form onSubmit={handleSendOtp} className="space-y-3">
+              <input
+                type="tel"
+                required
+                autoComplete="tel"
+                placeholder={am ? 'ስልክ ቁጥር (+251...)' : 'Phone number (+251...)'}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f5132]"
+              />
+              {phoneError && <p className="text-xs text-red-600">{phoneError}</p>}
+              <button
+                type="submit"
+                disabled={phoneLoading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#0f5132] text-white font-semibold py-3 disabled:opacity-60"
+              >
+                {phoneLoading && <Loader2 size={16} className="animate-spin" />}
+                {am ? 'ኮድ ላክ' : 'Send OTP'}
+              </button>
+            </form>
+          </>
+        )}
+
+        {mode === 'phone-otp' && (
+          <>
+            <BackButton onClick={() => setMode('phone')} />
+            <h2 className="text-lg font-bold mb-2">{am ? 'ማረጋገጫ ኮድ ያስገቡ' : 'Enter Verification Code'}</h2>
+            <p className="text-xs text-stone-500 mb-4">
+              {am ? `ኮድ ወደ ${phone} ተልኳል` : `A code was sent to ${phone}`}
+            </p>
+            <form onSubmit={handleVerifyOtp} className="space-y-3">
+              <input
+                type="text"
+                inputMode="numeric"
+                required
+                placeholder={am ? 'ማረጋገጫ ኮድ' : 'Verification Code'}
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-[#0f5132]"
+              />
+              {phoneError && <p className="text-xs text-red-600">{phoneError}</p>}
+              <button
+                type="submit"
+                disabled={phoneLoading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#0f5132] text-white font-semibold py-3 disabled:opacity-60"
+              >
+                {phoneLoading && <Loader2 size={16} className="animate-spin" />}
+                {am ? 'አረጋግጥ' : 'Verify OTP'}
+              </button>
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={cooldown > 0}
+                className="w-full text-xs text-stone-500 disabled:opacity-50"
+              >
+                {cooldown > 0
+                  ? (am ? `ዳግም ላክ (${cooldown}ሰ)` : `Resend code (${cooldown}s)`)
+                  : (am ? 'ኮድ ዳግም ላክ' : 'Resend code')}
+              </button>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );

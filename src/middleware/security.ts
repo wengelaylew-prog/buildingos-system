@@ -48,6 +48,37 @@ export const rateLimiter = (req: Request, res: Response, next: NextFunction) => 
   next();
 };
 
+// 3b. Stricter Rate Limiter for TMA Auth Endpoints (email login / OTP send+verify / logout)
+// Mitigates brute-force credential guessing and OTP brute force independent of the
+// general API rate limiter.
+const authRequestCounts = new Map<string, { count: number; resetTime: number }>();
+const AUTH_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const AUTH_MAX_REQUESTS = 20;
+
+export const authRateLimiter = (req: Request, res: Response, next: NextFunction) => {
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+
+  let record = authRequestCounts.get(ip);
+  if (!record || record.resetTime < now) {
+    record = { count: 0, resetTime: now + AUTH_WINDOW_MS };
+  }
+
+  record.count++;
+  authRequestCounts.set(ip, record);
+
+  if (record.count > AUTH_MAX_REQUESTS) {
+    return res.status(429).json({
+      success: false,
+      data: null,
+      message: 'Too many authentication requests. Please try again later.',
+      errors: ['rate_limited'],
+    });
+  }
+
+  next();
+};
+
 // 4. Environment Validation
 export const validateEnvironment = () => {
   const requiredVars = ['PORT', 'DATABASE_URL', 'JWT_SECRET'];
