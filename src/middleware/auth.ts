@@ -61,7 +61,16 @@ export const authenticate = async (
     // 0. Telegram Mini App Auth
     if (authHeader && authHeader.toUpperCase().startsWith('TMA ')) {
       const initData = authHeader.substring(4);
-      const botToken = process.env.TELEGRAM_BOT_TOKEN || 'test-bot-token'; // Fallback for tests if needed
+
+      // SECURITY: never fall back to a guessable bot token in production — that would let
+      // anyone forge a valid Telegram signature and impersonate a linked tenant.
+      if (!process.env.TELEGRAM_BOT_TOKEN) {
+        return res.status(401).json({
+          error: { code: 'CONFIG_ERROR', message: 'Telegram authentication is not configured' },
+          success: false, data: null, message: 'Telegram authentication is not configured', errors: []
+        });
+      }
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
       if (!validateTelegramWebAppData(initData, botToken)) {
         return res.status(401).json({

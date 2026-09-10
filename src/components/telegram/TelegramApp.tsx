@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext.tsx';
 import { TelegramLinkView } from './TelegramLinkView.tsx';
 import { TenantHomeView, PropertyView, LeaseView, BillingView, MaintenanceView, NotificationsView, ProfileView } from './TelegramViews.tsx';
 import { Building, Home, FileText, Wrench, Wallet, Bell, User } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext.tsx';
 
 export function TelegramApp() {
-  const { user } = useAuth();
+  const { locale } = useLanguage();
+  const am = locale === 'am';
   const [activeTab, setActiveTab] = useState('dashboard');
   const [initData, setInitData] = useState<string | null>(null);
-  const [tgUser, setTgUser] = useState<any>(null);
   const [isLinked, setIsLinked] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +20,6 @@ export function TelegramApp() {
       tg.ready();
       tg.expand();
       setInitData(tg.initData);
-      setTgUser(tg.initDataUnsafe?.user);
       
       // Inject theme colors based on Telegram Theme
       document.documentElement.style.setProperty('--tg-theme-bg-color', tg.backgroundColor || '#ffffff');
@@ -30,17 +29,19 @@ export function TelegramApp() {
       document.documentElement.style.setProperty('--tg-theme-button-color', tg.buttonColor || '#3390ec');
       document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.buttonTextColor || '#ffffff');
     } else {
-      // Mock for testing outside telegram
-      const mockInitData = "user=%7B%22id%22%3A12345%2C%22first_name%22%3A%22Test%22%7D&hash=abc";
-      setInitData(mockInitData);
-      setTgUser({ id: 12345, first_name: 'Test' });
+      setInitData(null);
     }
 
     // Check link status using our new API
-    checkLinkStatus(tg?.initData || "mock");
+    checkLinkStatus(tg?.initData || null);
   }, []);
 
-  const checkLinkStatus = async (data: string) => {
+  const checkLinkStatus = async (data: string | null) => {
+    if (!data) {
+      setIsLinked(false);
+      setLoading(false);
+      return;
+    }
     try {
       // We ping `/api/v1/telegram/me` with the TMA token to see if it succeeds.
       const res = await fetch('/api/v1/telegram/me', {
@@ -62,7 +63,7 @@ export function TelegramApp() {
   };
 
   if (loading) {
-    return <div className="p-4 text-center">Loading Telegram App...</div>;
+    return <div className="p-4 text-center">{am ? 'ኢንፔት እየተጫነ ነው...' : 'Loading Telegram App...'}</div>;
   }
 
   if (!isLinked) {
@@ -79,34 +80,43 @@ export function TelegramApp() {
         {activeTab === 'billing' && <BillingView initData={initData} />}
         {activeTab === 'maintenance' && <MaintenanceView initData={initData} />}
         {activeTab === 'notifications' && <NotificationsView initData={initData} onBack={() => setActiveTab('dashboard')} />}
-        {activeTab === 'profile' && <ProfileView initData={initData} onDisconnected={() => setIsLinked(false)} />}
+        {activeTab === 'profile' && (
+          <ProfileView
+            initData={initData}
+            onDisconnected={() => setIsLinked(false)}
+            onLoggedOut={() => {
+              setIsLinked(false);
+              setActiveTab('dashboard');
+            }}
+          />
+        )}
       </div>
 
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-[var(--tg-theme-bg-color,#ffffff)] border-t border-[var(--tg-theme-hint-color,#e2e8f0)] flex justify-around p-2 pb-safe">
         <button onClick={() => setActiveTab('dashboard')} className={`flex flex-col items-center p-2 ${activeTab === 'dashboard' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
           <Home size={20} />
-          <span className="text-[10px] mt-1">Home</span>
+          <span className="text-[10px] mt-1">{am ? 'ባሐል' : 'Home'}</span>
         </button>
         <button onClick={() => setActiveTab('property')} className={`flex flex-col items-center p-2 ${activeTab === 'property' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
           <Building size={20} />
-          <span className="text-[10px] mt-1">Property</span>
+          <span className="text-[10px] mt-1">{am ? 'ንብረት' : 'Property'}</span>
         </button>
         <button onClick={() => setActiveTab('lease')} className={`flex flex-col items-center p-2 ${activeTab === 'lease' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
           <FileText size={20} />
-          <span className="text-[10px] mt-1">Lease</span>
+          <span className="text-[10px] mt-1">{am ? 'ውል' : 'Lease'}</span>
         </button>
         <button onClick={() => setActiveTab('billing')} className={`flex flex-col items-center p-2 ${activeTab === 'billing' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
           <Wallet size={20} />
-          <span className="text-[10px] mt-1">Billing</span>
+          <span className="text-[10px] mt-1">{am ? 'ክፍያ' : 'Billing'}</span>
         </button>
         <button onClick={() => setActiveTab('maintenance')} className={`flex flex-col items-center p-2 ${activeTab === 'maintenance' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
           <Wrench size={20} />
-          <span className="text-[10px] mt-1">Fixes</span>
+          <span className="text-[10px] mt-1">{am ? 'ጥገ⤻' : 'Fixes'}</span>
         </button>
         <button onClick={() => setActiveTab('profile')} className={`flex flex-col items-center p-2 ${activeTab === 'profile' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
           <User size={20} />
-          <span className="text-[10px] mt-1">Profile</span>
+          <span className="text-[10px] mt-1">{am ? 'መገለጫ' : 'Profile'}</span>
         </button>
       </div>
     </div>

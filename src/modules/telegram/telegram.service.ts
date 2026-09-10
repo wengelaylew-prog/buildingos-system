@@ -15,7 +15,11 @@ export class TelegramService {
   }
 
   static async linkAccount(userId: string, initData: string) {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN || 'test-bot-token';
+    // SECURITY: never fall back to a guessable bot token in production (see middleware/auth.ts).
+    if (!process.env.TELEGRAM_BOT_TOKEN) {
+      throw new Error('Telegram authentication is not configured');
+    }
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!validateTelegramWebAppData(initData, botToken)) {
       throw new Error('Invalid Telegram initData signature');
     }

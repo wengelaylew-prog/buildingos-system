@@ -150,14 +150,24 @@ function MainLayout() {
 
 import { TelegramApp } from './components/telegram/TelegramApp.tsx';
 
+function isTelegramWebApp(): boolean {
+  const webApp = (window as any).Telegram?.WebApp;
+  return Boolean(webApp?.initData);
+}
+
 export default function App() {
-  const isTelegram = window.location.pathname.startsWith('/telegram');
+  const isTelegramRoute = window.location.pathname === '/telegram' || window.location.pathname.startsWith('/telegram/');
+  const isTelegram = isTelegramRoute || isTelegramWebApp();
 
   return (
     <LanguageProvider>
-      <AuthProvider>
-        {isTelegram ? <TelegramApp /> : <MainLayout />}
-      </AuthProvider>
+      {isTelegram ? (
+        <TelegramApp />
+      ) : (
+        <AuthProvider>
+          <MainLayout />
+        </AuthProvider>
+      )}
     </LanguageProvider>
   );
 }

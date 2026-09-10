@@ -14,7 +14,6 @@ async function tmaFetch(url: string, initData: string | null, options: any = {})
 }
 
 import { useLanguage } from '../../context/LanguageContext.tsx';
-import { useAuth } from '../../context/AuthContext.tsx';
 import { Building, FileText, Wrench, Wallet, Bell, AlertCircle, CheckCircle, ArrowLeft, Receipt, RefreshCw, XCircle, Clock, Loader2, Plus, Camera, Megaphone, CalendarClock, Check, Mail, Phone, HelpCircle, Users, LogOut, Unlink, ChevronRight, Moon, Sun } from 'lucide-react';
 
 export function TenantHomeView({ initData, onOpenNotifications }: { initData: string | null; onOpenNotifications?: () => void }) {
@@ -32,7 +31,7 @@ export function TenantHomeView({ initData, onOpenNotifications }: { initData: st
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-4">
         <AlertCircle size={48} className="text-red-500 opacity-80" />
-        <h2 className="text-xl font-bold">Error Loading Dashboard</h2>
+        <h2 className="text-xl font-bold">{locale === 'am' ? 'ዳሽቦርድ መጫን ላይ ስህተት' : 'Error Loading Dashboard'}</h2>
         <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{error}</p>
       </div>
     );
@@ -42,7 +41,7 @@ export function TenantHomeView({ initData, onOpenNotifications }: { initData: st
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 space-y-4">
         <div className="w-8 h-8 border-4 border-[var(--tg-theme-button-color,#3b82f6)] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">Loading your data...</p>
+        <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{locale === 'am' ? 'የእርስዎ መረጃ እየተጫነ ነው...' : 'Loading your data...'}</p>
       </div>
     );
   }
@@ -78,14 +77,14 @@ export function TenantHomeView({ initData, onOpenNotifications }: { initData: st
           >
             {locale === 'en' ? 'አማ' : 'EN'}
           </button>
-          <div className="relative" onClick={onOpenNotifications} role={onOpenNotifications ? 'button' : undefined}>
+          <button type="button" onClick={onOpenNotifications} className="relative" aria-label={locale === 'am' ? 'ማሳወቂያዎች' : 'Notifications'}>
             <Bell size={24} className="text-[var(--tg-theme-text-color,#000000)]" />
             {data.unreadNotifications > 0 && (
               <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
                 {data.unreadNotifications}
               </span>
             )}
-          </div>
+          </button>
         </div>
       </div>
 
@@ -102,7 +101,7 @@ export function TenantHomeView({ initData, onOpenNotifications }: { initData: st
         </div>
         <div>
           <p className="text-lg font-bold">{data.buildingName}</p>
-          <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">Unit {data.unitNumber}</p>
+          <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{locale === 'am' ? 'ክፍል' : 'Unit'} {data.unitNumber}</p>
         </div>
       </div>
 
@@ -200,7 +199,7 @@ export function PropertyView({ initData, startParam }: { initData: string | null
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-4">
         <AlertCircle size={48} className="text-red-500 opacity-80" />
-        <h2 className="text-xl font-bold">Error Loading Property</h2>
+        <h2 className="text-xl font-bold">{locale === 'am' ? 'ንብረት መጫን ላይ ስህተት' : 'Error Loading Property'}</h2>
         <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{error}</p>
       </div>
     );
@@ -210,7 +209,7 @@ export function PropertyView({ initData, startParam }: { initData: string | null
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 space-y-4">
         <div className="w-8 h-8 border-4 border-[var(--tg-theme-button-color,#3b82f6)] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">Loading property details...</p>
+        <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{locale === 'am' ? 'የንብረት ዝርዝሮች እየተጫኑ ነው...' : 'Loading property details...'}</p>
       </div>
     );
   }
@@ -242,7 +241,9 @@ export function PropertyView({ initData, startParam }: { initData: string | null
 
         <div className="flex justify-between items-center border-b border-[var(--tg-theme-hint-color,#e2e8f0)] pb-3 border-opacity-30">
           <span className="text-[var(--tg-theme-hint-color,#64748b)] text-sm">{locale === 'am' ? 'ወለል' : 'Floor'}</span>
-          <span className="font-medium">{data.floor?.floorName || `Floor ${data.floor?.floorNumber || 'N/A'}`}</span>
+          <span className="font-medium">
+            {data.floor?.floorName || `${locale === 'am' ? 'ወለል' : 'Floor'} ${data.floor?.floorNumber ?? (locale === 'am' ? 'የለም' : 'N/A')}`}
+          </span>
         </div>
 
         <div className="flex justify-between items-center border-b border-[var(--tg-theme-hint-color,#e2e8f0)] pb-3 border-opacity-30">
@@ -268,9 +269,13 @@ export function PropertyView({ initData, startParam }: { initData: string | null
         </div>
       </div>
 
-      <button className="w-full flex items-center justify-center gap-2 py-3 bg-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-text-color,#ffffff)] rounded-xl font-medium transition-all active:scale-[0.98]">
+      <button
+        disabled
+        title={locale === 'am' ? 'በስልክ መተግበሪያ ውስጥ ገና አይገኝም' : 'Not yet available inside the mobile mini app'}
+        className="w-full flex items-center justify-center gap-2 py-3 bg-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-text-color,#ffffff)] rounded-xl font-medium opacity-50 cursor-not-allowed"
+      >
         <Building size={18} />
-        {locale === 'am' ? 'በ 3D ይመልከቱ' : 'View 3D Property'}
+        {locale === 'am' ? 'በ 3D ይመልከቱ (በቅርቡ)' : 'View 3D Property (Coming Soon)'}
       </button>
 
     </div>
@@ -1325,12 +1330,13 @@ export function NotificationsView({ initData, onBack }: { initData: string | nul
 export function ProfileView({
   initData,
   onDisconnected,
+  onLoggedOut,
 }: {
   initData: string | null;
   onDisconnected?: () => void;
+  onLoggedOut?: () => void;
 }) {
   const { locale, setLocale } = useLanguage();
-  const { signOut } = useAuth();
   const am = locale === 'am';
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
@@ -1348,7 +1354,7 @@ export function ProfileView({
 
   const handleLogout = async () => {
     if (!window.confirm(am ? 'ከBuildingOS መለያዎ መውጣት ይፈልጋሉ?' : 'Are you sure you want to log out of BuildingOS?')) return;
-    await signOut();
+    onLoggedOut?.();
   };
 
   const handleDisconnect = async () => {
