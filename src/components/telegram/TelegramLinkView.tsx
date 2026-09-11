@@ -89,7 +89,7 @@ export function TelegramLinkView({ initData, telegramError, telegramLoading = fa
     setEmailError('');
     setEmailLoading(true);
     try {
-      await tmaAuthVerifyEmailOtp(email, emailCode);
+      await tmaAuthVerifyEmailOtp(email, emailCode, initData);
       onAuthenticated();
     } catch (err: any) {
       setEmailError(err.message || (am ? 'የማረጋገጫ ኮድ ትክክል አይደለም' : 'Invalid or expired verification code'));
@@ -129,7 +129,7 @@ export function TelegramLinkView({ initData, telegramError, telegramLoading = fa
     setPhoneError('');
     setPhoneLoading(true);
     try {
-      await tmaAuthVerifyPhoneOtp(phone, phoneCode);
+      await tmaAuthVerifyPhoneOtp(phone, phoneCode, initData);
       onAuthenticated();
     } catch (err: any) {
       setPhoneError(err.message || (am ? 'የማረጋገጫ ኮድ ትክክል አይደለም' : 'Invalid or expired verification code'));

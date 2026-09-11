@@ -34,8 +34,8 @@ export class TmaAuthController {
 
   static async verifyEmailOtp(req: Request, res: Response) {
     try {
-      const { email, code } = req.body || {};
-      const result = await TmaAuthService.verifyEmailOtp(email, code);
+      const { email, code, initData } = req.body || {};
+      const result = await TmaAuthService.verifyEmailOtp(email, code, initData);
       return sendSuccess(res, result, 'Signed in successfully');
     } catch (err: any) {
       return sendError(res, 401, err.message || 'Invalid or expired verification code', 'INVALID_OTP');
@@ -56,8 +56,8 @@ export class TmaAuthController {
 
   static async verifyPhoneOtp(req: Request, res: Response) {
     try {
-      const { phone, code } = req.body || {};
-      const result = await TmaAuthService.verifyPhoneOtp(phone, code);
+      const { phone, code, initData } = req.body || {};
+      const result = await TmaAuthService.verifyPhoneOtp(phone, code, initData);
       return sendSuccess(res, result, 'Signed in successfully');
     } catch (err: any) {
       return sendError(res, 401, err.message || 'Invalid or expired verification code', 'INVALID_OTP');

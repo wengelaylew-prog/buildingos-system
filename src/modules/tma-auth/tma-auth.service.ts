@@ -13,6 +13,38 @@ const OTP_MAX_PER_HOUR = 5;
 
 const INVALID_OTP = 'Invalid or expired verification code';
 
+async function linkTelegramAccountIfProvided(userId: string, initData?: string) {
+  if (!initData) return;
+  if (!process.env.TELEGRAM_BOT_TOKEN) return;
+
+  try {
+    if (!validateTelegramWebAppData(initData, process.env.TELEGRAM_BOT_TOKEN)) return;
+    const urlParams = new URLSearchParams(initData);
+    const userStr = urlParams.get('user');
+    if (!userStr) return;
+    const tgUser = JSON.parse(userStr);
+    const telegramUserId = tgUser.id?.toString();
+    if (!telegramUserId) return;
+
+    await db.delete(telegramAccounts).where(
+      sql`user_id = ${userId} OR telegram_user_id = ${telegramUserId}`
+    );
+
+    await db.insert(telegramAccounts).values({
+      userId,
+      telegramUserId,
+      username: tgUser.username,
+      firstName: tgUser.first_name,
+      lastName: tgUser.last_name,
+      photoUrl: tgUser.photo_url,
+      lastAuthenticatedAt: new Date(),
+    });
+  } catch(e) {
+    console.error('Failed to link telegram account during OTP', e);
+  }
+}
+
+
 function normalizeEmail(email: string): string {
   return (email || '').trim().toLowerCase();
 }
@@ -191,9 +223,10 @@ export class TmaAuthService {
     return genericResult;
   }
 
-  static async verifyEmailOtp(rawEmail: string, code: string) {
+  static async verifyEmailOtp(rawEmail: string, code: string, initData?: string) {
     const email = normalizeEmail(rawEmail);
     const user = await verifyAndConsumeOtp('EMAIL', email, code);
+    await linkTelegramAccountIfProvided(user.id, initData);
     const session = await createTmaSession(user.id, 'EMAIL');
     return { token: session.token, expiresAt: session.expiresAt };
   }
@@ -228,9 +261,10 @@ export class TmaAuthService {
     return genericResult;
   }
 
-  static async verifyPhoneOtp(rawPhone: string, code: string) {
+  static async verifyPhoneOtp(rawPhone: string, code: string, initData?: string) {
     const phone = normalizePhone(rawPhone);
     const user = await verifyAndConsumeOtp('PHONE', phone, code);
+    await linkTelegramAccountIfProvided(user.id, initData);
     const session = await createTmaSession(user.id, 'PHONE');
     return { token: session.token, expiresAt: session.expiresAt };
   }

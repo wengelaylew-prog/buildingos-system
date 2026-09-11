@@ -64,11 +64,11 @@ export async function tmaAuthSendEmailOtp(email: string) {
   return parseJson(res);
 }
 
-export async function tmaAuthVerifyEmailOtp(email: string, code: string) {
+export async function tmaAuthVerifyEmailOtp(email: string, code: string, initData?: string | null) {
   const res = await fetch('/api/v1/tma-auth/email/otp/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, code }),
+    body: JSON.stringify({ email, code, initData }),
   });
   const data = await parseJson(res);
   setTmaSessionToken(data.token);
@@ -84,11 +84,11 @@ export async function tmaAuthSendPhoneOtp(phone: string) {
   return parseJson(res);
 }
 
-export async function tmaAuthVerifyPhoneOtp(phone: string, code: string) {
+export async function tmaAuthVerifyPhoneOtp(phone: string, code: string, initData?: string | null) {
   const res = await fetch('/api/v1/tma-auth/phone/otp/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone, code }),
+    body: JSON.stringify({ phone, code, initData }),
   });
   const data = await parseJson(res);
   setTmaSessionToken(data.token);
