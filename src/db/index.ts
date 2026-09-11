@@ -10,11 +10,19 @@ declare global {
 // Function to create or retrieve the connection pool using the Object Method
 export const createPool = () => {
   if (!global._postgresPool) {
+    // Render sets DATABASE_URL automatically for linked PostgreSQL services.
+    // Individual SQL_* vars are used as fallback for local/custom setups.
+    const connectionConfig = process.env.DATABASE_URL
+      ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+      : {
+          host: process.env.SQL_HOST,
+          user: process.env.SQL_USER,
+          password: process.env.SQL_PASSWORD,
+          database: process.env.SQL_DB_NAME,
+        };
+
     global._postgresPool = new Pool({
-      host: process.env.SQL_HOST,
-      user: process.env.SQL_USER,
-      password: process.env.SQL_PASSWORD,
-      database: process.env.SQL_DB_NAME,
+      ...connectionConfig,
       max: 10,
       connectionTimeoutMillis: 15000,
     });

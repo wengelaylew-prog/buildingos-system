@@ -97,6 +97,22 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // ONE-TIME MIGRATION ENDPOINT
+  // Protected by MIGRATION_SECRET env var. Call once after deploy to fix DB schema.
+  // Example: POST /api/v1/internal/migrate  with header  x-migration-secret: <value>
+  app.post('/api/v1/internal/migrate', async (req, res) => {
+    const secret = process.env.MIGRATION_SECRET;
+    if (!secret || req.headers['x-migration-secret'] !== secret) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    try {
+      await runMigrations();
+      return res.json({ success: true, message: 'Migration complete' });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   // SEED TRIGGER ENDPOINT
   app.post('/api/v1/seed', authenticate, requirePermission('settings.manage'), async (req: AuthRequest, res) => {
     try {
