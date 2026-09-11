@@ -144,7 +144,6 @@ export const AuditLogsView: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 font-sans">
                       <div className="font-semibold text-slate-900">{log.userEmail || 'System'}</div>
-                      <span className="text-[10px] text-slate-400 uppercase font-mono">{log.userRole || 'ADMIN'}</span>
                     </td>
                     <td className="py-3 px-4">
                       <span
@@ -192,10 +191,6 @@ export const AuditLogsView: React.FC = () => {
         {selectedLog && (
           <div className="space-y-4 text-xs">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-              <div>
-                <div className="text-[10px] text-slate-400">Actor Role</div>
-                <div className="font-bold text-slate-800">{selectedLog.userRole || 'SUPER_ADMIN'}</div>
-              </div>
               <div>
                 <div className="text-[10px] text-slate-400">Client IP</div>
                 <div className="font-bold text-slate-800 font-mono">{selectedLog.ipAddress || '127.0.0.1'}</div>

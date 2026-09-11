@@ -12,7 +12,10 @@ telegramRouter.get('/me', authenticate, TelegramController.getMe);
 telegramRouter.get('/dashboard', authenticate, TelegramController.getDashboard);
 telegramRouter.get('/property', authenticate, TelegramController.getProperty);
 telegramRouter.get('/lease', authenticate, TelegramController.getLease);
+telegramRouter.post('/lease/renew', authenticate, TelegramController.requestRenewal);
 telegramRouter.get('/billing', authenticate, TelegramController.getBilling);
+telegramRouter.get('/invoices/:id', authenticate, TelegramController.getInvoiceDetail);
 telegramRouter.get('/maintenance', authenticate, TelegramController.getMaintenanceRequests);
 telegramRouter.post('/maintenance', authenticate, TelegramController.createMaintenanceRequest);
 telegramRouter.get('/notifications', authenticate, TelegramController.getNotifications);
+

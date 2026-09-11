@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, googleAuthProvider } from '../lib/firebase.ts';
-import { signInWithPopup, signOut as fbSignOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { signInWithPopup, signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { api, setApiRole, getApiRole, setApiToken } from '../api/client.ts';
 import { AuthUser } from '../types/index.ts';
 
@@ -10,6 +10,7 @@ interface AuthContextType {
   setActiveRole: (role: string) => void;
   hasPermission: (permissionCode: string) => boolean;
   signInWithGoogle: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   loading: boolean;
@@ -96,6 +97,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const login = async (email: string, password: string) => {
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      const token = await result.user.getIdToken();
+      setApiToken(token);
+      await fetchProfile();
+    } catch (error: any) {
+      console.error('Email/Password Sign In failed:', error);
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     try {
       await fbSignOut(auth);
@@ -114,6 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setActiveRole,
         hasPermission,
         signInWithGoogle,
+        login,
         signOut,
         refreshUser: fetchProfile,
         loading,
