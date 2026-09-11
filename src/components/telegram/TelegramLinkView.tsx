@@ -1,40 +1,41 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext.tsx';
-import { tmaAuthLoginEmail, tmaAuthSendOtp, tmaAuthVerifyOtp } from '../../lib/tma-client.ts';
-import { Send, Mail, Phone, Loader2, ArrowLeft } from 'lucide-react';
+import { tmaAuthSendEmailOtp, tmaAuthVerifyEmailOtp, tmaAuthSendPhoneOtp, tmaAuthVerifyPhoneOtp } from '../../lib/tma-client.ts';
+import { Send, Mail, Phone, Loader2, ArrowLeft, Building } from 'lucide-react';
 
-type Mode = 'menu' | 'email' | 'phone' | 'phone-otp';
+type Mode = 'menu' | 'email' | 'email-otp' | 'phone' | 'phone-otp';
 
 interface TelegramLinkViewProps {
   initData: string | null;
   telegramError: string | null;
+  telegramLoading?: boolean;
   onRetryTelegram: () => void;
   onAuthenticated: () => void;
 }
 
-// Tenant TMA login screen: Telegram / Email / Phone. Does not depend on Firebase.
-export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onAuthenticated }: TelegramLinkViewProps) {
-  const { locale, setLocale } = useLanguage();
+export function TelegramLinkView({ initData, telegramError, telegramLoading = false, onRetryTelegram, onAuthenticated }: TelegramLinkViewProps) {
+  const { locale } = useLanguage();
   const am = locale === 'am';
   const [mode, setMode] = useState<Mode>('menu');
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [emailCode, setEmailCode] = useState('');
   const [emailError, setEmailError] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
+  const [emailCooldown, setEmailCooldown] = useState(0);
 
   const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
+  const [phoneCode, setPhoneCode] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [phoneLoading, setPhoneLoading] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
+  const [phoneCooldown, setPhoneCooldown] = useState(0);
 
   const inTelegram = !!initData || !!(window as any).Telegram?.WebApp;
 
-  const startCooldown = () => {
-    setCooldown(60);
+  const startEmailCooldown = () => {
+    setEmailCooldown(60);
     const interval = setInterval(() => {
-      setCooldown((c) => {
+      setEmailCooldown((c) => {
         if (c <= 1) {
           clearInterval(interval);
           return 0;
@@ -44,28 +45,67 @@ export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onA
     }, 1000);
   };
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const startPhoneCooldown = () => {
+    setPhoneCooldown(60);
+    const interval = setInterval(() => {
+      setPhoneCooldown((c) => {
+        if (c <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+  };
+
+  const handleSendEmailOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError('');
     setEmailLoading(true);
     try {
-      await tmaAuthLoginEmail(email, password);
-      onAuthenticated();
+      await tmaAuthSendEmailOtp(email);
+      setMode('email-otp');
+      startEmailCooldown();
     } catch (err: any) {
-      setEmailError(err.message || (am ? 'ኢሜይል ወይም የይለፍ ቃል ትክክል አይደለም' : 'Invalid email or password'));
+      setEmailError(err.message || (am ? 'ኮድ መላክ አልተቻለም' : 'Unable to send verification code'));
     } finally {
       setEmailLoading(false);
     }
   };
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleResendEmailOtp = async () => {
+    if (emailCooldown > 0) return;
+    setEmailError('');
+    try {
+      await tmaAuthSendEmailOtp(email);
+      startEmailCooldown();
+    } catch (err: any) {
+      setEmailError(err.message || (am ? 'ኮድ መላክ አልተቻለም' : 'Unable to send verification code'));
+    }
+  };
+
+  const handleVerifyEmailOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailError('');
+    setEmailLoading(true);
+    try {
+      await tmaAuthVerifyEmailOtp(email, emailCode);
+      onAuthenticated();
+    } catch (err: any) {
+      setEmailError(err.message || (am ? 'የማረጋገጫ ኮድ ትክክል አይደለም' : 'Invalid or expired verification code'));
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleSendPhoneOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setPhoneError('');
     setPhoneLoading(true);
     try {
-      await tmaAuthSendOtp(phone);
+      await tmaAuthSendPhoneOtp(phone);
       setMode('phone-otp');
-      startCooldown();
+      startPhoneCooldown();
     } catch (err: any) {
       setPhoneError(err.message || (am ? 'ኮድ መላክ አልተቻለም' : 'Unable to send verification code'));
     } finally {
@@ -73,23 +113,23 @@ export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onA
     }
   };
 
-  const handleResendOtp = async () => {
-    if (cooldown > 0) return;
+  const handleResendPhoneOtp = async () => {
+    if (phoneCooldown > 0) return;
     setPhoneError('');
     try {
-      await tmaAuthSendOtp(phone);
-      startCooldown();
+      await tmaAuthSendPhoneOtp(phone);
+      startPhoneCooldown();
     } catch (err: any) {
       setPhoneError(err.message || (am ? 'ኮድ መላክ አልተቻለም' : 'Unable to send verification code'));
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleVerifyPhoneOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setPhoneError('');
     setPhoneLoading(true);
     try {
-      await tmaAuthVerifyOtp(phone, code);
+      await tmaAuthVerifyPhoneOtp(phone, phoneCode);
       onAuthenticated();
     } catch (err: any) {
       setPhoneError(err.message || (am ? 'የማረጋገጫ ኮድ ትክክል አይደለም' : 'Invalid or expired verification code'));
@@ -98,46 +138,35 @@ export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onA
     }
   };
 
-  const LanguageToggle = () => (
-    <div className="flex justify-end mb-2">
-      <button
-        type="button"
-        onClick={() => setLocale(am ? 'en' : 'am')}
-        className="text-xs font-medium px-2 py-1 rounded bg-stone-100 border border-stone-200 text-stone-700"
-      >
-        {am ? 'EN' : 'አማ'}
-      </button>
-    </div>
-  );
-
   const BackButton = ({ onClick }: { onClick: () => void }) => (
-    <button type="button" onClick={onClick} className="flex items-center gap-1 text-sm text-stone-500 mb-4">
-      <ArrowLeft size={16} />
+    <button onClick={onClick} className="mb-6 flex items-center gap-2 text-[#0f5132] font-medium active:opacity-70">
+      <ArrowLeft size={18} />
       {am ? 'ተመለስ' : 'Back'}
     </button>
   );
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[#faf7f2]">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-stone-100 p-6">
-        <LanguageToggle />
+    <div className="min-h-screen bg-stone-100 flex flex-col items-center justify-center p-4 font-sans">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm p-6">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-[#0f5132] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#0f5132]/20">
+            <Building size={32} className="text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-stone-900">BuildingOS</h1>
+          <p className="text-stone-500 mt-1">{am ? 'የተከራይ መግቢያ' : 'Tenant Portal'}</p>
+        </div>
 
         {mode === 'menu' && (
           <>
-            <h2 className="text-xl font-bold text-center mb-1">{am ? 'ወደ BuildingOS ይግቡ' : 'Sign in to BuildingOS'}</h2>
-            <p className="text-sm text-stone-500 text-center mb-6">
-              {am ? 'ለመቀጠል የመግቢያ መንገድ ይምረጡ' : 'Choose how you would like to sign in'}
-            </p>
-
             {telegramError && (
-              <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-center">
-                <p className="text-sm font-medium text-amber-800">
-                  {am ? 'ቴሌግራም አልተገናኘም' : 'Telegram account not linked'}
+              <div className="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-200 text-center">
+                <p className="text-sm text-amber-900 font-medium">
+                  {am ? 'የቴሌግራም መለያዎ አልተያያዘም' : 'Telegram Account Not Linked'}
                 </p>
                 <p className="text-xs text-amber-700 mt-1">
                   {am
-                    ? 'የቴሌግራም መለያዎን እንዲያገናኙ የንብረት አስተዳዳሪዎን ያነጋግሩ፣ ወይም ከታች ባሉት ኢሜይል ወይም ስልክ ይግቡ።'
-                    : 'Ask your property manager to link this Telegram account, or sign in with email or phone below.'}
+                    ? 'የቴሌግራም መለያዎን እንዲያገናኙ የንብረት አስተዳዳሪዎን ያነጋግሩ፣ ወይም ከታች ባሉት ኢሜይል ወይም ስልክ OTP ይግቡ።'
+                    : 'Ask your property manager to link this Telegram account, or sign in with email or phone OTP below.'}
                 </p>
               </div>
             )}
@@ -147,16 +176,19 @@ export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onA
                 <button
                   type="button"
                   onClick={onRetryTelegram}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#0f5132] text-white font-semibold py-3 active:opacity-90"
+                  disabled={telegramLoading}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#0f5132] text-white font-semibold py-3 active:opacity-90 disabled:opacity-60"
                 >
-                  <Send size={18} />
-                  {am ? 'በቴሌግራም ይቀጥሉ' : 'Continue with Telegram'}
+                  {telegramLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                  {am ? 'Telegram ይግቡ' : 'Sign in with Telegram'}
                 </button>
               )}
               {!inTelegram && (
-                <p className="text-xs text-red-600 text-center">
-                  {am ? 'ለቴሌግራም መግቢያ ይህን መተግበሪያ ከቴሌግራም ይክፈቱ።' : 'Open this app inside Telegram to use Telegram sign-in.'}
-                </p>
+                <div className="mb-4 p-4 bg-blue-50 rounded-xl border border-blue-200 text-center">
+                  <p className="text-sm text-blue-900">
+                    {am ? 'ይህንን አፕሊኬሽን በቴሌግራም ውስጥ ይክፈቱ' : 'Open this app inside Telegram for instant login'}
+                  </p>
+                </div>
               )}
 
               <button
@@ -165,7 +197,7 @@ export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onA
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-stone-300 text-stone-800 font-semibold py-3 active:bg-stone-50"
               >
                 <Mail size={18} />
-                {am ? 'በኢሜይል ይቀጥሉ' : 'Continue with Email'}
+                {am ? 'በኢሜይል OTP ይግቡ' : 'Sign in with Email OTP'}
               </button>
 
               <button
@@ -174,7 +206,7 @@ export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onA
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-stone-300 text-stone-800 font-semibold py-3 active:bg-stone-50"
               >
                 <Phone size={18} />
-                {am ? 'በስልክ ቁጥር ይቀጥሉ' : 'Continue with Phone'}
+                {am ? 'በስልክ OTP ይግቡ' : 'Sign in with Phone OTP'}
               </button>
             </div>
           </>
@@ -183,24 +215,14 @@ export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onA
         {mode === 'email' && (
           <>
             <BackButton onClick={() => setMode('menu')} />
-            <h2 className="text-lg font-bold mb-4">{am ? 'በኢሜይል ይግቡ' : 'Sign in with Email'}</h2>
-            <form onSubmit={handleEmailSubmit} className="space-y-3">
+            <h2 className="text-lg font-bold mb-4">{am ? 'በኢሜይል OTP ይግቡ' : 'Sign in with Email OTP'}</h2>
+            <form onSubmit={handleSendEmailOtp} className="space-y-3">
               <input
                 type="email"
                 required
-                autoComplete="email"
-                placeholder={am ? 'ኢሜይል' : 'Email'}
+                placeholder={am ? 'ኢሜይል አድራሻ' : 'Email address'}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f5132]"
-              />
-              <input
-                type="password"
-                required
-                autoComplete="current-password"
-                placeholder={am ? 'የይለፍ ቃል' : 'Password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f5132]"
               />
               {emailError && <p className="text-xs text-red-600">{emailError}</p>}
@@ -210,7 +232,47 @@ export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onA
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#0f5132] text-white font-semibold py-3 disabled:opacity-60"
               >
                 {emailLoading && <Loader2 size={16} className="animate-spin" />}
-                {am ? 'ግባ' : 'Sign In'}
+                {am ? 'ኮድ ላክ' : 'Send OTP'}
+              </button>
+            </form>
+          </>
+        )}
+
+        {mode === 'email-otp' && (
+          <>
+            <BackButton onClick={() => setMode('email')} />
+            <h2 className="text-lg font-bold mb-2">{am ? 'ማረጋገጫ ኮድ ያስገቡ' : 'Enter Verification Code'}</h2>
+            <p className="text-xs text-stone-500 mb-4">
+              {am ? `ኮድ ወደ ${email} ተልኳል` : `A code was sent to ${email}`}
+            </p>
+            <form onSubmit={handleVerifyEmailOtp} className="space-y-3">
+              <input
+                type="text"
+                inputMode="numeric"
+                required
+                placeholder={am ? 'ማረጋገጫ ኮድ' : 'Verification Code'}
+                value={emailCode}
+                onChange={(e) => setEmailCode(e.target.value)}
+                className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-[#0f5132]"
+              />
+              {emailError && <p className="text-xs text-red-600">{emailError}</p>}
+              <button
+                type="submit"
+                disabled={emailLoading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#0f5132] text-white font-semibold py-3 disabled:opacity-60"
+              >
+                {emailLoading && <Loader2 size={16} className="animate-spin" />}
+                {am ? 'አረጋግጥ' : 'Verify OTP'}
+              </button>
+              <button
+                type="button"
+                onClick={handleResendEmailOtp}
+                disabled={emailCooldown > 0}
+                className="w-full text-xs text-stone-500 disabled:opacity-50"
+              >
+                {emailCooldown > 0
+                  ? (am ? `ዳግም ላክ (${emailCooldown}ሰ)` : `Resend code (${emailCooldown}s)`)
+                  : (am ? 'ኮድ ዳግም ላክ' : 'Resend code')}
               </button>
             </form>
           </>
@@ -219,13 +281,12 @@ export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onA
         {mode === 'phone' && (
           <>
             <BackButton onClick={() => setMode('menu')} />
-            <h2 className="text-lg font-bold mb-4">{am ? 'በስልክ ይግቡ' : 'Sign in with Phone'}</h2>
-            <form onSubmit={handleSendOtp} className="space-y-3">
+            <h2 className="text-lg font-bold mb-4">{am ? 'በስልክ OTP ይግቡ' : 'Sign in with Phone OTP'}</h2>
+            <form onSubmit={handleSendPhoneOtp} className="space-y-3">
               <input
                 type="tel"
                 required
-                autoComplete="tel"
-                placeholder={am ? 'ስልክ ቁጥር (+251...)' : 'Phone number (+251...)'}
+                placeholder={am ? 'ስልክ ቁጥር' : 'Phone number'}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f5132]"
@@ -250,14 +311,14 @@ export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onA
             <p className="text-xs text-stone-500 mb-4">
               {am ? `ኮድ ወደ ${phone} ተልኳል` : `A code was sent to ${phone}`}
             </p>
-            <form onSubmit={handleVerifyOtp} className="space-y-3">
+            <form onSubmit={handleVerifyPhoneOtp} className="space-y-3">
               <input
                 type="text"
                 inputMode="numeric"
                 required
                 placeholder={am ? 'ማረጋገጫ ኮድ' : 'Verification Code'}
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+                value={phoneCode}
+                onChange={(e) => setPhoneCode(e.target.value)}
                 className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-[#0f5132]"
               />
               {phoneError && <p className="text-xs text-red-600">{phoneError}</p>}
@@ -271,12 +332,12 @@ export function TelegramLinkView({ initData, telegramError, onRetryTelegram, onA
               </button>
               <button
                 type="button"
-                onClick={handleResendOtp}
-                disabled={cooldown > 0}
+                onClick={handleResendPhoneOtp}
+                disabled={phoneCooldown > 0}
                 className="w-full text-xs text-stone-500 disabled:opacity-50"
               >
-                {cooldown > 0
-                  ? (am ? `ዳግም ላክ (${cooldown}ሰ)` : `Resend code (${cooldown}s)`)
+                {phoneCooldown > 0
+                  ? (am ? `ዳግም ላክ (${phoneCooldown}ሰ)` : `Resend code (${phoneCooldown}s)`)
                   : (am ? 'ኮድ ዳግም ላክ' : 'Resend code')}
               </button>
             </form>

@@ -26,39 +26,56 @@ export function getTmaSessionToken(): string | null {
   return memoryToken;
 }
 
-// Resolves the Authorization header value for the currently available auth method:
-// live Telegram WebApp initData takes priority, otherwise a previously issued session token.
-export function getTmaAuthHeader(fallbackInitData: string | null): string | null {
-  const tg = (window as any).Telegram?.WebApp;
-  if (tg?.initData) return `TMA ${tg.initData}`;
-  if (fallbackInitData) return `TMA ${fallbackInitData}`;
-
+// Resolves the Authorization header for the currently authenticated TMA session.
+// All three login methods (Telegram / Email OTP / Phone OTP) converge on the same
+// server-issued session token, so ongoing API calls only ever need this one header.
+export function getTmaAuthHeader(): string | null {
   const token = getTmaSessionToken();
-  if (token) return `TMASession ${token}`;
-
-  return null;
+  return token ? `TMASession ${token}` : null;
 }
 
 async function parseJson(res: Response) {
   const json = await res.json();
   if (!res.ok || !json.success) {
-    throw new Error(json.message || 'Request failed');
+    const err: any = new Error(json.message || 'Request failed');
+    err.code = json.error?.code;
+    throw err;
   }
   return json.data;
 }
 
-export async function tmaAuthLoginEmail(email: string, password: string) {
-  const res = await fetch('/api/v1/tma-auth/email/login', {
+export async function tmaAuthLoginTelegram(initData: string) {
+  const res = await fetch('/api/v1/tma-auth/telegram', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ initData }),
   });
   const data = await parseJson(res);
   setTmaSessionToken(data.token);
   return data;
 }
 
-export async function tmaAuthSendOtp(phone: string) {
+export async function tmaAuthSendEmailOtp(email: string) {
+  const res = await fetch('/api/v1/tma-auth/email/otp/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  return parseJson(res);
+}
+
+export async function tmaAuthVerifyEmailOtp(email: string, code: string) {
+  const res = await fetch('/api/v1/tma-auth/email/otp/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code }),
+  });
+  const data = await parseJson(res);
+  setTmaSessionToken(data.token);
+  return data;
+}
+
+export async function tmaAuthSendPhoneOtp(phone: string) {
   const res = await fetch('/api/v1/tma-auth/phone/otp/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -67,7 +84,7 @@ export async function tmaAuthSendOtp(phone: string) {
   return parseJson(res);
 }
 
-export async function tmaAuthVerifyOtp(phone: string, code: string) {
+export async function tmaAuthVerifyPhoneOtp(phone: string, code: string) {
   const res = await fetch('/api/v1/tma-auth/phone/otp/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -79,7 +96,7 @@ export async function tmaAuthVerifyOtp(phone: string, code: string) {
 }
 
 export async function tmaAuthLogout() {
-  const header = getTmaAuthHeader(null);
+  const header = getTmaAuthHeader();
   try {
     await fetch('/api/v1/tma-auth/logout', {
       method: 'POST',

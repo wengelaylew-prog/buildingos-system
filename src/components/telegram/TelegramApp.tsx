@@ -3,7 +3,7 @@ import { TelegramLinkView } from './TelegramLinkView.tsx';
 import { TenantHomeView, PropertyView, LeaseView, BillingView, MaintenanceView, NotificationsView, ProfileView } from './TelegramViews.tsx';
 import { Building, Home, FileText, Wrench, Wallet, Bell, User } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext.tsx';
-import { getTmaAuthHeader } from '../../lib/tma-client.ts';
+import { getTmaSessionToken, getTmaAuthHeader, tmaAuthLoginTelegram } from '../../lib/tma-client.ts';
 
 export function TelegramApp() {
   const { locale } = useLanguage();
@@ -12,11 +12,11 @@ export function TelegramApp() {
   const [initData, setInitData] = useState<string | null>(null);
   const [isLinked, setIsLinked] = useState<boolean>(false);
   const [telegramError, setTelegramError] = useState<string | null>(null);
+  const [telegramLoading, setTelegramLoading] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Read Telegram WebApp initData
-    // In actual Telegram, this is available at window.Telegram.WebApp.initData
     const tg = (window as any).Telegram?.WebApp;
     if (tg) {
       tg.ready();
@@ -34,38 +34,54 @@ export function TelegramApp() {
       setInitData(null);
     }
 
-    // Check auth status against whatever credential is currently available
-    // (live Telegram initData, or a previously issued email/phone session token).
-    checkAuthStatus();
+    bootstrapAuth(tg?.initData);
   }, []);
 
-  const checkAuthStatus = async () => {
-    const authHeader = getTmaAuthHeader((window as any).Telegram?.WebApp?.initData || null);
-    if (!authHeader) {
-      setIsLinked(false);
+  const bootstrapAuth = async (currentInitData?: string) => {
+    const hasSession = !!getTmaSessionToken();
+    if (hasSession) {
+      setIsLinked(true);
+      setTelegramError(null);
       setLoading(false);
       return;
     }
-    try {
-      const res = await fetch('/api/v1/telegram/me', {
-        headers: { Authorization: authHeader },
-      });
-      const json = await res.json().catch(() => null);
-      if (res.ok && json?.success) {
-        setIsLinked(true);
-        setTelegramError(null);
-      } else {
-        setIsLinked(false);
-        if (authHeader.startsWith('TMA ') && json?.error?.code === 'TELEGRAM_NOT_LINKED') {
-          setTelegramError(json.message || 'Telegram account not linked');
-        }
-      }
-    } catch (e) {
-      console.error(e);
+
+    const dataToUse = currentInitData || initData || (window as any).Telegram?.WebApp?.initData;
+    if (dataToUse) {
+      await loginWithTelegram(dataToUse, true);
+    } else {
       setIsLinked(false);
-    } finally {
       setLoading(false);
     }
+  };
+
+  const loginWithTelegram = async (data: string, silent = false) => {
+    setTelegramError(null);
+    if (!silent) setTelegramLoading(true);
+    try {
+      await tmaAuthLoginTelegram(data);
+      setIsLinked(true);
+    } catch (e: any) {
+      setIsLinked(false);
+      if (e.code === 'TELEGRAM_NOT_LINKED') {
+        setTelegramError(e.message || 'Telegram account not linked');
+      } else if (!silent) {
+        setTelegramError(e.message || 'Unable to sign in with Telegram');
+      }
+    } finally {
+      if (!silent) setTelegramLoading(false);
+      setLoading(false);
+    }
+  };
+
+  const handleRetryTelegram = () => {
+    const data = initData || (window as any).Telegram?.WebApp?.initData;
+    if (data) loginWithTelegram(data, false);
+  };
+
+  const handleLoggedOut = () => {
+    setIsLinked(false);
+    setActiveTab('dashboard');
   };
 
   if (loading) {
@@ -77,16 +93,17 @@ export function TelegramApp() {
       <TelegramLinkView
         initData={initData}
         telegramError={telegramError}
-        onRetryTelegram={checkAuthStatus}
+        telegramLoading={telegramLoading}
+        onRetryTelegram={handleRetryTelegram}
         onAuthenticated={() => {
           setTelegramError(null);
-          checkAuthStatus();
+          bootstrapAuth();
         }}
       />
     );
   }
 
-  const authHeader = getTmaAuthHeader(initData);
+  const authHeader = getTmaAuthHeader();
 
   // The actual Mini App Layout
   return (
@@ -101,11 +118,8 @@ export function TelegramApp() {
         {activeTab === 'profile' && (
           <ProfileView
             initData={authHeader}
-            onDisconnected={() => setIsLinked(false)}
-            onLoggedOut={() => {
-              setIsLinked(false);
-              setActiveTab('dashboard');
-            }}
+            onDisconnected={handleLoggedOut}
+            onLoggedOut={handleLoggedOut}
           />
         )}
       </div>
@@ -140,4 +154,3 @@ export function TelegramApp() {
     </div>
   );
 }
-

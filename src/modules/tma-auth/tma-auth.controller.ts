@@ -8,17 +8,41 @@ const sendError = (res: Response, status: number, message: string, code?: string
   res.status(status).json({ success: false, data: null, message, errors: [message], error: { code, message } });
 
 export class TmaAuthController {
-  static async loginEmail(req: Request, res: Response) {
+  static async loginTelegram(req: Request, res: Response) {
     try {
-      const { email, password } = req.body || {};
-      const result = await TmaAuthService.loginWithEmail(email, password);
+      const { initData } = req.body || {};
+      const result = await TmaAuthService.loginWithTelegram(initData);
       return sendSuccess(res, result, 'Signed in successfully');
     } catch (err: any) {
-      return sendError(res, 401, err.message || 'Invalid email or password', 'INVALID_CREDENTIALS');
+      const code = err.code || 'UNAUTHENTICATED';
+      const status = code === 'CONFIG_ERROR' ? 401 : code === 'ACCOUNT_DISABLED' ? 403 : 401;
+      return sendError(res, status, err.message || 'Telegram authentication failed', code);
     }
   }
 
-  static async sendOtp(req: Request, res: Response) {
+  static async sendEmailOtp(req: Request, res: Response) {
+    try {
+      const { email } = req.body || {};
+      const result = await TmaAuthService.sendEmailOtp(email, req.ip);
+      return sendSuccess(res, result, 'If this email is registered, a verification code has been sent.');
+    } catch (err: any) {
+      const message = err.message || 'Unable to send verification code';
+      const status = /wait|Too many/i.test(message) ? 429 : 400;
+      return sendError(res, status, message);
+    }
+  }
+
+  static async verifyEmailOtp(req: Request, res: Response) {
+    try {
+      const { email, code } = req.body || {};
+      const result = await TmaAuthService.verifyEmailOtp(email, code);
+      return sendSuccess(res, result, 'Signed in successfully');
+    } catch (err: any) {
+      return sendError(res, 401, err.message || 'Invalid or expired verification code', 'INVALID_OTP');
+    }
+  }
+
+  static async sendPhoneOtp(req: Request, res: Response) {
     try {
       const { phone } = req.body || {};
       const result = await TmaAuthService.sendPhoneOtp(phone, req.ip);
@@ -30,7 +54,7 @@ export class TmaAuthController {
     }
   }
 
-  static async verifyOtp(req: Request, res: Response) {
+  static async verifyPhoneOtp(req: Request, res: Response) {
     try {
       const { phone, code } = req.body || {};
       const result = await TmaAuthService.verifyPhoneOtp(phone, code);
