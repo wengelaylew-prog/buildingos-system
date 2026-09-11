@@ -13,3 +13,4 @@ export function getEmailProvider(): EmailProvider {
   // Always use mock provider since we don't have a real email provider configured yet
   return new MockEmailProvider();
 }
+
