@@ -45,9 +45,14 @@ import { adminRouter } from './src/modules/admin/admin.routes.ts';
 import { telegramRouter } from './src/modules/telegram/telegram.routes.ts';
 import { tmaAuthRouter } from './src/modules/tma-auth/tma-auth.routes.ts';
 import { corsMiddleware, securityHeaders, rateLimiter, validateEnvironment } from './src/middleware/security.ts';
+import { runMigrations } from './src/db/migrate.ts';
 
 async function startServer() {
   validateEnvironment();
+
+  // Run DB migrations before accepting traffic
+  await runMigrations();
+
   const app = express();
 
   // PRODUCTION HARDENING (Phase 10)
