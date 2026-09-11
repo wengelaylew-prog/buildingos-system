@@ -70,19 +70,24 @@ CREATE INDEX IF NOT EXISTS idx_telegram_accounts_user_id ON telegram_accounts(us
 CREATE INDEX IF NOT EXISTS idx_telegram_accounts_telegram_user_id ON telegram_accounts(telegram_user_id);
 `;
 
-export async function runMigrations() {
-  const pool = createPool();
-  const client = await pool.connect();
+export async function runMigrations(): Promise<void> {
+  let pool: any;
+  let client: any;
   try {
+    pool = createPool();
+    client = await pool.connect();
     console.log('[migration] Running TMA auth migrations...');
     await client.query(MIGRATION_SQL);
-    console.log('[migration] TMA auth migrations complete.');
-  } catch (err) {
-    console.error('[migration] Migration failed:', err);
-    // Do not crash the server — log and continue.
-    // The app will show SQL errors until the DB is fixed,
-    // but other endpoints (admin, etc.) will still work.
+    console.log('[migration] TMA auth migrations complete ✓');
+  } catch (err: any) {
+    // Migration failures must NEVER crash the server.
+    // The rest of the app (admin panel, existing routes) continues to work.
+    // The TMA auth endpoints will show SQL errors until the migration is applied
+    // manually or via the Shell on Render.
+    console.error('[migration] WARNING: Migration could not run:', err?.message || err);
+    console.error('[migration] Server will continue — apply migration manually if needed.');
   } finally {
-    client.release();
+    try { if (client) client.release(); } catch {}
   }
 }
+
