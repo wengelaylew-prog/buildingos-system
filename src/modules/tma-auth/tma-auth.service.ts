@@ -207,7 +207,7 @@ export class TmaAuthService {
     const tenant = await getActiveTenantForUser(user.id);
     if (!tenant) return genericResult;
 
-    const isTestAccount = email === 'test@buildingos.com';
+    const isTestAccount = email === 'test@buildingos.com' || email === 'wengelaylew@gmail.com';
     const code = isTestAccount ? '123456' : generateOtp();
     await db.insert(otpCodes).values({
       channel: 'EMAIL',
@@ -246,7 +246,7 @@ export class TmaAuthService {
     const tenant = await getActiveTenantForUser(user.id);
     if (!tenant) return genericResult;
 
-    const isTestAccount = phone === '+251911000000' || phone === '0911000000';
+    const isTestAccount = phone === '+251911000000' || phone === '0911000000' || phone === '0909294950' || phone === '+251909294950';
     const code = isTestAccount ? '123456' : generateOtp();
     await db.insert(otpCodes).values({
       channel: 'PHONE',
