@@ -22,6 +22,26 @@ export class MessagingService {
     return { id };
   }
 
+  static async getAnnouncements(organizationId: string) {
+    const { announcements } = await import('../../db/schema.ts');
+    return db.select().from(announcements)
+      .where(eq(announcements.organizationId, organizationId))
+      .orderBy(desc(announcements.createdAt));
+  }
+
+  static async createAnnouncement(data: {
+    organizationId: string;
+    title: string;
+    message: string;
+    targetAudience: 'ALL' | 'BUILDING' | 'FLOOR';
+    targetId?: string;
+    createdBy: string;
+  }) {
+    const { announcements } = await import('../../db/schema.ts');
+    const result = await db.insert(announcements).values(data).returning();
+    return result[0];
+  }
+
   static async getMessages(organizationId: string, userId: string) {
     // For MVP: Fetch all messages where user is sender or receiver within the org.
     const results = await db.select({

@@ -74,21 +74,31 @@ export function TenantHomeView({ initData, onOpenNotifications }: { initData: st
         </div>
         <div className="flex items-center gap-2">
           <button 
-            onClick={() => setLocale(locale === 'en' ? 'am' : 'en')}
-            className="text-xs font-medium px-2 py-1 rounded bg-[var(--tg-theme-bg-color,#ffffff)] border border-[var(--tg-theme-hint-color,#e2e8f0)]"
+            onClick={onOpenNotifications}
+            className="w-10 h-10 rounded-full bg-blue-50 text-[var(--tg-theme-button-color,#3b82f6)] flex items-center justify-center relative"
           >
-            {locale === 'en' ? 'አማ' : 'EN'}
-          </button>
-          <button type="button" onClick={onOpenNotifications} className="relative" aria-label={locale === 'am' ? 'ማሳወቂያዎች' : 'Notifications'}>
-            <Bell size={24} className="text-[var(--tg-theme-text-color,#000000)]" />
+            <Bell size={20} />
             {data.unreadNotifications > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
-                {data.unreadNotifications}
-              </span>
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
             )}
           </button>
         </div>
       </div>
+
+      {data.announcements && data.announcements.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-blue-900">
+          <h3 className="font-bold flex items-center gap-2 mb-2"><Megaphone size={16} /> Announcements</h3>
+          <div className="space-y-2">
+            {data.announcements.map((ann: any) => (
+              <div key={ann.id} className="bg-white p-3 rounded-lg shadow-sm">
+                <h4 className="font-semibold text-sm">{ann.title}</h4>
+                <p className="text-xs text-slate-600 mt-1">{ann.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
 
       {/* Property & Lease Summary Card */}
       <div className="bg-[var(--tg-theme-bg-color,#ffffff)] p-4 rounded-xl shadow-sm border border-[var(--tg-theme-hint-color,#e2e8f0)] space-y-3">

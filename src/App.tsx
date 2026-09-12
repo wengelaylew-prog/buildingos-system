@@ -19,6 +19,7 @@ import { ReportsView } from './components/views/ReportsView.tsx';
 import { SuperAdminView } from './components/views/SuperAdminView.tsx';
 import { UsersView } from './components/views/UsersView.tsx';
 import { PhasePlaceholderView } from './components/views/PhasePlaceholderView.tsx';
+import { SecurityView } from './components/views/SecurityView.tsx';
 
 function MainLayout() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -127,6 +128,8 @@ function MainLayout() {
             )}
 
             {activeTab === 'maintenance' && <MaintenanceView />}
+
+            {activeTab === 'security' && <SecurityView />}
 
             {activeTab === 'messages' && <MessagesView />}
 

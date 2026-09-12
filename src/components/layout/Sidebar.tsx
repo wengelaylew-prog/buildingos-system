@@ -32,6 +32,7 @@ export type ActiveTab =
   | 'payments'
   | 'receipts'
   | 'maintenance'
+  | 'security'
   | 'messages'
   | 'documents'
   | 'reports'
@@ -61,22 +62,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSel
     icon: React.ComponentType<{ className?: string }>;
     permission?: string;
     phaseBadge?: string;
+    allowedRoles?: string[];
   }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: '3d-viewer', label: '3D Building Viewer', icon: Box, phaseBadge: 'Phase 4' },
-    { id: 'buildings', label: 'Buildings', icon: Building2, permission: 'building.read' },
-    { id: 'units', label: 'Floors & Units', icon: Grid3X3, permission: 'unit.read' },
-    { id: 'tenants', label: 'Tenants', icon: Users, permission: 'tenant.read' },
-    { id: 'contracts', label: 'Contracts & Leases', icon: FileText, permission: 'contract.read' },
-    { id: 'payments', label: 'Payments & Revenue', icon: CreditCard, permission: 'payment.read' },
-    { id: 'receipts', label: 'Receipts', icon: Receipt, phaseBadge: 'Phase 2' },
-    { id: 'maintenance', label: 'Maintenance', icon: Wrench, permission: 'maintenance.read' },
-    { id: 'messages', label: 'Messages', icon: MessageSquare, phaseBadge: 'Phase 2' },
-    { id: 'documents', label: 'Documents', icon: FolderArchive, permission: 'document.read' },
-    { id: 'reports', label: 'Reports', icon: BarChart3, phaseBadge: 'Phase 2' },
-    { id: 'users', label: 'Users', icon: Users2, phaseBadge: 'Phase 2' },
-    { id: 'audit', label: 'Audit Trail', icon: History, permission: 'audit.read' },
-    { id: 'settings', label: 'Settings & RBAC', icon: Settings, permission: 'settings.manage' },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER'] },
+    { id: '3d-viewer', label: '3D Building Viewer', icon: Box, phaseBadge: 'Phase 4', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'TENANT'] },
+    { id: 'buildings', label: 'Buildings', icon: Building2, permission: 'building.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER'] },
+    { id: 'units', label: 'Floors & Units', icon: Grid3X3, permission: 'unit.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'MAINTENANCE'] },
+    { id: 'tenants', label: 'Tenants', icon: Users, permission: 'tenant.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'ACCOUNTANT'] },
+    { id: 'contracts', label: 'Contracts & Leases', icon: FileText, permission: 'contract.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'ACCOUNTANT'] },
+    { id: 'payments', label: 'Payments & Revenue', icon: CreditCard, permission: 'payment.read', allowedRoles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
+    { id: 'receipts', label: 'Receipts', icon: Receipt, phaseBadge: 'Phase 2', allowedRoles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
+    { id: 'maintenance', label: 'Maintenance', icon: Wrench, permission: 'maintenance.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'MAINTENANCE'] },
+    { id: 'security', label: 'Security & Gates', icon: ShieldCheck, phaseBadge: 'Phase 3', allowedRoles: ['SUPER_ADMIN', 'SECURITY', 'PROPERTY_MANAGER'] },
+    { id: 'messages', label: 'Messages', icon: MessageSquare, phaseBadge: 'Phase 2', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER'] },
+    { id: 'documents', label: 'Documents', icon: FolderArchive, permission: 'document.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER'] },
+    { id: 'reports', label: 'Reports', icon: BarChart3, phaseBadge: 'Phase 2', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'ACCOUNTANT'] },
+    { id: 'users', label: 'Users', icon: Users2, phaseBadge: 'Phase 2', allowedRoles: ['SUPER_ADMIN'] },
+    { id: 'audit', label: 'Audit Trail', icon: History, permission: 'audit.read', allowedRoles: ['SUPER_ADMIN'] },
+    { id: 'settings', label: 'Settings & RBAC', icon: Settings, permission: 'settings.manage', allowedRoles: ['SUPER_ADMIN'] },
   ];
 
   return (
@@ -126,7 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSel
       {/* Navigation List */}
       <nav id="sidebar-navigation" className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
         <div className="space-y-1">
-        {navItems.map((item) => {
+        {navItems.filter(item => item.allowedRoles ? item.allowedRoles.includes(activeRole) : true).map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (

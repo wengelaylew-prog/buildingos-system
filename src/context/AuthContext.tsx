@@ -23,6 +23,7 @@ export const AVAILABLE_ROLES = [
   { code: 'PROPERTY_MANAGER', name: 'Property Manager', badge: 'Operations & Leases' },
   { code: 'ACCOUNTANT', name: 'Accountant', badge: 'Financials & Reports' },
   { code: 'MAINTENANCE', name: 'Maintenance Technician', badge: 'Work Orders & Tickets' },
+  { code: 'SECURITY', name: 'Security Guard', badge: 'Gate & Scanners' },
   { code: 'RECEPTION', name: 'Front Desk / Reception', badge: 'Check-in & Inquiries' },
   { code: 'TENANT', name: 'Tenant Portal', badge: 'Self-Service & Leases' },
 ];

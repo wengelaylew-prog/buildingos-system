@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { TelegramLinkView } from './TelegramLinkView.tsx';
 import { TenantHomeView, PropertyView, LeaseView, BillingView, MaintenanceView, NotificationsView, ProfileView } from './TelegramViews.tsx';
-import { Building, Home, FileText, Wrench, Wallet, Bell, User } from 'lucide-react';
+import { GatePassTenantView } from './GatePassTenantView.tsx';
+import { Building, Home, FileText, Wrench, Wallet, Bell, User, Package } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext.tsx';
 import { getTmaSessionToken, getTmaAuthHeader, tmaAuthLoginTelegram } from '../../lib/tma-client.ts';
 
@@ -115,6 +116,7 @@ export function TelegramApp() {
         {activeTab === 'billing' && <BillingView initData={authHeader} />}
         {activeTab === 'maintenance' && <MaintenanceView initData={authHeader} />}
         {activeTab === 'notifications' && <NotificationsView initData={authHeader} onBack={() => setActiveTab('dashboard')} />}
+        {activeTab === 'gatepass' && <GatePassTenantView initData={authHeader} />}
         {activeTab === 'profile' && (
           <ProfileView
             initData={authHeader}
@@ -144,7 +146,11 @@ export function TelegramApp() {
         </button>
         <button onClick={() => setActiveTab('maintenance')} className={`flex flex-col items-center p-2 ${activeTab === 'maintenance' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
           <Wrench size={20} />
-          <span className="text-[10px] mt-1">{am ? 'ጥገ⤻' : 'Fixes'}</span>
+          <span className="text-[10px] mt-1">{am ? 'ጥገና' : 'Fixes'}</span>
+        </button>
+        <button onClick={() => setActiveTab('gatepass')} className={`flex flex-col items-center p-2 ${activeTab === 'gatepass' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
+          <Package size={20} />
+          <span className="text-[10px] mt-1">{am ? 'እቃ መውጫ' : 'Pass'}</span>
         </button>
         <button onClick={() => setActiveTab('profile')} className={`flex flex-col items-center p-2 ${activeTab === 'profile' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
           <User size={20} />

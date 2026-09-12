@@ -44,6 +44,7 @@ import { reportsRouter } from './src/modules/reports/reports.routes.ts';
 import { adminRouter } from './src/modules/admin/admin.routes.ts';
 import { telegramRouter } from './src/modules/telegram/telegram.routes.ts';
 import { tmaAuthRouter } from './src/modules/tma-auth/tma-auth.routes.ts';
+import { securityRouter } from './src/modules/security/security.routes.ts';
 import { corsMiddleware, securityHeaders, rateLimiter, validateEnvironment } from './src/middleware/security.ts';
 import { runMigrations } from './src/db/migrate.ts';
 
@@ -728,6 +729,9 @@ async function startServer() {
   // 16. TELEGRAM MINI APP (PHASE TMA-1)
   app.use('/api/v1/telegram', telegramRouter);
   app.use('/api/v1/tma-auth', tmaAuthRouter);
+
+  // SECURITY
+  app.use('/api/v1/security', securityRouter);
 
   // VITE MIDDLEWARE SETUP
   if (process.env.NODE_ENV !== 'production') {

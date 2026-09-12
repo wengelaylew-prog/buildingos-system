@@ -1,5 +1,5 @@
 import { db } from '../../db/index.ts';
-import { tenants, tenantUnits, units, buildings, floors, contracts, maintenanceRequests, notifications, payments, invoices, receipts, telegramAccounts, users } from '../../db/schema.ts';
+import { tenants, tenantUnits, units, buildings, floors, contracts, maintenanceRequests, notifications, payments, invoices, receipts, telegramAccounts, users, announcements } from '../../db/schema.ts';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { validateTelegramWebAppData } from '../../lib/telegram.ts';
 import { MessagingService } from '../messaging/messaging.service.ts';
@@ -102,6 +102,11 @@ export class TelegramService {
     const unreadNotifs = await db.select().from(notifications)
       .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
 
+    // Get announcements (broadcasts)
+    const recentAnnouncements = await db.select().from(announcements)
+      .orderBy(desc(announcements.createdAt))
+      .limit(3);
+
     return {
       tenantName: tenant.fullName,
       buildingName: bldgData?.name || 'N/A',
@@ -114,6 +119,7 @@ export class TelegramService {
       recentInvoice: recentInvoice ? { id: recentInvoice.id, number: recentInvoice.invoiceNumber, amount: recentInvoice.amount, status: recentInvoice.status } : null,
       recentMaintenance: recentMaintenance ? { id: recentMaintenance.id, title: recentMaintenance.title, status: recentMaintenance.status } : null,
       unreadNotifications: unreadNotifs.length,
+      announcements: recentAnnouncements,
     };
   }
 
