@@ -437,6 +437,51 @@ export const tmaSessions = pgTable('tma_sessions', {
   userIdIdx: index('idx_tma_sessions_user_id').on(table.userId),
 }));
 
+
+// 14. TENANT MESSAGING (Announcements)
+export const announcements = pgTable('announcements', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  targetAudience: text('target_audience').notNull().default('ALL'), // ALL, BUILDING, FLOOR
+  targetId: uuid('target_id'), // Building ID or Floor ID if applicable
+  createdBy: uuid('created_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// 15. GATE PASSES
+export const gatePasses = pgTable('gate_passes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  unitId: uuid('unit_id').notNull().references(() => units.id),
+  direction: text('direction').notNull(), // IN, OUT
+  itemDescription: text('item_description').notNull(),
+  quantity: integer('quantity').notNull().default(1),
+  status: text('status').notNull().default('PENDING'), // PENDING, APPROVED, REJECTED, COMPLETED
+  qrCodeUrl: text('qr_code_url'), // Link to generated QR code for the pass
+  requestedAt: timestamp('requested_at').defaultNow().notNull(),
+  scheduledDate: timestamp('scheduled_date'),
+  approvedBy: uuid('approved_by').references(() => users.id),
+  verifiedAt: timestamp('verified_at'),
+  notes: text('notes'),
+});
+
+// 16. SECURITY LOGS (Visitor & Tenant Entry/Exit)
+export const securityLogs = pgTable('security_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  scanType: text('scan_type').notNull(), // ID_CARD, GATE_PASS, VISITOR
+  scannedId: text('scanned_id').notNull(), // The ID string from the QR code or ID card
+  direction: text('direction').notNull(), // IN, OUT
+  gatePassId: uuid('gate_pass_id').references(() => gatePasses.id),
+  tenantId: uuid('tenant_id').references(() => tenants.id),
+  scannedBy: uuid('scanned_by').notNull().references(() => users.id), // The security guard
+  scannedAt: timestamp('scanned_at').defaultNow().notNull(),
+  status: text('status').notNull().default('SUCCESS'), // SUCCESS, DENIED, FLAG
+  notes: text('notes'),
+});
+
 // DRIZZLE RELATIONS DEFINITIONS
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   users: many(users),
@@ -568,4 +613,23 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.id],
     references: [telegramAccounts.userId],
   }),
+}));
+
+
+export const announcementsRelations = relations(announcements, ({ one }) => ({
+  organization: one(organizations, { fields: [announcements.organizationId], references: [organizations.id] }),
+  creator: one(users, { fields: [announcements.createdBy], references: [users.id] }),
+}));
+
+export const gatePassesRelations = relations(gatePasses, ({ one }) => ({
+  tenant: one(tenants, { fields: [gatePasses.tenantId], references: [tenants.id] }),
+  unit: one(units, { fields: [gatePasses.unitId], references: [units.id] }),
+  approver: one(users, { fields: [gatePasses.approvedBy], references: [users.id] }),
+}));
+
+export const securityLogsRelations = relations(securityLogs, ({ one }) => ({
+  organization: one(organizations, { fields: [securityLogs.organizationId], references: [organizations.id] }),
+  gatePass: one(gatePasses, { fields: [securityLogs.gatePassId], references: [gatePasses.id] }),
+  tenant: one(tenants, { fields: [securityLogs.tenantId], references: [tenants.id] }),
+  guard: one(users, { fields: [securityLogs.scannedBy], references: [users.id] }),
 }));

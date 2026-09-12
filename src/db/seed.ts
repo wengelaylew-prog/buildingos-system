@@ -76,7 +76,14 @@ export async function seedDatabase() {
       // System & Users
       { code: 'user.manage', name: 'Manage Users & Roles', category: 'Administration' },
       { code: 'audit.read', name: 'View Audit Logs', category: 'Administration' },
-      { code: 'settings.manage', name: 'Manage System Settings', category: 'Administration' },
+      
+      // Security & Messages
+      { code: 'gate_pass.read', name: 'View Gate Passes', category: 'Security' },
+      { code: 'gate_pass.create', name: 'Request Gate Pass', category: 'Security' },
+      { code: 'gate_pass.approve', name: 'Approve Gate Pass', category: 'Security' },
+      { code: 'security_log.create', name: 'Log Entry/Exit', category: 'Security' },
+      { code: 'announcement.create', name: 'Send Announcements', category: 'Communication' },
+{ code: 'settings.manage', name: 'Manage System Settings', category: 'Administration' },
     ];
 
     const insertedPermissions = await db
@@ -113,6 +120,11 @@ export async function seedDatabase() {
         description: 'Handles tenant inquiries, unit visitor check-ins, and basic directory.',
       },
       {
+        name: 'Security Guard',
+        code: 'SECURITY',
+        description: 'Handles entry/exit logs, ID scanning, and gate pass verifications.',
+      },
+      {
         name: 'Tenant Portal',
         code: 'TENANT',
         description: 'Restricted view to own lease, unit, documents, and payments.',
@@ -143,7 +155,7 @@ export async function seedDatabase() {
       'unit.read', 'unit.create', 'unit.update',
       'tenant.read', 'tenant.create', 'tenant.update',
       'contract.read', 'contract.create', 'contract.update',
-      'maintenance.read', 'maintenance.create', 'maintenance.update',
+      'maintenance.read', 'maintenance.create', 'maintenance.update', 'gate_pass.read', 'gate_pass.approve', 'announcement.create',
       'document.read', 'document.upload',
       'audit.read',
     ];
@@ -184,7 +196,7 @@ export async function seedDatabase() {
     // Tenant
     const tenPerms = [
       'unit.read', 'tenant.read', 'contract.read', 'payment.read',
-      'receipt.read', 'maintenance.create', 'maintenance.read', 'document.read',
+      'receipt.read', 'maintenance.create', 'maintenance.read', 'document.read', 'gate_pass.read', 'gate_pass.create',
     ];
     for (const code of tenPerms) {
       const pid = permMap.get(code);
