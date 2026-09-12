@@ -113,6 +113,23 @@ async function startServer() {
     }
   });
 
+  // ONE-TIME PUSH ENDPOINT
+  // Runs drizzle-kit push from inside the Render network
+  app.post('/api/v1/internal/push', async (req, res) => {
+    const secret = process.env.MIGRATION_SECRET;
+    if (!secret || req.headers['x-migration-secret'] !== secret) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    
+    const { exec } = require('child_process');
+    exec('npx drizzle-kit push --config=src/db/drizzle.config.ts', (error: any, stdout: string, stderr: string) => {
+      if (error) {
+        return res.status(500).json({ success: false, error: error.message, stderr, stdout });
+      }
+      return res.json({ success: true, stdout, stderr });
+    });
+  });
+
   // SEED TRIGGER ENDPOINT
   app.post('/api/v1/seed', authenticate, requirePermission('settings.manage'), async (req: AuthRequest, res) => {
     try {
