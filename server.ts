@@ -72,7 +72,7 @@ async function startServer() {
   // DEBUG ENV ENDPOINT
   app.get('/api/v1/internal/debug-env', (req, res) => {
     res.json({
-      keys: Object.keys(process.env).filter(k => k.includes('SQL') || k.includes('DB')),
+      keys: Object.keys(process.env)
     });
   });
 
