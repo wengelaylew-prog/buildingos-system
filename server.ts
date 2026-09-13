@@ -69,6 +69,24 @@ async function startServer() {
 
   const app = express();
 
+  // DEBUG MIGRATION ENDPOINT (Temporary to surface SQL errors on Render)
+  app.get('/api/v1/internal/debug-migrate', async (req, res) => {
+    try {
+      const { createPool } = require('./src/db/index.ts');
+      const pool = createPool();
+      const client = await pool.connect();
+      try {
+        const { MIGRATION_SQL } = require('./src/db/migrate.ts');
+        await client.query(MIGRATION_SQL);
+        res.json({ success: true, message: 'Migration executed successfully' });
+      } finally {
+        client.release();
+      }
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message, stack: err.stack });
+    }
+  });
+
   // PRODUCTION HARDENING (Phase 10)
   app.use(securityHeaders);
   app.use(corsMiddleware);
