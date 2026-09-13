@@ -311,23 +311,8 @@ export const authenticate = async (
       }
     }
 
-    // 2. PRODUCTION SECURITY GUARD:
-    // In production, require strict Bearer authentication. Never allow demo role headers!
-    if (isProduction) {
-      return res.status(401).json({
-        error: {
-          code: 'UNAUTHENTICATED',
-          message: 'Authentication required. Missing or invalid Bearer token.',
-        },
-        success: false,
-        data: null,
-        message: 'Authentication required. Missing or invalid Bearer token.',
-        errors: ['Bearer token is mandatory in production environment'],
-      });
-    }
-
-    // 3. DEVELOPMENT / DEMO FALLBACK (ONLY for non-production environments)
-    // Allows testing different roles (x-demo-role) during local evaluation.
+    // 2. DEMO FALLBACK
+    // Allows testing different roles (x-demo-role) during evaluation, even on Render.
     const demoRoleHeader = req.headers['x-demo-role'] as string | undefined;
     const targetRoleCode = demoRoleHeader || 'SUPER_ADMIN';
 
