@@ -68,6 +68,25 @@ CREATE TABLE IF NOT EXISTS telegram_accounts (
 
 CREATE INDEX IF NOT EXISTS idx_telegram_accounts_user_id ON telegram_accounts(user_id);
 CREATE INDEX IF NOT EXISTS idx_telegram_accounts_telegram_user_id ON telegram_accounts(telegram_user_id);
+
+-- Step 5: Add subscription columns to organizations
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_plan TEXT DEFAULT 'FREE';
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'ACTIVE' NOT NULL;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS subscription_end_date TIMESTAMP;
+
+-- Step 6: Create subscription_requests table
+CREATE TABLE IF NOT EXISTS subscription_requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+  organization_id uuid NOT NULL REFERENCES organizations(id),
+  plan text NOT NULL,
+  transaction_code text NOT NULL,
+  receipt_url text NOT NULL,
+  status text DEFAULT 'PENDING_VERIFICATION' NOT NULL,
+  reviewed_by uuid REFERENCES users(id),
+  notes text,
+  created_at timestamp DEFAULT now() NOT NULL,
+  updated_at timestamp DEFAULT now() NOT NULL
+);
 `;
 
 export async function runMigrations(): Promise<void> {
