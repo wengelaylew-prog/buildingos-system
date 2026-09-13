@@ -23,38 +23,38 @@ export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps)
   return (
     <div className="min-h-screen bg-[var(--tg-theme-bg-color,#f8fafc)] text-[var(--tg-theme-text-color,#0f172a)] font-sans">
       {/* Navbar */}
-      <nav className="flex items-center justify-between px-6 py-4 bg-white shadow-sm sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
+      <nav className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 bg-white shadow-sm sticky top-0 z-50">
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="w-7 h-7 md:w-8 md:h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
             B
           </div>
-          <span className="text-xl font-bold tracking-tight">BuildingOS</span>
+          <span className="text-lg md:text-xl font-bold tracking-tight hidden sm:block">BuildingOS</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4 shrink-0">
           <button 
             onClick={() => setLocale(language === 'en' ? 'am' : 'en')}
-            className="text-sm font-medium hover:text-indigo-600 transition-colors"
+            className="text-xs md:text-sm font-medium hover:text-indigo-600 transition-colors"
           >
             {language === 'en' ? 'አማርኛ' : 'English'}
           </button>
-          <button onClick={onLogin} className="text-sm font-medium text-blue-600 hover:text-blue-700">
-            {language === 'en' ? 'Log in' : 'ግባ (Log in)'}
+          <button onClick={onLogin} className="text-xs md:text-sm font-medium text-blue-600 hover:text-blue-700">
+            {language === 'en' ? 'Log in' : 'ግባ'}
           </button>
           <button 
             onClick={() => onSelectPlan('MONTHLY')}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-600 text-white text-xs md:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
           >
-            {language === 'en' ? 'Get Started' : 'አሁን ይጀምሩ'}
+            {language === 'en' ? 'Get Started' : 'ጀምር'}
           </button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-20 pb-24 flex flex-col items-center justify-center text-center px-4 overflow-hidden">
+      <section className="relative pt-12 md:pt-20 pb-16 md:pb-24 flex flex-col items-center justify-center text-center px-4 overflow-hidden">
         <div className="absolute inset-0 bg-blue-50/50 -z-10" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-blue-100/50 blur-3xl rounded-full -z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] md:w-[800px] h-[200px] md:h-[400px] bg-blue-100/50 blur-3xl rounded-full -z-10" />
         
-        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 max-w-4xl mb-6">
+        <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 max-w-4xl mb-4 md:mb-6">
           {language === 'en' 
             ? 'The Ultimate Platform to Manage Your Buildings & Tenants' 
             : 'የህንፃ እና የተከራይ አስተዳደርን የሚያዘምን ዘመናዊ ሲስተም'}
