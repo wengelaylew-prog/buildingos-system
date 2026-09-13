@@ -36,8 +36,12 @@ export function TenantHomeView({ initData, onOpenNotifications }: { initData: st
         <h2 className="text-xl font-bold">{locale === 'am' ? 'ዳሽቦርድ መጫን አልተቻለም' : 'Error Loading Dashboard'}</h2>
         <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{error}</p>
         <button 
-          onClick={() => {
-            tmaAuthLogout().catch(() => {});
+          onClick={async () => {
+            try {
+              await tmaAuthLogout();
+            } catch (e) {
+              // ignore
+            }
             window.location.reload();
           }}
           className="mt-4 px-4 py-2 bg-red-100 text-red-600 rounded-lg text-sm font-medium"

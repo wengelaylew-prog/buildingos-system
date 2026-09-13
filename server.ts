@@ -50,9 +50,19 @@ import { authRouter } from './src/modules/auth/auth.routes.ts';
 import { aiRouter } from './src/modules/ai/ai.routes.ts';
 import { corsMiddleware, securityHeaders, rateLimiter, validateEnvironment } from './src/middleware/security.ts';
 import { runMigrations } from './src/db/migrate.ts';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 
 async function startServer() {
   validateEnvironment();
+
+  // Run database migrations on startup to ensure all tables (like tma_sessions) exist in production
+  try {
+    console.log('Running database migrations...');
+    await migrate(db, { migrationsFolder: './drizzle' });
+    console.log('Database migrations completed successfully.');
+  } catch (err) {
+    console.error('Failed to run database migrations:', err);
+  }
 
   // Run DB migrations before accepting traffic
   await runMigrations();

@@ -353,11 +353,11 @@ export const authenticate = async (
     return res.status(401).json({
       error: {
         code: 'UNAUTHENTICATED',
-        message: 'Authentication failed',
+        message: String(error),
       },
       success: false,
       data: null,
-      message: 'Authentication failed',
+      message: String(error),
       errors: [String(error)],
     });
   }
