@@ -21,6 +21,12 @@ export const organizations = pgTable('organizations', {
   slug: text('slug'),
   status: text('status').notNull().default('ACTIVE'), // ACTIVE, SUSPENDED
   logoUrl: text('logo_url'),
+  
+  // Subscription / Packages
+  subscriptionPlan: text('subscription_plan').default('FREE'), // FREE, MONTHLY, BI_ANNUAL, YEARLY
+  subscriptionStatus: text('subscription_status').notNull().default('ACTIVE'), // PENDING_PAYMENT, PENDING_VERIFICATION, ACTIVE, PAST_DUE, CANCELLED
+  subscriptionEndDate: timestamp('subscription_end_date'),
+  
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -482,6 +488,20 @@ export const securityLogs = pgTable('security_logs', {
   notes: text('notes'),
 });
 
+// 17. SUBSCRIPTION REQUESTS (Manual Payment Tracking)
+export const subscriptionRequests = pgTable('subscription_requests', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  plan: text('plan').notNull(), // MONTHLY, BI_ANNUAL, YEARLY
+  transactionCode: text('transaction_code').notNull(),
+  receiptUrl: text('receipt_url').notNull(),
+  status: text('status').notNull().default('PENDING_VERIFICATION'), // PENDING_VERIFICATION, APPROVED, REJECTED
+  reviewedBy: uuid('reviewed_by').references(() => users.id),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // DRIZZLE RELATIONS DEFINITIONS
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   users: many(users),
@@ -489,6 +509,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   floors: many(floors),
   units: many(units),
   auditLogs: many(auditLogs),
+  subscriptionRequests: many(subscriptionRequests),
 }));
 
 export const buildingsRelations = relations(buildings, ({ one, many }) => ({
@@ -632,4 +653,9 @@ export const securityLogsRelations = relations(securityLogs, ({ one }) => ({
   gatePass: one(gatePasses, { fields: [securityLogs.gatePassId], references: [gatePasses.id] }),
   tenant: one(tenants, { fields: [securityLogs.tenantId], references: [tenants.id] }),
   guard: one(users, { fields: [securityLogs.scannedBy], references: [users.id] }),
+}));
+
+export const subscriptionRequestsRelations = relations(subscriptionRequests, ({ one }) => ({
+  organization: one(organizations, { fields: [subscriptionRequests.organizationId], references: [organizations.id] }),
+  reviewer: one(users, { fields: [subscriptionRequests.reviewedBy], references: [users.id] }),
 }));
