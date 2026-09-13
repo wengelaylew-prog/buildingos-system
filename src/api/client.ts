@@ -311,6 +311,10 @@ export const api = {
       body: JSON.stringify({ status }),
     }),
   getAdminUsers: () => request<any[]>('/api/v1/admin/users'),
+  createAdminUser: (data: any) => request<any>('/api/v1/admin/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
   getGlobalAuditLogs: () => request<any[]>('/api/v1/admin/audit'),
   
   // SaaS Subscriptions

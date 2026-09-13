@@ -54,6 +54,33 @@ export class AdminController {
     }
   }
 
+  static async createUser(req: AuthRequest, res: Response) {
+    try {
+      if (req.user?.roleCode === 'TENANT') {
+        return sendError(res, 403, 'Forbidden');
+      }
+      
+      const { email, fullName, roleId, password } = req.body;
+      const organizationId = req.user?.organizationId;
+
+      if (!organizationId) {
+        return sendError(res, 400, 'Organization ID is required');
+      }
+
+      const newUser = await AdminService.createUser({
+        email,
+        fullName,
+        roleId,
+        organizationId,
+        password
+      });
+
+      return sendSuccess(res, newUser, 'User created successfully');
+    } catch (err: any) {
+      return sendError(res, 500, 'Failed to create user', [err.message]);
+    }
+  }
+
   static async getGlobalAuditLogs(req: AuthRequest, res: Response) {
     try {
       if (req.user?.roleCode !== 'SUPER_ADMIN') {

@@ -12,6 +12,7 @@ router.get('/audit', authenticate, AdminController.getGlobalAuditLogs);
 
 // Global User Management (Shared with org admins but scoped internally)
 router.get('/users', authenticate, AdminController.getUsers);
+router.post('/users', authenticate, AdminController.createUser);
 
 export const adminRouter = router;
 
