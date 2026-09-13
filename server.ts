@@ -72,8 +72,7 @@ async function startServer() {
   // DEBUG ENV ENDPOINT
   app.get('/api/v1/internal/debug-env', (req, res) => {
     res.json({
-      hasDbUrl: !!process.env.DATABASE_URL,
-      dbUrlPrefix: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 15) : null,
+      keys: Object.keys(process.env).filter(k => k.includes('SQL') || k.includes('DB')),
     });
   });
 
