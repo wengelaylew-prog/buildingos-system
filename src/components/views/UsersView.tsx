@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../api/client.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { useLanguage } from '../../context/LanguageContext.tsx';
-import { Users, Shield, ShieldCheck, UserPlus, X } from 'lucide-react';
+import { Users, Shield, ShieldCheck, X } from 'lucide-react';
 import { Badge } from '../common/Badge.tsx';
 
 export const UsersView: React.FC = () => {
@@ -80,7 +80,7 @@ export const UsersView: React.FC = () => {
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm"
         >
-          <UserPlus size={16} /> Create User
+          <Users size={16} /> Create User
         </button>
       </div>
 
@@ -137,7 +137,7 @@ export const UsersView: React.FC = () => {
           <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
             <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                <UserPlus size={18} className="text-indigo-600" /> 
+                <Users size={18} className="text-indigo-600" /> 
                 {t('createRole') || 'Create New User'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
