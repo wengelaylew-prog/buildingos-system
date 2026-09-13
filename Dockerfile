@@ -1,37 +1,32 @@
 # 1. Builder stage for React frontend & Node backend
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies (including devDependencies for build)
+# Copy package files
 COPY package*.json ./
-RUN npm install
+
+# CRITICAL FIX for esbuild cross-platform binary resolution:
+# Remove package-lock.json so npm forces resolution of Linux musl binaries 
+# instead of relying on the Windows lockfile, which causes esbuild to crash.
+RUN rm -f package-lock.json && npm install
 
 COPY . .
 
-# Build Frontend (Vite)
-RUN node node_modules/vite/bin/vite.js build
-
-# Build Backend (esbuild)
-RUN node node_modules/esbuild/bin/esbuild server.ts \
-  --bundle \
-  --platform=node \
-  --format=cjs \
-  --packages=external \
-  --sourcemap \
-  --outfile=dist/server.cjs
+# Build Frontend & Backend natively via npm scripts
+RUN npm run build
 
 # 2. Production Runtime Stage
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
 
 # Copy built assets
-COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/package.json ./
 COPY --from=builder /app/dist ./dist
 
-# Install production dependencies only
+# Install production dependencies only (without lockfile to ensure native binaries match)
 RUN npm install --omit=dev
 
 # Expose backend port
