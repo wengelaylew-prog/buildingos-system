@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Building2, Check, ArrowRight, Box, ShieldCheck, TrendingUp, Users, Phone } from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext.tsx';
 
@@ -10,8 +10,18 @@ interface LandingViewProps {
 export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps) {
   const { t, locale: language, setLocale } = useLanguage();
 
+  useEffect(() => {
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg && tg.initData) {
+      tg.ready();
+      tg.expand();
+      document.documentElement.style.setProperty('--tg-theme-bg-color', tg.backgroundColor || '#f8fafc');
+      document.documentElement.style.setProperty('--tg-theme-text-color', tg.textColor || '#0f172a');
+    }
+  }, []);
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className="min-h-screen bg-[var(--tg-theme-bg-color,#f8fafc)] text-[var(--tg-theme-text-color,#0f172a)] font-sans">
       {/* Navbar */}
       <nav className="flex items-center justify-between px-6 py-4 bg-white shadow-sm sticky top-0 z-50">
         <div className="flex items-center gap-2">
