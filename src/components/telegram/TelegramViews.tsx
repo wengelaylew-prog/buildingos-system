@@ -33,8 +33,17 @@ export function TenantHomeView({ initData, onOpenNotifications }: { initData: st
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-4">
         <AlertCircle size={48} className="text-red-500 opacity-80" />
-        <h2 className="text-xl font-bold">{locale === 'am' ? 'ዳሽቦርድ መጫን ላይ ስህተት' : 'Error Loading Dashboard'}</h2>
+        <h2 className="text-xl font-bold">{locale === 'am' ? 'ዳሽቦርድ መጫን አልተቻለም' : 'Error Loading Dashboard'}</h2>
         <p className="text-sm text-[var(--tg-theme-hint-color,#64748b)]">{error}</p>
+        <button 
+          onClick={() => {
+            tmaAuthLogout().catch(() => {});
+            window.location.reload();
+          }}
+          className="mt-4 px-4 py-2 bg-red-100 text-red-600 rounded-lg text-sm font-medium"
+        >
+          {locale === 'am' ? 'እንደገና ሞክር (Sign Out)' : 'Sign Out & Try Again'}
+        </button>
       </div>
     );
   }
