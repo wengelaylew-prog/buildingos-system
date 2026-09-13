@@ -55,6 +55,7 @@ export class MessagingController {
       return sendSuccess(res, result, 'Announcement sent successfully');
     } catch (err: any) {
       return sendError(res, 500, 'Failed to send announcement', [err.message]);
+    }
   }
 
   static async getNotifications(req: AuthRequest, res: Response) {
