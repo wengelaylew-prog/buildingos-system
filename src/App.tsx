@@ -158,19 +158,57 @@ function isTelegramWebApp(): boolean {
   return Boolean(webApp?.initData);
 }
 
+import LandingView from './components/views/public/LandingView.tsx';
+import RegistrationView from './components/views/public/RegistrationView.tsx';
+import CheckoutView from './components/views/public/CheckoutView.tsx';
+
 export default function App() {
   const isTelegramRoute = window.location.pathname === '/telegram' || window.location.pathname.startsWith('/telegram/');
   const isTelegram = isTelegramRoute || isTelegramWebApp();
 
+  // Simple state-based routing for public pages
+  const [currentView, setCurrentView] = useState<'LANDING' | 'REGISTER' | 'CHECKOUT' | 'APP'>('LANDING');
+  const [selectedPlan, setSelectedPlan] = useState<'MONTHLY' | 'BI_ANNUAL' | 'YEARLY'>('MONTHLY');
+
+  if (isTelegram) {
+    return (
+      <LanguageProvider>
+        <TelegramApp />
+      </LanguageProvider>
+    );
+  }
+
   return (
     <LanguageProvider>
-      {isTelegram ? (
-        <TelegramApp />
-      ) : (
-        <AuthProvider>
-          <MainLayout />
-        </AuthProvider>
-      )}
+      <AuthProvider>
+        {currentView === 'LANDING' && (
+          <LandingView 
+            onLogin={() => setCurrentView('APP')} 
+            onSelectPlan={(plan) => {
+              setSelectedPlan(plan);
+              setCurrentView('REGISTER');
+            }} 
+          />
+        )}
+        
+        {currentView === 'REGISTER' && (
+          <RegistrationView 
+            plan={selectedPlan}
+            onBack={() => setCurrentView('LANDING')}
+            onSuccess={() => setCurrentView('CHECKOUT')}
+          />
+        )}
+        
+        {currentView === 'CHECKOUT' && (
+          <CheckoutView 
+            plan={selectedPlan}
+            onBack={() => setCurrentView('REGISTER')}
+            onDashboard={() => setCurrentView('APP')}
+          />
+        )}
+        
+        {currentView === 'APP' && <MainLayout />}
+      </AuthProvider>
     </LanguageProvider>
   );
 }

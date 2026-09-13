@@ -312,6 +312,16 @@ export const api = {
     }),
   getAdminUsers: () => request<any[]>('/api/v1/admin/users'),
   getGlobalAuditLogs: () => request<any[]>('/api/v1/admin/audit'),
+  
+  // SaaS Subscriptions
+  getPendingSubscriptions: () => request<any[]>('/api/v1/subscriptions/pending'),
+  approveSubscription: (id: string) => 
+    request<any>(`/api/v1/subscriptions/${id}/approve`, { method: 'POST' }),
+  rejectSubscription: (id: string, notes?: string) => 
+    request<any>(`/api/v1/subscriptions/${id}/reject`, { 
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    }),
 
   // Maintenance
   getMaintenance: () => request<MaintenanceRequest[]>('/api/v1/maintenance'),
