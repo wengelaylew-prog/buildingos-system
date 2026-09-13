@@ -11,9 +11,10 @@ interface TelegramLinkViewProps {
   telegramLoading?: boolean;
   onRetryTelegram: () => void;
   onAuthenticated: () => void;
+  onRegisterClick?: () => void;
 }
 
-export function TelegramLinkView({ initData, telegramError, telegramLoading = false, onRetryTelegram, onAuthenticated }: TelegramLinkViewProps) {
+export function TelegramLinkView({ initData, telegramError, telegramLoading = false, onRetryTelegram, onAuthenticated, onRegisterClick }: TelegramLinkViewProps) {
   const { locale } = useLanguage();
   const am = locale === 'am';
   const [mode, setMode] = useState<Mode>('menu');
@@ -209,6 +210,21 @@ export function TelegramLinkView({ initData, telegramError, telegramLoading = fa
                 {am ? 'በስልክ OTP ይግቡ' : 'Sign in with Phone OTP'}
               </button>
             </div>
+            
+            {onRegisterClick && (
+              <div className="mt-8 pt-6 border-t border-stone-200 text-center">
+                <p className="text-sm text-stone-500 mb-3">
+                  {am ? 'አዲስ የህንፃ ባለቤት ነዎት?' : 'Are you a Building Owner?'}
+                </p>
+                <button
+                  type="button"
+                  onClick={onRegisterClick}
+                  className="w-full rounded-xl bg-blue-50 text-blue-700 font-semibold py-3 active:bg-blue-100 transition-colors"
+                >
+                  {am ? 'የህንፃ አስተዳደር ይመዝገቡ (Packages)' : 'Register Building & View Packages'}
+                </button>
+              </div>
+            )}
           </>
         )}
 

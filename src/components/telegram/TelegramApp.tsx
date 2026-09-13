@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { TelegramLinkView } from './TelegramLinkView.tsx';
 import { TenantHomeView, PropertyView, LeaseView, BillingView, MaintenanceView, NotificationsView, ProfileView } from './TelegramViews.tsx';
 import { GatePassTenantView } from './GatePassTenantView.tsx';
+import LandingView from '../views/public/LandingView.tsx';
+import CheckoutView from '../views/public/CheckoutView.tsx';
 import { Building, LayoutGrid as Home, FileText, Wrench, Wallet, Bell, User, Box as Package } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext.tsx';
 import { getTmaSessionToken, getTmaAuthHeader, tmaAuthLoginTelegram } from '../../lib/tma-client.ts';
@@ -9,6 +11,8 @@ import { getTmaSessionToken, getTmaAuthHeader, tmaAuthLoginTelegram } from '../.
 export function TelegramApp() {
   const { locale } = useLanguage();
   const am = locale === 'am';
+  const [unauthView, setUnauthView] = useState<'LINK' | 'LANDING' | 'CHECKOUT'>('LINK');
+  const [selectedPlan, setSelectedPlan] = useState<'MONTHLY' | 'BI_ANNUAL' | 'YEARLY'>('MONTHLY');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [initData, setInitData] = useState<string | null>(null);
   const [isLinked, setIsLinked] = useState<boolean>(false);
@@ -90,6 +94,33 @@ export function TelegramApp() {
   }
 
   if (!isLinked) {
+    if (unauthView === 'LANDING') {
+      return (
+        <div className="h-screen w-full overflow-y-auto">
+          <LandingView
+            onLogin={() => setUnauthView('LINK')}
+            onSelectPlan={(plan) => {
+              setSelectedPlan(plan);
+              setUnauthView('CHECKOUT');
+            }}
+          />
+        </div>
+      );
+    }
+    if (unauthView === 'CHECKOUT') {
+      return (
+        <div className="h-screen w-full overflow-y-auto">
+          <CheckoutView
+            plan={selectedPlan}
+            onBack={() => setUnauthView('LANDING')}
+            onDashboard={() => {
+              setUnauthView('LINK');
+            }}
+          />
+        </div>
+      );
+    }
+    
     return (
       <TelegramLinkView
         initData={initData}
@@ -100,6 +131,7 @@ export function TelegramApp() {
           setTelegramError(null);
           bootstrapAuth();
         }}
+        onRegisterClick={() => setUnauthView('LANDING')}
       />
     );
   }
