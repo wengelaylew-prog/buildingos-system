@@ -98,8 +98,66 @@ export const PaymentsView: React.FC = () => {
     .filter((p) => p.status === 'OVERDUE')
     .reduce((sum, p) => sum + parseFloat(p.amount), 0);
 
+  const [aiInsights, setAiInsights] = useState<any>(null);
+  const [loadingAi, setLoadingAi] = useState(false);
+
+  const fetchAiInsights = async () => {
+    setLoadingAi(true);
+    try {
+      const insights = await api.getAIPaymentInsights();
+      setAiInsights(insights);
+    } catch (err) {
+      console.error('Failed to get AI insights', err);
+    } finally {
+      setLoadingAi(false);
+    }
+  };
+
   return (
     <div id="payments-view" className="space-y-6">
+      {/* AI Advisor Panel */}
+      <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-5 shadow-sm relative overflow-hidden">
+        <div className="flex justify-between items-start">
+          <div className="flex gap-3">
+            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12 2.1 7.1"/><path d="M12 12l9.9 4.9"/></svg>
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                BuildingOS AI Advisor <span className="px-1.5 py-0.5 bg-indigo-200 text-indigo-700 text-[9px] font-bold uppercase rounded">Beta</span>
+              </h3>
+              {aiInsights ? (
+                <div className="mt-2 space-y-3">
+                  <p className="text-sm text-slate-700 leading-relaxed font-medium">{aiInsights.summary}</p>
+                  <div className="bg-white/60 p-3 rounded-lg border border-indigo-50">
+                    <h4 className="text-xs font-bold text-indigo-900 mb-1">Recommended Actions:</h4>
+                    <ul className="list-disc list-inside text-xs text-slate-700 space-y-1">
+                      {aiInsights.actionItems?.map((item: string, i: number) => (
+                        <li key={i}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="text-[10px] font-bold flex items-center gap-1">
+                    Risk Level: <span className={`px-2 py-0.5 rounded ${aiInsights.riskLevel === 'High' ? 'bg-rose-100 text-rose-700' : aiInsights.riskLevel === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{aiInsights.riskLevel}</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500 mt-1">Get smart insights on your building's financial health, late payment predictions, and actionable advice.</p>
+              )}
+            </div>
+          </div>
+          {!aiInsights && (
+            <button 
+              onClick={fetchAiInsights}
+              disabled={loadingAi}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+            >
+              {loadingAi ? 'Analyzing...' : 'Analyze Financials'}
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs">

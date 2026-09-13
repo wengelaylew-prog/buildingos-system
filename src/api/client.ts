@@ -327,6 +327,10 @@ export const api = {
       body: JSON.stringify({ notes }),
     }),
 
+  // AI Insights
+  getAIPaymentInsights: () => request<any>('/api/v1/ai/payment-insights'),
+  getAISecurityInsights: () => request<any>('/api/v1/ai/security-insights'),
+
   // Maintenance
   getMaintenance: () => request<MaintenanceRequest[]>('/api/v1/maintenance'),
   createMaintenance: (data: any) =>
