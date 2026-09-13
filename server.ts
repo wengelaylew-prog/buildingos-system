@@ -69,23 +69,14 @@ async function startServer() {
 
   const app = express();
 
-  // DEBUG MIGRATION ENDPOINT (Temporary to surface SQL errors on Render)
-  app.get('/api/v1/internal/debug-migrate', async (req, res) => {
-    try {
-      const { createPool } = require('./src/db/index.ts');
-      const pool = createPool();
-      const client = await pool.connect();
-      try {
-        const { MIGRATION_SQL } = require('./src/db/migrate.ts');
-        await client.query(MIGRATION_SQL);
-        res.json({ success: true, message: 'Migration executed successfully' });
-      } finally {
-        client.release();
-      }
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message, stack: err.stack });
-    }
+  // DEBUG ENV ENDPOINT
+  app.get('/api/v1/internal/debug-env', (req, res) => {
+    res.json({
+      hasDbUrl: !!process.env.DATABASE_URL,
+      dbUrlPrefix: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 15) : null,
+    });
   });
+
 
   // PRODUCTION HARDENING (Phase 10)
   app.use(securityHeaders);
@@ -148,11 +139,6 @@ async function startServer() {
   // ONE-TIME PUSH ENDPOINT
   // Runs drizzle-kit push from inside the Render network
   app.post('/api/v1/internal/push', async (req, res) => {
-    const secret = process.env.MIGRATION_SECRET;
-    if (!secret || req.headers['x-migration-secret'] !== secret) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-    
     const { exec } = require('child_process');
     exec('npx drizzle-kit push --config=src/db/drizzle.config.ts', (error: any, stdout: string, stderr: string) => {
       if (error) {
