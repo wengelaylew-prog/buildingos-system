@@ -10,7 +10,7 @@ interface CheckoutViewProps {
 }
 
 export default function CheckoutView({ plan, onBack, onDashboard }: CheckoutViewProps) {
-  const { t, language } = useLanguage();
+  const { t, locale: language, setLocale } = useLanguage();
   const [transactionCode, setTransactionCode] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);

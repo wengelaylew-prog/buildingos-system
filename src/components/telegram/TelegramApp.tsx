@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TelegramLinkView } from './TelegramLinkView.tsx';
 import { TenantHomeView, PropertyView, LeaseView, BillingView, MaintenanceView, NotificationsView, ProfileView } from './TelegramViews.tsx';
 import { GatePassTenantView } from './GatePassTenantView.tsx';
-import { Building, Home, FileText, Wrench, Wallet, Bell, User, Package } from 'lucide-react';
+import { Building, LayoutGrid as Home, FileText, Wrench, Wallet, Bell, User, Box as Package } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext.tsx';
 import { getTmaSessionToken, getTmaAuthHeader, tmaAuthLoginTelegram } from '../../lib/tma-client.ts';
 

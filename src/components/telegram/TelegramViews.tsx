@@ -16,7 +16,7 @@ async function tmaFetch(url: string, authHeader: string | null, options: any = {
 }
 
 import { useLanguage } from '../../context/LanguageContext.tsx';
-import { Building, FileText, Wrench, Wallet, Bell, AlertCircle, CheckCircle, ArrowLeft, Receipt, RefreshCw, XCircle, Clock, Loader2, Plus, Camera, Megaphone, CalendarClock, Check, Mail, Phone, HelpCircle, Users, LogOut, Unlink, ChevronRight, Moon, Sun } from 'lucide-react';
+import { Building, FileText, Wrench, Wallet, Bell, AlertCircle, CheckCircle, ArrowLeft, Receipt, RefreshCw, XCircle, Clock, Activity as Loader2, Plus, Eye as Camera, Bell as Megaphone, FileClock as CalendarClock, Check, Mail, Phone, HelpCircle, Users, LogOut, X as Unlink, ChevronRight, Globe as Moon, Flame as Sun } from 'lucide-react';
 
 export function TenantHomeView({ initData, onOpenNotifications }: { initData: string | null; onOpenNotifications?: () => void }) {
   const { t, locale, setLocale } = useLanguage();

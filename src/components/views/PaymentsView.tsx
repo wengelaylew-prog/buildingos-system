@@ -76,7 +76,7 @@ export const PaymentsView: React.FC = () => {
     }
   };
 
-  const filtered = paymentsList.filter((p) => {
+  const filtered = paymentsList.filter((p: any) => {
     if (statusFilter !== 'ALL' && p.status !== statusFilter) return false;
     if (search) {
       const s = search.toLowerCase();
@@ -91,12 +91,12 @@ export const PaymentsView: React.FC = () => {
   });
 
   const totalCollected = paymentsList
-    .filter((p) => p.status === 'PAID')
-    .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+    .filter((p: any) => p.status === 'PAID')
+    .reduce((sum: number, p: any) => sum + parseFloat(p.amount), 0);
 
   const totalOverdue = paymentsList
-    .filter((p) => p.status === 'OVERDUE')
-    .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+    .filter((p: any) => p.status === 'OVERDUE')
+    .reduce((sum: number, p: any) => sum + parseFloat(p.amount), 0);
 
   const [aiInsights, setAiInsights] = useState<any>(null);
   const [loadingAi, setLoadingAi] = useState(false);
@@ -185,66 +185,66 @@ export const PaymentsView: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-white rounded-xl border border-slate-200">
         <div className="relative flex-1 w-full sm:max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            id="payment-search-input"
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('searchPayments')}
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 focus:bg-white"
-          />
+            <input
+              id="payment-search-input"
+              type="text"
+              value={search}
+              onChange={(e: any) => setSearch(e.target.value)}
+              placeholder={t('searchPayments')}
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 focus:bg-white"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleGenerateInvoices}
+              className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 px-3 rounded-lg font-medium transition-colors"
+            >
+              {t('generateInvoices')}
+            </button>
+            <button
+              onClick={handleApplyLateFees}
+              className="text-xs bg-rose-600 hover:bg-rose-700 text-white py-1.5 px-3 rounded-lg font-medium transition-colors"
+            >
+              {t('applyLateFees')}
+            </button>
+            <select
+            id="payment-status-filter"
+            value={statusFilter}
+            onChange={(e: any) => setStatusFilter(e.target.value)}
+            className="text-xs bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="ALL">All Payment Statuses</option>
+            <option value="PAID">Paid</option>
+            <option value="OVERDUE">Overdue</option>
+            <option value="PENDING">Pending</option>
+              <option value="PARTIAL">Partial</option>
+            </select>
+          </div>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={handleGenerateInvoices}
-            className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 px-3 rounded-lg font-medium transition-colors"
-          >
-            {t('generateInvoices')}
-          </button>
-          <button
-            onClick={handleApplyLateFees}
-            className="text-xs bg-rose-600 hover:bg-rose-700 text-white py-1.5 px-3 rounded-lg font-medium transition-colors"
-          >
-            {t('applyLateFees')}
-          </button>
-          <select
-          id="payment-status-filter"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="text-xs bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
-        >
-          <option value="ALL">All Payment Statuses</option>
-          <option value="PAID">Paid</option>
-          <option value="OVERDUE">Overdue</option>
-          <option value="PENDING">Pending</option>
-            <option value="PARTIAL">Partial</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Payment Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-        {loading ? (
-          <div className="py-16 text-center text-xs text-slate-400">Loading payments ledger...</div>
-        ) : filtered.length === 0 ? (
-          <div className="py-16 text-center p-6 text-xs text-slate-400">No payment records found.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-semibold uppercase tracking-wider text-[10px]">
-                  <th className="py-3 px-4">Payment #</th>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Tenant & Unit</th>
-                  <th className="py-3 px-4">Method & Ref</th>
-                  <th className="py-3 px-4">Amount</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Official Receipt</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filtered.map((p) => (
+        {/* Payment Table */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+          {loading ? (
+            <div className="py-16 text-center text-xs text-slate-400">Loading payments ledger...</div>
+          ) : filtered.length === 0 ? (
+            <div className="py-16 text-center p-6 text-xs text-slate-400">No payment records found.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 font-semibold uppercase tracking-wider text-[10px]">
+                    <th className="py-3 px-4">Payment #</th>
+                    <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4">Tenant & Unit</th>
+                    <th className="py-3 px-4">Method & Ref</th>
+                    <th className="py-3 px-4">Amount</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Official Receipt</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filtered.map((p: any) => (
                   <tr key={p.id} id={`payment-row-${p.id}`} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-4 font-mono font-bold text-slate-900">{p.paymentNumber}</td>
                     <td className="py-3 px-4 text-slate-600">{p.paymentDate}</td>

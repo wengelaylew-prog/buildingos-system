@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../context/LanguageContext.tsx';
 import { tmaAuthSendEmailOtp, tmaAuthVerifyEmailOtp, tmaAuthSendPhoneOtp, tmaAuthVerifyPhoneOtp } from '../../lib/tma-client.ts';
-import { Send, Mail, Phone, Loader2, ArrowLeft, Building } from 'lucide-react';
+import { Send, Mail, Phone, RefreshCw as Loader2, ArrowLeft, Building } from 'lucide-react';
 
 type Mode = 'menu' | 'email' | 'email-otp' | 'phone' | 'phone-otp';
 

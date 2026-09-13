@@ -29,7 +29,7 @@ export const SecurityView = () => {
   };
 
   const handleApprove = (id: string) => {
-    setGatePasses(prev => prev.map(p => p.id === id ? { ...p, status: 'APPROVED' } : p));
+    setGatePasses((prev: any[]) => prev.map((p: any) => p.id === id ? { ...p, status: 'APPROVED' } : p));
     // api.put('/api/v1/security/gate-passes/' + id + '/approve')
   };
 
@@ -125,7 +125,7 @@ export const SecurityView = () => {
       <div className="flex-1 overflow-auto">
         {activeTab === 'passes' ? (
           <div className="space-y-4">
-            {gatePasses.map((pass) => (
+            {gatePasses.map((pass: any) => (
               <div key={pass.id} className="bg-slate-900 border border-slate-800 rounded-lg p-4 flex items-center justify-between">
                 <div className="flex items-start gap-4">
                   <div className={`p-3 rounded-full ${pass.direction === 'OUT' ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
@@ -159,7 +159,7 @@ export const SecurityView = () => {
             <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-xl overflow-hidden">
               <h3 className="text-center font-semibold text-slate-200 mb-4">Scan QR Code or ID Barcode</h3>
               <div className="aspect-square bg-slate-950 rounded-lg overflow-hidden relative">
-                <Scanner onScan={(result) => handleScan(result[0].rawValue)} />
+                <Scanner onScan={(result: any) => handleScan(result[0].rawValue)} />
               </div>
               {scanResult && (
                 <div className={`mt-4 p-3 rounded text-sm text-center ${scanResult.status === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>

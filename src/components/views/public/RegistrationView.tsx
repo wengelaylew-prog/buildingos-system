@@ -9,7 +9,7 @@ interface RegistrationViewProps {
 }
 
 export default function RegistrationView({ plan, onBack, onSuccess }: RegistrationViewProps) {
-  const { t, language } = useLanguage();
+  const { t, locale: language, setLocale } = useLanguage();
   const [formData, setFormData] = useState({ fullName: '', email: '', password: '', organizationName: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

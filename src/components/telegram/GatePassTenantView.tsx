@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Package, ArrowRight, Camera } from 'lucide-react';
+import { ShieldCheck, Box as Package, ArrowRight, Eye as Camera } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext.tsx';
 
 export function GatePassTenantView({ initData }: { initData: string | null }) {

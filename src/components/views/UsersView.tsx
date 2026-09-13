@@ -138,7 +138,7 @@ export const UsersView: React.FC = () => {
             <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <Users size={18} className="text-indigo-600" /> 
-                {t('createRole') || 'Create New User'}
+                Create New User
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
                 <X size={20} />

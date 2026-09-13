@@ -8,7 +8,7 @@ interface LandingViewProps {
 }
 
 export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps) {
-  const { t, language, setLanguage } = useLanguage();
+  const { t, locale: language, setLocale } = useLanguage();
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -22,8 +22,8 @@ export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps)
         </div>
         <div className="flex items-center gap-4">
           <button 
-            onClick={() => setLanguage(language === 'en' ? 'am' : 'en')}
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            onClick={() => setLocale(language === 'en' ? 'am' : 'en')}
+            className="text-sm font-medium hover:text-indigo-600 transition-colors"
           >
             {language === 'en' ? 'አማርኛ' : 'English'}
           </button>

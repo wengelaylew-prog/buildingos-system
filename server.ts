@@ -45,6 +45,9 @@ import { adminRouter } from './src/modules/admin/admin.routes.ts';
 import { telegramRouter } from './src/modules/telegram/telegram.routes.ts';
 import { tmaAuthRouter } from './src/modules/tma-auth/tma-auth.routes.ts';
 import { securityRouter } from './src/modules/security/security.routes.ts';
+import { subscriptionsRouter } from './src/modules/subscriptions/subscriptions.routes.ts';
+import { authRouter } from './src/modules/auth/auth.routes.ts';
+import { aiRouter } from './src/modules/ai/ai.routes.ts';
 import { corsMiddleware, securityHeaders, rateLimiter, validateEnvironment } from './src/middleware/security.ts';
 import { runMigrations } from './src/db/migrate.ts';
 
@@ -664,8 +667,8 @@ async function startServer() {
         return errorResponse(res, 404, 'Receipt not found');
       }
       const payment = (await db.select().from(payments).where(eq(payments.id, found.paymentId)))[0] || null;
-      const tenant = payment ? (await db.select().from(tenants).where(eq(tenants.id, payment.tenantId)))[0] || null : null;
-      const unit = payment ? (await db.select().from(units).where(eq(units.id, payment.unitId)))[0] || null : null;
+      const tenant = payment && payment.tenantId ? (await db.select().from(tenants).where(eq(tenants.id, payment.tenantId)))[0] || null : null;
+      const unit = payment && payment.unitId ? (await db.select().from(units).where(eq(units.id, payment.unitId)))[0] || null : null;
       return successResponse(res, { receipt: found, payment, tenant, unit });
     } catch (err: any) {
       return errorResponse(res, 500, 'Failed to fetch receipt details', [err.message]);
@@ -732,6 +735,9 @@ async function startServer() {
 
   // SECURITY
   app.use('/api/v1/security', securityRouter);
+  app.use('/api/v1/subscriptions', subscriptionsRouter);
+  app.use('/api/v1/auth', authRouter);
+  app.use('/api/v1/ai', aiRouter);
 
   // VITE MIDDLEWARE SETUP
   if (process.env.NODE_ENV !== 'production') {
