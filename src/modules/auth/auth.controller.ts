@@ -20,16 +20,10 @@ export class AuthController {
         return sendError(res, 400, 'User with this email already exists');
       }
 
-      // 2. Create user in Firebase Auth
-      let fbUser;
-      try {
-        fbUser = await adminAuth.createUser({
-          email,
-          password,
-          displayName: fullName,
-        });
-      } catch (fbError: any) {
-        return sendError(res, 400, 'Firebase Registration Failed', [fbError.message]);
+      // 2. Use the UID provided by the frontend (which already registered in Firebase)
+      const uid = req.body.uid;
+      if (!uid) {
+        return sendError(res, 400, 'Firebase UID is missing from request');
       }
 
       // 3. Create Organization (Status: PENDING_PAYMENT)
@@ -47,7 +41,7 @@ export class AuthController {
 
       // 5. Create User in Postgres
       const [newUser] = await db.insert(users).values({
-        uid: fbUser.uid,
+        uid,
         email,
         fullName,
         organizationId: newOrg.id,

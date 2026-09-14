@@ -19,11 +19,25 @@ export default function RegistrationView({ plan, onBack, onSuccess }: Registrati
     setLoading(true);
     setError(null);
     try {
+      // 1. Create user in Firebase FIRST using client SDK
+      const { auth } = await import('../../../lib/firebase.ts');
+      const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
+      
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      await updateProfile(userCredential.user, { displayName: formData.fullName });
+      
+      const idToken = await userCredential.user.getIdToken();
+
+      // 2. Register in our PostgreSQL database
       const res = await fetch('/api/v1/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, plan })
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ ...formData, plan, uid: userCredential.user.uid })
       });
+      
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Registration failed');
       
