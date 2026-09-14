@@ -26,6 +26,8 @@ export class AIController {
     } catch (err: any) {
       return sendError(res, 500, 'Failed to generate security insights', [err.message]);
     }
+  }
+
   static async handleChat(req: AuthRequest, res: Response) {
     try {
       const organizationId = req.user?.organizationId;
