@@ -69,11 +69,14 @@ async function startServer() {
 
   const app = express();
 
-  // DEBUG ENV ENDPOINT
-  app.get('/api/v1/internal/debug-env', (req, res) => {
-    res.json({
-      keys: Object.keys(process.env)
-    });
+  // DEBUG MIGRATIONS ENDPOINT
+  app.get('/api/v1/internal/debug-run-migrations', async (req, res) => {
+    try {
+      await runMigrations();
+      res.json({ success: true, message: 'Migrations ran successfully!' });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message, stack: err.stack });
+    }
   });
 
 
