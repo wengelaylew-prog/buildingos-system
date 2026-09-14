@@ -20,6 +20,7 @@ import { SuperAdminView } from './components/views/SuperAdminView.tsx';
 import { UsersView } from './components/views/UsersView.tsx';
 import { PhasePlaceholderView } from './components/views/PhasePlaceholderView.tsx';
 import { SecurityView } from './components/views/SecurityView.tsx';
+import AIChatWidget from './components/ui/AIChatWidget.tsx';
 
 function MainLayout() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -146,6 +147,9 @@ function MainLayout() {
             {activeTab === 'settings' && <SettingsView />}
           </div>
         </main>
+
+        {/* Persistent AI Chat Widget for Authenticated Users */}
+        <AIChatWidget />
       </div>
     </div>
   );

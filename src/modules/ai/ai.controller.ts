@@ -26,6 +26,19 @@ export class AIController {
     } catch (err: any) {
       return sendError(res, 500, 'Failed to generate security insights', [err.message]);
     }
+  static async handleChat(req: AuthRequest, res: Response) {
+    try {
+      const organizationId = req.user?.organizationId;
+      if (!organizationId) return sendError(res, 400, 'Organization ID is missing');
+      
+      const { query } = req.body;
+      if (!query) return sendError(res, 400, 'Query is required');
+
+      const response = await AIService.handleAdminQuery(organizationId, query);
+      return sendSuccess(res, response);
+    } catch (err: any) {
+      return sendError(res, 500, 'Failed to handle AI chat', [err.message]);
+    }
   }
 }
 

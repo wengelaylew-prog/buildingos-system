@@ -106,6 +106,57 @@ export class AIService {
       console.error('AI Security Insights Error:', error);
       throw new Error('Failed to generate AI insights');
     }
+  /**
+   * Interactive AI Assistant for Property Managers/Admins
+   */
+  static async handleAdminQuery(organizationId: string, query: string) {
+    if (process.env.NODE_ENV !== 'production' && !process.env.GEMINI_API_KEY) {
+      return {
+        reply: "ይህ የሙከራ መልስ ነው። ሲስተሙ በትክክል ከ Gemini ጋር ሲገናኝ ትክክለኛ ምላሽ ይሰጣል። (Mock Mode)"
+      };
+    }
+
+    try {
+      // 1. Fetch some contextual data so the AI has context
+      const overdueInvoices = await db.select()
+        .from(invoices)
+        .where(
+          and(
+            eq(invoices.organizationId, organizationId),
+            eq(invoices.status, 'OVERDUE')
+          )
+        ).limit(10);
+      
+      const recentLogs = await db.select()
+        .from(auditLogs)
+        .where(eq(auditLogs.organizationId, organizationId))
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(10);
+
+      const prompt = `
+        You are a highly helpful and professional Property Management Assistant named "BuildingOS Assistant". 
+        Your job is to answer the admin's questions about their building, payments, and security. 
+        You MUST always reply in Amharic (Ethiopian language), but you can use English technical terms if needed.
+        
+        Here is the current context for the admin's organization:
+        - Recent Overdue Invoices: ${JSON.stringify(overdueInvoices)}
+        - Recent System Logs: ${JSON.stringify(recentLogs)}
+        
+        Admin's Query: "${query}"
+        
+        Provide a helpful, direct, and professional answer.
+      `;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt
+      });
+
+      return { reply: response.text };
+    } catch (error: any) {
+      console.error('AI Chat Error:', error);
+      throw new Error('Failed to generate AI response');
+    }
   }
 }
 
