@@ -106,6 +106,8 @@ export class AIService {
       console.error('AI Security Insights Error:', error);
       throw new Error('Failed to generate AI insights');
     }
+  }
+
   /**
    * Interactive AI Assistant for Property Managers/Admins
    */
