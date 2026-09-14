@@ -172,7 +172,7 @@ export default function App() {
 
   // Simple state-based routing for public pages
   const [currentView, setCurrentView] = useState<'LANDING' | 'REGISTER' | 'CHECKOUT' | 'APP'>('LANDING');
-  const [selectedPlan, setSelectedPlan] = useState<'MONTHLY' | 'BI_ANNUAL' | 'YEARLY'>('MONTHLY');
+  const [selectedPlan, setSelectedPlan] = useState<'RENTAL' | 'BUILDING' | 'REAL_ESTATE'>('BUILDING');
 
   if (isTelegram) {
     return (

@@ -4,7 +4,7 @@ import { useLanguage } from '../../../context/LanguageContext.tsx';
 
 interface LandingViewProps {
   onLogin: () => void;
-  onSelectPlan: (plan: 'MONTHLY' | 'BI_ANNUAL' | 'YEARLY') => void;
+  onSelectPlan: (plan: 'RENTAL' | 'BUILDING' | 'REAL_ESTATE') => void;
 }
 
 export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps) {
@@ -187,70 +187,71 @@ export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps)
               {language === 'en' ? 'Simple, Transparent Pricing' : 'ቀላል እና ግልፅ የክፍያ አማራጮች'}
             </h2>
             <p className="text-lg text-slate-600">
-              {language === 'en' ? 'Choose the plan that fits your property management needs.' : 'ለእርስዎ ድርጅት የሚስማማውን እቅድ ይምረጡ።'}
+              {language === 'en' ? 'Choose the package that fits your property type. All packages include all features.' : 'ለንብረትዎ የሚስማማውን ፓኬጅ ይምረጡ። ሁሉም ፓኬጆች ሙሉ አገልግሎት ይሰጣሉ።'}
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Monthly */}
+            {/* Rental Houses */}
             <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 flex flex-col">
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">{language === 'en' ? 'Monthly' : 'ወርሃዊ'}</h3>
-              <p className="text-slate-500 mb-6">{language === 'en' ? 'Perfect for testing the platform.' : 'ሲስተሙን ለመሞከር እና ለትንሽ ጊዜ'}
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">{language === 'en' ? 'Rental Houses' : 'የሚከራዩ ቤቶች'}</h3>
+              <p className="text-slate-500 mb-6">{language === 'en' ? 'For individual residential houses and villas.' : 'ለግል የሚከራዩ ቤቶች፣ ቪላዎች እና ጊቢዎች'}
               </p>
               <div className="mb-6">
-                <span className="text-4xl font-extrabold text-slate-900">1,500</span>
+                <span className="text-4xl font-extrabold text-slate-900">5,000</span>
                 <span className="text-slate-500 font-medium"> ETB / {language === 'en' ? 'mo' : 'በወር'}</span>
               </div>
               <ul className="space-y-4 mb-8 flex-1">
-                <li className="flex items-start gap-3"><Check size={20} className="text-blue-600 shrink-0" /> <span className="text-slate-700">All Core Features</span></li>
-                <li className="flex items-start gap-3"><Check size={20} className="text-blue-600 shrink-0" /> <span className="text-slate-700">3D Building Viewer</span></li>
-                <li className="flex items-start gap-3"><Check size={20} className="text-blue-600 shrink-0" /> <span className="text-slate-700">Tenant Telegram Bot</span></li>
-                <li className="flex items-start gap-3"><Check size={20} className="text-blue-600 shrink-0" /> <span className="text-slate-700">Email Support</span></li>
+                <li className="flex items-start gap-3"><Check size={20} className="text-green-500 shrink-0" /> <span className="text-slate-700">All Core Features</span></li>
+                <li className="flex items-start gap-3"><Check size={20} className="text-green-500 shrink-0" /> <span className="text-slate-700">Telegram Bot Integration</span></li>
+                <li className="flex items-start gap-3"><Check size={20} className="text-green-500 shrink-0" /> <span className="text-slate-700">Utility Bills Management</span></li>
+                <li className="flex items-start gap-3"><Check size={20} className="text-green-500 shrink-0" /> <span className="text-slate-700">Standard Support</span></li>
               </ul>
-              <button onClick={() => onSelectPlan('MONTHLY')} className="w-full py-3 rounded-xl font-bold border-2 border-slate-200 text-slate-900 hover:border-blue-600 hover:text-blue-600 transition-colors">
-                {language === 'en' ? 'Select Monthly' : 'ወርሃዊን ይምረጡ'}
+              <button onClick={() => onSelectPlan('RENTAL')} className="w-full py-3 rounded-xl font-bold border-2 border-slate-200 text-slate-900 hover:border-blue-600 hover:text-blue-600 transition-colors">
+                {language === 'en' ? 'Select Rental Package' : 'ይህንን ይምረጡ'}
               </button>
             </div>
 
-            {/* Yearly (Highlighted) */}
+            {/* Building Management (Highlighted) */}
             <div className="bg-blue-600 rounded-3xl p-8 shadow-xl shadow-blue-200 border border-blue-600 flex flex-col relative transform md:-translate-y-4">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider shadow-sm">
-                {language === 'en' ? 'Best Value' : 'በጣም ተመራጭ'}
+                {language === 'en' ? 'Most Popular' : 'በጣም ተመራጭ'}
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">{language === 'en' ? '1 Year Plan' : 'የ 1 አመት እቅድ'}</h3>
-              <p className="text-blue-100 mb-6">{language === 'en' ? 'Save 20% for long-term management.' : '20% ቅናሽ ያገኛሉ! ለረጅም ጊዜ ስራ'}
+              <h3 className="text-2xl font-bold text-white mb-2">{language === 'en' ? 'Commercial Building' : 'ህንፃ አስተዳደር'}</h3>
+              <p className="text-blue-100 mb-6">{language === 'en' ? 'For multi-story commercial buildings and offices.' : 'ለንግድ ህንፃዎች፣ ለቢሮዎች እና ለሱቆች የተዘጋጀ'}
               </p>
               <div className="mb-6">
-                <span className="text-4xl font-extrabold text-white">14,400</span>
-                <span className="text-blue-200 font-medium"> ETB / {language === 'en' ? 'yr' : 'በአመት'}</span>
+                <span className="text-4xl font-extrabold text-white">20,000</span>
+                <span className="text-blue-200 font-medium"> ETB / {language === 'en' ? 'mo' : 'በወር'}</span>
               </div>
               <ul className="space-y-4 mb-8 flex-1">
                 <li className="flex items-start gap-3"><Check size={20} className="text-blue-300 shrink-0" /> <span className="text-white">All Core Features</span></li>
-                <li className="flex items-start gap-3"><Check size={20} className="text-blue-300 shrink-0" /> <span className="text-white font-bold">Advanced 3D Building Viewer</span></li>
-                <li className="flex items-start gap-3"><Check size={20} className="text-blue-300 shrink-0" /> <span className="text-white font-bold">Upcoming AI Assistant</span></li>
+                <li className="flex items-start gap-3"><Check size={20} className="text-blue-300 shrink-0" /> <span className="text-white font-bold">Interactive 3D Viewer</span></li>
+                <li className="flex items-start gap-3"><Check size={20} className="text-blue-300 shrink-0" /> <span className="text-white font-bold">Smart AI Assistant</span></li>
                 <li className="flex items-start gap-3"><Check size={20} className="text-blue-300 shrink-0" /> <span className="text-white">Priority 24/7 Support</span></li>
               </ul>
-              <button onClick={() => onSelectPlan('YEARLY')} className="w-full py-3 rounded-xl font-bold bg-white text-blue-600 hover:bg-slate-50 transition-colors">
-                {language === 'en' ? 'Select Yearly' : 'የአመቱን ይምረጡ'}
+              <button onClick={() => onSelectPlan('BUILDING')} className="w-full py-3 rounded-xl font-bold bg-white text-blue-600 hover:bg-slate-50 transition-colors">
+                {language === 'en' ? 'Select Building Package' : 'ይህንን ይምረጡ'}
               </button>
             </div>
 
-            {/* 6 Months */}
+            {/* Real Estate */}
             <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 flex flex-col">
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">{language === 'en' ? '6 Months' : 'የ 6 ወር'}</h3>
-              <p className="text-slate-500 mb-6">{language === 'en' ? 'Balance commitment and cost.' : 'አማካኝ ቅናሽ ያለው እቅድ'}
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">{language === 'en' ? 'Real Estate' : 'ሪልስቴት አስተዳደር'}</h3>
+              <p className="text-slate-500 mb-6">{language === 'en' ? 'For apartment complexes and real estate developers.' : 'ለሰፋፊ የአፓርትመንት ህንፃዎች እና ለሪልስቴት አልሚዎች'}
               </p>
               <div className="mb-6">
-                <span className="text-4xl font-extrabold text-slate-900">8,000</span>
-                <span className="text-slate-500 font-medium"> ETB / 6 {language === 'en' ? 'mo' : 'ወር'}</span>
+                <span className="text-4xl font-extrabold text-slate-900">30,000</span>
+                <span className="text-slate-500 font-medium"> ETB / {language === 'en' ? 'mo' : 'በወር'}</span>
               </div>
               <ul className="space-y-4 mb-8 flex-1">
-                <li className="flex items-start gap-3"><Check size={20} className="text-blue-600 shrink-0" /> <span className="text-slate-700">All Core Features</span></li>
-                <li className="flex items-start gap-3"><Check size={20} className="text-blue-600 shrink-0" /> <span className="text-slate-700">3D Building Viewer</span></li>
-                <li className="flex items-start gap-3"><Check size={20} className="text-blue-600 shrink-0" /> <span className="text-slate-700">Standard Support</span></li>
+                <li className="flex items-start gap-3"><Check size={20} className="text-green-500 shrink-0" /> <span className="text-slate-700">All Core Features</span></li>
+                <li className="flex items-start gap-3"><Check size={20} className="text-green-500 shrink-0" /> <span className="text-slate-700">Advanced 3D & AI</span></li>
+                <li className="flex items-start gap-3"><Check size={20} className="text-green-500 shrink-0" /> <span className="text-slate-700">Multi-Property Support</span></li>
+                <li className="flex items-start gap-3"><Check size={20} className="text-green-500 shrink-0" /> <span className="text-slate-700">Dedicated Account Manager</span></li>
               </ul>
-              <button onClick={() => onSelectPlan('BI_ANNUAL')} className="w-full py-3 rounded-xl font-bold border-2 border-slate-200 text-slate-900 hover:border-blue-600 hover:text-blue-600 transition-colors">
-                {language === 'en' ? 'Select 6 Months' : 'የ 6 ወሩን ይምረጡ'}
+              <button onClick={() => onSelectPlan('REAL_ESTATE')} className="w-full py-3 rounded-xl font-bold border-2 border-slate-200 text-slate-900 hover:border-blue-600 hover:text-blue-600 transition-colors">
+                {language === 'en' ? 'Select Real Estate Package' : 'ይህንን ይምረጡ'}
               </button>
             </div>
           </div>

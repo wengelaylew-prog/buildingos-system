@@ -3,7 +3,7 @@ import { ArrowLeft, Building2, User, Mail, Lock } from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext.tsx';
 
 interface RegistrationViewProps {
-  plan: 'MONTHLY' | 'BI_ANNUAL' | 'YEARLY';
+  plan: 'RENTAL' | 'BUILDING' | 'REAL_ESTATE';
   onBack: () => void;
   onSuccess: () => void; // Proceed to checkout
 }
@@ -70,7 +70,9 @@ export default function RegistrationView({ plan, onBack, onSuccess }: Registrati
             {language === 'en' ? 'Create Your Account' : 'አዲስ አካውንት ይክፈቱ'}
           </h1>
           <p className="text-slate-500 mt-2">
-            {language === 'en' ? `Selected Plan: ${plan}` : `የመረጡት ፓኬጅ: ${plan}`}
+            {language === 'en' 
+              ? `Selected Package: ${plan === 'RENTAL' ? 'Rental Houses' : plan === 'BUILDING' ? 'Commercial Building' : 'Real Estate'}` 
+              : `የተመረጠው ፓኬጅ: ${plan === 'RENTAL' ? 'የሚከራዩ ቤቶች' : plan === 'BUILDING' ? 'ህንፃ አስተዳደር' : 'ሪልስቴት አስተዳደር'}`}
           </p>
         </div>
 
