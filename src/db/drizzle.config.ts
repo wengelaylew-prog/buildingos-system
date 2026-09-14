@@ -8,15 +8,15 @@ export default defineConfig({
   out: './drizzle',
   dialect: 'postgresql',
   schemaFilter: ['public'],
-  dbCredentials: process.env.DATABASE_URL
+  dbCredentials: process.env['DATABASE_URL']
     ? {
-        url: process.env.DATABASE_URL,
+        url: process.env['DATABASE_URL'],
       }
     : {
-        host: process.env.SQL_HOST!,
-        user: process.env.SQL_USER!,
-        password: process.env.SQL_PASSWORD!,
-        database: process.env.SQL_DB_NAME!,
+        host: process.env['SQL_HOST']!,
+        user: process.env['SQL_USER']!,
+        password: process.env['SQL_PASSWORD']!,
+        database: process.env['SQL_DB_NAME']!,
         ssl: true,
       },
   verbose: true,

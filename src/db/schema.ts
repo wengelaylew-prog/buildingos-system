@@ -411,7 +411,7 @@ export const telegramAccounts = pgTable('telegram_accounts', {
 }));
 
 // 18. OTP CODES (Tenant TMA phone login)
-export const otpCodes = pgTable('otp_codes', {
+export const otpCodes = pgTable('tma_otp_codes', {
   id: uuid('id').defaultRandom().primaryKey(),
   channel: text('channel').notNull(), // 'EMAIL' or 'PHONE'
   identifier: text('identifier').notNull(), // normalized email or phone

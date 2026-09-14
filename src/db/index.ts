@@ -12,13 +12,15 @@ export const createPool = () => {
   if (!global._postgresPool) {
     // Render sets DATABASE_URL automatically for linked PostgreSQL services.
     // Individual SQL_* vars are used as fallback for local/custom setups.
-    const connectionConfig = process.env.DATABASE_URL
-      ? { connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } }
+    // Use bracket notation to prevent ESBuild from evaluating this at build time
+    const dbUrl = process.env['DATABASE_URL'];
+    const connectionConfig = dbUrl
+      ? { connectionString: dbUrl, ssl: { rejectUnauthorized: false } }
       : {
-          host: process.env.SQL_HOST,
-          user: process.env.SQL_USER,
-          password: process.env.SQL_PASSWORD,
-          database: process.env.SQL_DB_NAME,
+          host: process.env['SQL_HOST'],
+          user: process.env['SQL_USER'],
+          password: process.env['SQL_PASSWORD'],
+          database: process.env['SQL_DB_NAME'],
         };
 
     global._postgresPool = new Pool({

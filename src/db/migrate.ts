@@ -9,22 +9,13 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN NOT NULL DEFAU
 DROP INDEX IF EXISTS uq_users_email_password_auth;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_users_phone ON users (phone) WHERE phone IS NOT NULL;
 
--- Step 2: Recreate otp_codes only if it has the OLD schema (phone column instead of channel/identifier)
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'otp_codes' AND column_name = 'phone'
-  ) THEN
-    DROP TABLE IF EXISTS otp_codes;
-  END IF;
-END $$;
-
-CREATE TABLE IF NOT EXISTS otp_codes (
+-- Step 2: Create a brand new table for OTP codes to avoid any schema conflicts with old tables
+CREATE TABLE IF NOT EXISTS tma_otp_codes (
   id           UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
   channel      TEXT      NOT NULL,
   identifier   TEXT      NOT NULL,
   user_id      UUID      REFERENCES users(id) ON DELETE CASCADE,
+
   code_hash    TEXT      NOT NULL,
   purpose      TEXT      NOT NULL DEFAULT 'TMA_LOGIN',
   attempts     INTEGER   NOT NULL DEFAULT 0,
@@ -87,6 +78,9 @@ CREATE TABLE IF NOT EXISTS subscription_requests (
   created_at timestamp DEFAULT now() NOT NULL,
   updated_at timestamp DEFAULT now() NOT NULL
 );
+
+-- Step 7: Fix roles table missing column
+ALTER TABLE roles ADD COLUMN IF NOT EXISTS description TEXT;
 `;
 
 export async function runMigrations(): Promise<void> {
