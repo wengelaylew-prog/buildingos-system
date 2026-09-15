@@ -108,6 +108,99 @@ const categories: {
   },
 ];
 
+
+const ShowcaseCarousel = ({ language }: { language: 'en' | 'am' }) => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const slides = [
+    {
+      titleEn: "Interactive 3D Security Monitoring",
+      titleAm: "የህንፃዎን ደህንነት በ 3D ይቆጣጠሩ",
+      descEn: "Visualize your entire building in 3D. Track unauthorized access in real-time with AI-powered radar and live camera feeds.",
+      descAm: "በዘመናዊ 3D ቴክኖሎጂ ሙሉ ህንፃዎን ይቆጣጠሩ። አርቴፊሻል ኢንተለጀንስ (AI) በመጠቀም ያልተፈቀደ የሰዎች እንቅስቃሴን ወዲያውኑ ይለዩ!",
+      icon: <Globe className="w-16 h-16 text-indigo-400 mb-4" />,
+      bg: "bg-gradient-to-br from-indigo-900/40 to-slate-900 border-indigo-500/30",
+      image: "https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&q=80&w=800",
+      features: ['Live AI Radar', '3D Floor Inspection', 'Access Logs']
+    },
+    {
+      titleEn: "Automated Billing & Fast Payments",
+      titleAm: "አውቶማቲክ የክፍያ ስሌት እና ፈጣን ክትትል",
+      descEn: "Rent and utility bills are calculated automatically. One-click smart reminders via Telegram and WhatsApp.",
+      descAm: "የውሃ፣ መብራት እና ኪራይ ክፍያዎች በራሳቸው ጊዜ ይሰላሉ። ክፍያ ላዘገዩ ተከራዮች በአንድ ክሊክ (Click) ማሳሰቢያ በቴሌግራም/ዋትስአፕ ይላኩ።",
+      icon: <Activity className="w-16 h-16 text-emerald-400 mb-4" />,
+      bg: "bg-gradient-to-br from-emerald-900/40 to-slate-900 border-emerald-500/30",
+      image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=800",
+      features: ['Smart Telegram Bots', 'Utility Split', 'Payment Tracking']
+    },
+    {
+      titleEn: "Complete Tenant Management",
+      titleAm: "የተሟላ የተከራይ አስተዳደር",
+      descEn: "From contracts to maintenance requests, everything is managed on a sleek and fast SOC Dashboard.",
+      descAm: "ከውል ስምምነት እስከ ጥገና ጥያቄዎች ድረስ ሁሉንም ነገር ፈጣን እና ዘመናዊ በሆነው ማዕከላዊ ዳሽቦርድ (SOC) ላይ ያስተዳድሩ።",
+      icon: <Users className="w-16 h-16 text-blue-400 mb-4" />,
+      bg: "bg-gradient-to-br from-blue-900/40 to-slate-900 border-blue-500/30",
+      image: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=800",
+      features: ['Contract Management', 'Maintenance Portal', 'Audit Logs']
+    }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  const slide = slides[currentSlide];
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 mb-16">
+      <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-slate-900/50 backdrop-blur-sm">
+        {/* Carousel Content */}
+        <div className="flex flex-col md:flex-row h-full md:h-[400px]">
+          <div className={`flex-1 p-8 md:p-12 flex flex-col justify-center transition-colors duration-1000 ${slide.bg}`}>
+            {slide.icon}
+            <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-4 leading-tight">
+              {language === 'en' ? slide.titleEn : slide.titleAm}
+            </h2>
+            <p className="text-slate-300 text-lg mb-8 leading-relaxed max-w-md">
+              {language === 'en' ? slide.descEn : slide.descAm}
+            </p>
+            <div className="flex flex-wrap gap-3 mt-auto">
+              {slide.features.map((f, i) => (
+                <span key={i} className="px-3 py-1.5 bg-white/10 rounded-full text-xs font-bold text-white uppercase tracking-wider backdrop-blur-md border border-white/5">
+                  <Check className="inline-block w-3 h-3 mr-1" /> {f}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="flex-1 relative hidden md:block">
+            <img 
+              src={slide.image} 
+              alt="Showcase" 
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+              key={currentSlide} // Forces re-mount animation
+            />
+            <div className="absolute inset-0 bg-gradient-to-l from-transparent to-slate-900" />
+          </div>
+        </div>
+
+        {/* Indicators */}
+        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-3 md:justify-start md:left-12">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentSlide(i)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${currentSlide === i ? 'w-8 bg-white' : 'bg-white/30 hover:bg-white/50'}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps) {
   const { locale: language, setLocale } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
@@ -410,6 +503,10 @@ export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps)
           ))}
         </div>
       </section>
+
+      {/* Showcase Slider */}
+      <ShowcaseCarousel language={language as 'en'|'am'} />
+
 
       {/* Feature highlights */}
       <section className="py-16 px-6 border-t border-white/10">
