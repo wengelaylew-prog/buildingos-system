@@ -38,6 +38,7 @@ import tenantsRouter from './src/modules/tenants/tenants.routes.ts';
 import leasesRouter from './src/modules/leases/leases.routes.ts';
 import { threeDRouter } from './src/modules/three-d/three-d.routes.ts';
 import { billingRouter } from './src/modules/billing/billing.routes.ts';
+import { utilityRouter } from './src/modules/billing/utility.routes.ts';
 import { maintenanceRouter } from './src/modules/maintenance/maintenance.routes.ts';
 import { messagingRouter } from './src/modules/messaging/messaging.routes.ts';
 import { reportsRouter } from './src/modules/reports/reports.routes.ts';
@@ -367,6 +368,9 @@ async function startServer() {
 
   // 6. BILLING & INVOICING (PHASE 5)
   app.use('/api/v1/billing', billingRouter);
+
+  // 6b. UTILITY PAYMENT TRACKING (PHASE 5b)
+  app.use('/api/v1/utilities', utilityRouter);
 
   // 8. DOCUMENTS MODULE (Generic Polymorphic Document Architecture)
   // GET /api/v1/documents

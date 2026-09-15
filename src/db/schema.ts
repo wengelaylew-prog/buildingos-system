@@ -503,6 +503,69 @@ export const subscriptionRequests = pgTable('subscription_requests', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// 18. UTILITY READINGS (Meter readings per unit per billing period)
+export const utilityReadings = pgTable('utility_readings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  unitId: uuid('unit_id').notNull().references(() => units.id, { onDelete: 'cascade' }),
+  buildingId: uuid('building_id').notNull().references(() => buildings.id, { onDelete: 'cascade' }),
+  utilityType: text('utility_type').notNull(), // ELECTRICITY, WATER, GAS, INTERNET, PARKING, OTHER
+  billingPeriod: text('billing_period').notNull(), // YYYY-MM  e.g. 2025-09
+  previousReading: numeric('previous_reading', { precision: 12, scale: 3 }).notNull().default('0'),
+  currentReading: numeric('current_reading', { precision: 12, scale: 3 }).notNull(),
+  consumption: numeric('consumption', { precision: 12, scale: 3 }).notNull(), // current - previous
+  unitPrice: numeric('unit_price', { precision: 12, scale: 4 }).notNull(), // price per unit of consumption
+  totalAmount: numeric('total_amount', { precision: 12, scale: 2 }).notNull(), // consumption * unitPrice
+  unit: text('unit').notNull().default('kWh'), // kWh, m3, Mbps, hours, etc.
+  readingDate: text('reading_date').notNull(), // ISO date string
+  enteredBy: uuid('entered_by').references(() => users.id),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgPeriodTypeIdx: index('idx_utility_readings_org_period_type').on(table.organizationId, table.billingPeriod, table.utilityType),
+  unitPeriodTypeUq: uniqueIndex('uq_utility_readings_unit_period_type').on(table.unitId, table.billingPeriod, table.utilityType),
+  buildingIdx: index('idx_utility_readings_building').on(table.buildingId),
+}));
+
+// 19. UTILITY BILLS (The actual bill sent to each unit / tenant)
+export const utilityBills = pgTable('utility_bills', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  readingId: uuid('reading_id').references(() => utilityReadings.id, { onDelete: 'set null' }),
+  unitId: uuid('unit_id').notNull().references(() => units.id, { onDelete: 'restrict' }),
+  buildingId: uuid('building_id').notNull().references(() => buildings.id),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'set null' }),
+  contractId: uuid('contract_id').references(() => contracts.id, { onDelete: 'set null' }),
+  invoiceId: uuid('invoice_id').references(() => invoices.id, { onDelete: 'set null' }), // linked invoice
+  billNumber: text('bill_number').notNull().unique(),
+  utilityType: text('utility_type').notNull(), // ELECTRICITY, WATER, GAS, INTERNET, PARKING, OTHER
+  billingPeriod: text('billing_period').notNull(), // YYYY-MM
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  paidAmount: numeric('paid_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+  remainingAmount: numeric('remaining_amount', { precision: 12, scale: 2 }).notNull(),
+  status: text('status').notNull().default('PENDING'), // PENDING, PARTIALLY_PAID, PAID, OVERDUE, CANCELLED
+  dueDate: text('due_date').notNull(),
+  // Split tracking (when a shared building bill is divided)
+  isSharedBill: boolean('is_shared_bill').notNull().default(false),
+  sharedBillId: uuid('shared_bill_id'), // references a "master" bill if split from one
+  splitRatio: numeric('split_ratio', { precision: 6, scale: 4 }), // fraction e.g. 0.25 for 25%
+  // Payment details (populated when paid)
+  paidAt: text('paid_at'),
+  paymentMethod: text('payment_method'), // Bank Transfer, Telebirr, CBE Birr, Cash
+  paymentReference: text('payment_reference'),
+  paidBy: uuid('paid_by').references(() => users.id, { onDelete: 'set null' }),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgPeriodIdx: index('idx_utility_bills_org_period').on(table.organizationId, table.billingPeriod),
+  unitPeriodTypeUq: uniqueIndex('uq_utility_bills_unit_period_type').on(table.unitId, table.billingPeriod, table.utilityType),
+  tenantIdx: index('idx_utility_bills_tenant').on(table.tenantId),
+  statusIdx: index('idx_utility_bills_status').on(table.status),
+  buildingIdx: index('idx_utility_bills_building').on(table.buildingId),
+}));
+
 // DRIZZLE RELATIONS DEFINITIONS
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   users: many(users),
