@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, X, Send, Loader2 } from 'lucide-react';
+import { Sparkles, X, Send, RefreshCw } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext.tsx';
 
 interface Message {
@@ -98,7 +98,7 @@ export default function AIChatWidget() {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
+                  <RefreshCw className="w-4 h-4 text-indigo-600 animate-spin" />
                   <span className="text-xs text-slate-500">በማሰብ ላይ...</span>
                 </div>
               </div>

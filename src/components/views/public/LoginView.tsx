@@ -9,7 +9,7 @@ interface LoginViewProps {
 }
 
 export default function LoginView({ onBack, onSuccess }: LoginViewProps) {
-  const { language } = useLanguage();
+  const { locale: language } = useLanguage();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -108,3 +108,4 @@ export default function LoginView({ onBack, onSuccess }: LoginViewProps) {
     </div>
   );
 }
+

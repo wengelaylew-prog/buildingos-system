@@ -4,7 +4,7 @@ import { useLanguage } from '../../../context/LanguageContext.tsx';
 import { api } from '../../../api/client.ts';
 
 interface CheckoutViewProps {
-  plan: 'MONTHLY' | 'BI_ANNUAL' | 'YEARLY';
+  plan: 'RENTAL' | 'BUILDING' | 'REAL_ESTATE';
   onBack: () => void;
   onDashboard: () => void;
 }
@@ -20,9 +20,9 @@ export default function CheckoutView({ plan, onBack, onDashboard }: CheckoutView
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getPrice = () => {
-    if (plan === 'MONTHLY') return '1,500 ETB';
-    if (plan === 'BI_ANNUAL') return '8,000 ETB';
-    return '14,400 ETB';
+    if (plan === 'RENTAL') return '5,000 ETB';
+    if (plan === 'BUILDING') return '20,000 ETB';
+    return '30,000 ETB';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

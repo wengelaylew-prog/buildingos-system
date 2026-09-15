@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Building2, Check, ArrowRight, Box, ShieldCheck, TrendingUp, Users, Phone, Home, DoorOpen } from 'lucide-react';
+import { Building2, Check, ArrowRight, Box, ShieldCheck, TrendingUp, Users, Phone, Building, DoorOpen } from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext.tsx';
 
 interface LandingViewProps {
@@ -119,7 +119,7 @@ export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps)
           {/* Card 3: Rental Houses Management */}
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
             <div className="w-14 h-14 bg-teal-100 text-teal-600 rounded-2xl flex items-center justify-center mb-6">
-              <Home className="w-7 h-7" />
+              <Building className="w-7 h-7" />
             </div>
             <h3 className="text-2xl font-bold text-slate-900 mb-3">
               {language === 'en' ? 'Rental Houses' : '3. ቤቶች አስተዳደር'}

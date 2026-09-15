@@ -12,7 +12,7 @@ export function TelegramApp() {
   const { locale } = useLanguage();
   const am = locale === 'am';
   const [unauthView, setUnauthView] = useState<'LINK' | 'LANDING' | 'CHECKOUT'>('LINK');
-  const [selectedPlan, setSelectedPlan] = useState<'MONTHLY' | 'BI_ANNUAL' | 'YEARLY'>('MONTHLY');
+  const [selectedPlan, setSelectedPlan] = useState<'RENTAL' | 'BUILDING' | 'REAL_ESTATE'>('BUILDING');
   const [activeTab, setActiveTab] = useState('dashboard');
   const [initData, setInitData] = useState<string | null>(null);
   const [isLinked, setIsLinked] = useState<boolean>(false);
