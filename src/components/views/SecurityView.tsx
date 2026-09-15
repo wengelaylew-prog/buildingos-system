@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldAlert, ShieldCheck, Activity, AlertTriangle, CheckCircle, Search, User } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, Activity, AlertTriangle, CheckCircle, Search, User, Sparkles } from 'lucide-react';
 // @ts-ignore
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { useLanguage } from '../../context/LanguageContext.tsx';
+import { api } from '../../api/client.ts';
 
 // Mock Access Logs
 type AccessLog = {
