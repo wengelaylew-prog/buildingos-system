@@ -17,6 +17,7 @@ interface BuildingCanvasProps {
   autoRotate?: boolean;
   tenantUnitId?: string | null;
   compact?: boolean;
+  viewMode?: 'MANAGEMENT' | 'SECURITY';
   onSelectUnit: (unit: SceneUnitDTO) => void;
   onResetViewComplete?: () => void;
 }
@@ -46,6 +47,7 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
   autoRotate = false,
   tenantUnitId,
   compact = false,
+  viewMode = 'MANAGEMENT',
   onSelectUnit,
   onResetViewComplete,
 }) => {
@@ -437,6 +439,69 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
         });
       }
 
+      // ----------------------------------------------------
+      // REALISTIC SECURITY MODE OVERLAYS
+      // ----------------------------------------------------
+      if (viewMode === 'SECURITY') {
+        // Add 2 security cameras per floor (Corner placements)
+        const cameraLocations = [
+          { x: -FLOOR_WIDTH / 2 + 0.5, z: -FLOOR_DEPTH / 2 + 0.5, ry: Math.PI / 4 }, // Top-left
+          { x: FLOOR_WIDTH / 2 - 0.5, z: FLOOR_DEPTH / 2 - 0.5, ry: -Math.PI * 0.75 }, // Bottom-right
+        ];
+
+        cameraLocations.forEach((loc, i) => {
+          const camGroup = new THREE.Group();
+          camGroup.position.set(loc.x, FLOOR_HEIGHT - 0.5, loc.z);
+          camGroup.rotation.y = loc.ry;
+
+          // Camera Body
+          const bodyGeo = new THREE.BoxGeometry(0.6, 0.4, 0.8);
+          const bodyMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.2 });
+          const body = new THREE.Mesh(bodyGeo, bodyMat);
+          body.castShadow = true;
+          camGroup.add(body);
+
+          // Lens
+          const lensGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.2, 16);
+          const lensMat = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.1, metalness: 0.8 });
+          const lens = new THREE.Mesh(lensGeo, lensMat);
+          lens.rotation.x = Math.PI / 2;
+          lens.position.z = 0.45;
+          camGroup.add(lens);
+
+          // Glowing Red Recording LED
+          const ledGeo = new THREE.SphereGeometry(0.04, 8, 8);
+          const ledMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+          const led = new THREE.Mesh(ledGeo, ledMat);
+          led.position.set(0.2, 0.1, 0.42);
+          camGroup.add(led);
+
+          // Field of view visualization cone (only active if hovered or randomly blinking, let's keep it static but transparent)
+          const fovGeo = new THREE.ConeGeometry(3, 6, 16);
+          const fovMat = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.05, depthWrite: false });
+          const fov = new THREE.Mesh(fovGeo, fovMat);
+          fov.rotation.x = -Math.PI / 2;
+          fov.position.z = 3.2;
+          camGroup.add(fov);
+
+          // We can attach userData to make it clickable
+          camGroup.userData = {
+            isCamera: true,
+            cameraId: `CAM-${floor.floorNumber}-${i}`,
+            floorId: floor.id
+          };
+          
+          floorGroup.add(camGroup);
+        });
+        
+        // Add Access Control / Fire Alarms near the core
+        const panelGeo = new THREE.BoxGeometry(0.8, 1.2, 0.1);
+        const panelMat = new THREE.MeshStandardMaterial({ color: 0x00ff00, emissive: 0x005500 });
+        const panel = new THREE.Mesh(panelGeo, panelMat);
+        panel.position.set(0, 1.5, 3.05); // attached to core
+        floorGroup.add(panel);
+      }
+
       // Roof Parapet on topmost floor
       if (floorIndex === floorsSorted.length - 1) {
         const roofCapGeo = new THREE.BoxGeometry(FLOOR_WIDTH + 0.4, 0.4, FLOOR_DEPTH + 0.4);
@@ -470,7 +535,7 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
         }
       );
     }
-  }, [building, tenantUnitId, compact]);
+  }, [building, tenantUnitId, compact, viewMode]);
 
   // 3. HANDLE EXPLODED FLOORS (SMOOTH VERTICAL SEPARATION)
   useEffect(() => {

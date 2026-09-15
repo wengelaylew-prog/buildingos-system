@@ -48,6 +48,10 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  
+  // New features state
+  const [viewMode, setViewMode] = useState<'MANAGEMENT' | 'SECURITY'>('MANAGEMENT');
+  const [showAiBuilder, setShowAiBuilder] = useState<boolean>(false);
   const [isExploded, setIsExploded] = useState<boolean>(false);
   const [cameraPreset, setCameraPreset] = useState<'perspective' | 'top' | 'front'>('perspective');
   const [autoRotate, setAutoRotate] = useState<boolean>(false);
@@ -299,44 +303,83 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
               </button>
             </div>
 
-            {/* Exploded Floors Toggle */}
-            <button
-              type="button"
-              onClick={() => setIsExploded(!isExploded)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${
-                isExploded
-                  ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs'
-                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-              }`}
-              title="Explode individual floor slabs vertically"
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              <span>{isExploded ? t('collapseFloors') : t('explodeFloors')}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* View Mode Toggle */}
+              <div className="flex bg-slate-100 rounded-xl p-1 mr-2 border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('MANAGEMENT')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    viewMode === 'MANAGEMENT'
+                      ? 'bg-white text-indigo-700 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {isAmharic ? 'ማኔጅመንት' : 'Management'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('SECURITY')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
+                    viewMode === 'SECURITY'
+                      ? 'bg-red-600 text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  {isAmharic ? 'ሴኪዩሪቲ' : 'Security'}
+                </button>
+              </div>
 
-            {/* Auto Rotate Turntable */}
-            <button
-              type="button"
-              onClick={() => setAutoRotate(!autoRotate)}
-              className={`p-1.5 rounded-xl border text-xs font-semibold transition-all ${
-                autoRotate
-                  ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs'
-                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-              }`}
-              title="Auto-Rotate Turntable"
-            >
-              <Compass className="w-4 h-4" />
-            </button>
+              {/* Explode View */}
+              <button
+                type="button"
+                onClick={() => setIsExploded(!isExploded)}
+                className={`px-3 py-1.5 rounded-xl border flex items-center gap-2 text-xs font-semibold transition-all ${
+                  isExploded
+                    ? 'bg-slate-900 border-slate-900 text-white shadow-xs'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <Layers className="w-4 h-4" />
+                <span>{isExploded ? t('collapseFloors') : t('explodeFloors')}</span>
+              </button>
 
-            {/* Reset View */}
-            <button
-              type="button"
-              onClick={handleResetView}
-              className="p-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 text-xs font-semibold transition-colors shadow-xs"
-              title={t('resetView')}
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
+              {/* Auto Rotate Turntable */}
+              <button
+                type="button"
+                onClick={() => setAutoRotate(!autoRotate)}
+                className={`p-1.5 rounded-xl border text-xs font-semibold transition-all ${
+                  autoRotate
+                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+                title="Auto-Rotate Turntable"
+              >
+                <Compass className="w-4 h-4" />
+              </button>
+
+              {/* AI 3D Generator */}
+              <button
+                type="button"
+                onClick={() => setShowAiBuilder(true)}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white border border-fuchsia-500 hover:opacity-90 text-xs font-bold transition-all shadow-sm flex items-center gap-2"
+                title="Generate 3D from Photo"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                {isAmharic ? 'ከፎቶ 3D ስራ (AI)' : 'AI 3D Build'}
+              </button>
+
+              {/* Reset View */}
+              <button
+                type="button"
+                onClick={handleResetView}
+                className="p-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900 text-xs font-semibold transition-colors shadow-xs ml-1"
+                title={t('resetView')}
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -455,6 +498,7 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
               cameraPreset={cameraPreset}
               autoRotate={autoRotate}
               tenantUnitId={sceneData.tenantUnitId}
+              viewMode={viewMode}
               onSelectUnit={handleSelectUnit}
             />
 
@@ -510,6 +554,68 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
           onNavigate?.('contracts');
         }}
       />
+
+      {/* 5. AI Image to 3D Generation Modal */}
+      {showAiBuilder && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-in fade-in">
+          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-fuchsia-50 to-purple-50">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-600 to-purple-600 text-white flex items-center justify-center">
+                  <RefreshCw className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-slate-900">
+                  {isAmharic ? 'የህንፃ ፎቶ ወደ 3D ጀነሬተር (AI)' : 'Image to 3D Generator (AI)'}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setShowAiBuilder(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                <AlertCircle className="w-5 h-5 opacity-0 absolute" /> {/* just to import AlertCircle if needed */}
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center bg-slate-50 hover:bg-slate-100 hover:border-fuchsia-300 transition-colors cursor-pointer group">
+                <div className="w-16 h-16 rounded-full bg-fuchsia-100 text-fuchsia-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h4 className="font-semibold text-slate-900 text-center mb-1">
+                  {isAmharic ? 'የህንፃዎን ፎቶ ያስገቡ (Upload Photo)' : 'Upload Building Photo'}
+                </h4>
+                <p className="text-xs text-slate-500 text-center max-w-xs">
+                  {isAmharic 
+                    ? 'የህንፃዎን የፊት ለፊት ገፅታ የሚያሳይ ግልፅ ፎቶ ያስገቡ። AI ፎቶውን በማየት ወደ 3D ሞዴል ይቀይረዋል!' 
+                    : 'Upload a clear front-facing photo of your building. AI will analyze it to generate a 3D model!'}
+                </p>
+                <button className="mt-6 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-colors">
+                  {isAmharic ? 'ፎቶ ምረጥ' : 'Browse Files'}
+                </button>
+              </div>
+
+              <div className="mt-6 bg-purple-50 p-4 rounded-xl border border-purple-100 flex items-start gap-3">
+                <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+                <div>
+                  <h5 className="text-sm font-bold text-purple-900 mb-1">
+                    {isAmharic ? 'እንዴት ነው የሚሰራው?' : 'How does it work?'}
+                  </h5>
+                  <p className="text-xs text-purple-700 leading-relaxed">
+                    {isAmharic 
+                      ? 'Gemini AI የህንፃውን ወለሎች ብዛት፣ መስኮቶች፣ በሮች እና አጠቃላይ ዲዛይን በመለየት (Analyze በማድረግ) በThree.js የ3D ሞዴል እና ቨርቹዋል ካሜራዎችን ጀነሬት ያደርጋል። (ይህ ገፅታ ለሙከራ/Demo የቀረበ ነው)' 
+                      : 'Gemini AI analyzes floor counts, windows, doors, and general facade design to procedurally generate a Three.js 3D model and virtual security cameras. (Demo Feature)'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
