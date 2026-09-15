@@ -10,6 +10,7 @@ import { UnitsView } from './components/views/UnitsView.tsx';
 import { TenantsView } from './components/views/TenantsView.tsx';
 import { ContractsView } from './components/views/ContractsView.tsx';
 import { PaymentsView } from './components/views/PaymentsView.tsx';
+import { UtilityManagementView } from './components/views/UtilityManagementView.tsx';
 import { MaintenanceView } from './components/views/MaintenanceView.tsx';
 import { DocumentsView } from './components/views/DocumentsView.tsx';
 import { AuditLogsView } from './components/views/AuditLogsView.tsx';
@@ -123,6 +124,7 @@ function MainLayout() {
             )}
 
             {activeTab === 'payments' && <PaymentsView />}
+            {activeTab === 'utilities' && <UtilityManagementView />}
 
             {activeTab === 'receipts' && (
               <PhasePlaceholderView module="receipts" onNavigate={handleNavigate} />

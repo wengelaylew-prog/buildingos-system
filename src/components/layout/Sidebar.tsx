@@ -1,5 +1,5 @@
 import React from 'react';
-import {
+import { Activity,
   LayoutDashboard,
   Building2,
   Box,
@@ -23,6 +23,7 @@ import {
 import { useAuth, AVAILABLE_ROLES } from '../../context/AuthContext.tsx';
 
 export type ActiveTab =
+  | 'utilities'
   | 'dashboard'
   | '3d-viewer'
   | 'buildings'
@@ -70,7 +71,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSel
     { id: 'units', label: 'Floors & Units', icon: Grid3X3, permission: 'unit.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'MAINTENANCE'] },
     { id: 'tenants', label: 'Tenants', icon: Users, permission: 'tenant.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'ACCOUNTANT'] },
     { id: 'contracts', label: 'Contracts & Leases', icon: FileText, permission: 'contract.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'ACCOUNTANT'] },
-    { id: 'payments', label: 'Payments & Revenue', icon: CreditCard, permission: 'payment.read', allowedRoles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
+    { id: 'utilities', label: 'Utility Billing', icon: Activity, permission: 'payment.read', allowedRoles: ['SUPER_ADMIN', 'ACCOUNTANT', 'PROPERTY_MANAGER'] },
+      { id: 'payments', label: 'Payments & Revenue', icon: CreditCard, permission: 'payment.read', allowedRoles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
     { id: 'receipts', label: 'Receipts', icon: Receipt, phaseBadge: 'Phase 2', allowedRoles: ['SUPER_ADMIN', 'ACCOUNTANT'] },
     { id: 'maintenance', label: 'Maintenance', icon: Wrench, permission: 'maintenance.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'MAINTENANCE'] },
     { id: 'security', label: 'Security & Gates', icon: ShieldCheck, phaseBadge: 'Phase 3', allowedRoles: ['SUPER_ADMIN', 'SECURITY', 'PROPERTY_MANAGER'] },

@@ -54,6 +54,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
+  // Utilities
+  getUtilitySummary: () => request<any>('/api/v1/utilities/summary'),
+  getUtilityBills: () => request<any>('/api/v1/utilities/bills'),
+  getUtilityReadings: () => request<any>('/api/v1/utilities/readings'),
+  recordUtilityReading: (data: any) => request<any>('/api/v1/utilities/readings', { method: 'POST', body: JSON.stringify(data) }),
+  splitUtilityBill: (data: any) => request<any>('/api/v1/utilities/split', { method: 'POST', body: JSON.stringify(data) }),
+  payUtilityBill: (id: string, data: any) => request<any>(`/api/v1/utilities/bills/${id}/pay`, { method: 'POST', body: JSON.stringify(data) }),
+
   // Auth
   getCurrentUser: () => request<AuthUser>('/api/v1/auth/me'),
 
