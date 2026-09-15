@@ -165,3 +165,4 @@ export const TenantQuickProfileModal: React.FC<TenantQuickProfileModalProps> = (
     </div>
   );
 };
+

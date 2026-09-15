@@ -723,3 +723,14 @@ export const subscriptionRequestsRelations = relations(subscriptionRequests, ({ 
   organization: one(organizations, { fields: [subscriptionRequests.organizationId], references: [organizations.id] }),
   reviewer: one(users, { fields: [subscriptionRequests.reviewedBy], references: [users.id] }),
 }));
+
+
+export const utilityReadingsRelations = relations(utilityReadings, ({ one }) => ({
+  unit: one(units, { fields: [utilityReadings.unitId], references: [units.id] }),
+  building: one(buildings, { fields: [utilityReadings.buildingId], references: [buildings.id] }),
+}));
+
+export const utilityBillsRelations = relations(utilityBills, ({ one }) => ({
+  unit: one(units, { fields: [utilityBills.unitId], references: [units.id] }),
+  invoice: one(invoices, { fields: [utilityBills.invoiceId], references: [invoices.id] }),
+}));

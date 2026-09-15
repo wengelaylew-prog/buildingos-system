@@ -60,12 +60,19 @@ export class SubscriptionsService {
     const [request] = await db.select().from(subscriptionRequests).where(eq(subscriptionRequests.id, requestId));
     if (!request) throw new Error('Request not found');
     if (request.status !== 'PENDING_VERIFICATION') throw new Error('Request is not pending');
-
     // Calculate new end date based on plan
     const endDate = new Date();
-    if (request.plan === 'MONTHLY') endDate.setMonth(endDate.getMonth() + 1);
-    else if (request.plan === 'BI_ANNUAL') endDate.setMonth(endDate.getMonth() + 6);
-    else if (request.plan === 'YEARLY') endDate.setFullYear(endDate.getFullYear() + 1);
+    const p = request.plan.toUpperCase();
+    if (p.includes('MONTHLY') || p.includes('BASIC')) {
+      endDate.setMonth(endDate.getMonth() + 1);
+    } else if (p.includes('BI_ANNUAL') || p.includes('STANDARD')) {
+      endDate.setMonth(endDate.getMonth() + 6);
+    } else if (p.includes('YEARLY') || p.includes('PREMIUM')) {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    } else {
+      // Default to 1 year
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    }
 
     // Update Request
     await db.update(subscriptionRequests).set({
