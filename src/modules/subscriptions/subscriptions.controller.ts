@@ -11,8 +11,8 @@ export class SubscriptionsController {
       const file = (req as any).file;
 
       if (!organizationId) return sendError(res, 401, 'Unauthorized');
-      if (!file) return sendError(res, 400, 'Payment receipt image is required');
-      if (!plan || !transactionCode) return sendError(res, 400, 'Plan and transaction code are required');
+      if (!file && !transactionCode) return sendError(res, 400, 'Please provide either a transaction code or a payment receipt image');
+      if (!plan) return sendError(res, 400, 'Plan is required');
 
       const result = await SubscriptionsService.submitCheckout(
         organizationId,

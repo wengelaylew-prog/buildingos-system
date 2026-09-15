@@ -27,7 +27,7 @@ export default function CheckoutView({ plan, onBack, onDashboard }: CheckoutView
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) {
+    if (!file && !transactionCode.trim()) {
       setError(language === 'en' ? 'Please upload the payment receipt' : 'እባክዎ የከፈሉበትን ደረሰኝ (Screenshot) ያስገቡ');
       return;
     }
@@ -134,7 +134,7 @@ export default function CheckoutView({ plan, onBack, onDashboard }: CheckoutView
                 {language === 'en' ? 'Transaction ID / Reference Code' : 'የትራንዛክሽን ኮድ (Transaction ID)'}
               </label>
               <input 
-                type="text" required
+                type="text"
                 value={transactionCode}
                 onChange={e => setTransactionCode(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all font-mono"
