@@ -4,7 +4,7 @@ import { useLanguage } from '../../../context/LanguageContext.tsx';
 import { api } from '../../../api/client.ts';
 
 interface CheckoutViewProps {
-  plan: 'RENTAL' | 'BUILDING' | 'REAL_ESTATE';
+  plan: 'RENTAL_BASIC' | 'RENTAL_STANDARD' | 'RENTAL_PREMIUM' | 'BUILDING_BASIC' | 'BUILDING_STANDARD' | 'BUILDING_PREMIUM' | 'REAL_ESTATE_BASIC' | 'REAL_ESTATE_STANDARD' | 'REAL_ESTATE_PREMIUM';
   onBack: () => void;
   onDashboard: () => void;
 }
@@ -20,9 +20,20 @@ export default function CheckoutView({ plan, onBack, onDashboard }: CheckoutView
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getPrice = () => {
-    if (plan === 'RENTAL') return '5,000 ETB';
-    if (plan === 'BUILDING') return '20,000 ETB';
-    return '30,000 ETB';
+    switch (plan) {
+      case 'RENTAL_BASIC': return '2,500 ETB';
+      case 'RENTAL_STANDARD': return '5,000 ETB';
+      case 'RENTAL_PREMIUM': return '10,000 ETB';
+      
+      case 'BUILDING_BASIC': return '10,000 ETB';
+      case 'BUILDING_STANDARD': return '20,000 ETB';
+      case 'BUILDING_PREMIUM': return '30,000 ETB';
+
+      case 'REAL_ESTATE_BASIC': return '15,000 ETB';
+      case 'REAL_ESTATE_STANDARD': return '30,000 ETB';
+      case 'REAL_ESTATE_PREMIUM': return '50,000 ETB';
+      default: return '20,000 ETB';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -3,7 +3,7 @@ import { ArrowLeft, Building2, User, Mail, Lock } from 'lucide-react';
 import { useLanguage } from '../../../context/LanguageContext.tsx';
 
 interface RegistrationViewProps {
-  plan: 'RENTAL' | 'BUILDING' | 'REAL_ESTATE';
+  plan: 'RENTAL_BASIC' | 'RENTAL_STANDARD' | 'RENTAL_PREMIUM' | 'BUILDING_BASIC' | 'BUILDING_STANDARD' | 'BUILDING_PREMIUM' | 'REAL_ESTATE_BASIC' | 'REAL_ESTATE_STANDARD' | 'REAL_ESTATE_PREMIUM';
   onBack: () => void;
   onSuccess: () => void; // Proceed to checkout
 }
@@ -13,6 +13,20 @@ export default function RegistrationView({ plan, onBack, onSuccess }: Registrati
   const [formData, setFormData] = useState({ fullName: '', email: '', password: '', organizationName: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const getPlanName = (p: string, lang: string) => {
+    if (p.startsWith('RENTAL')) return lang === 'en' ? 'Rental Houses' : 'የሚከራዩ ቤቶች';
+    if (p.startsWith('BUILDING')) return lang === 'en' ? 'Commercial Building' : 'የንግድ ህንፃዎች';
+    return lang === 'en' ? 'Real Estate' : 'የሪል ስቴት አስተዳደር';
+  };
+  
+  const getTierName = (p: string, lang: string) => {
+    if (p.endsWith('BASIC')) return lang === 'en' ? 'Basic' : 'መነሻ';
+    if (p.endsWith('STANDARD')) return lang === 'en' ? 'Standard' : 'መካከለኛ';
+    if (p.endsWith('PREMIUM')) return lang === 'en' ? 'Premium' : 'ከፍተኛ';
+    return '';
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +61,7 @@ export default function RegistrationView({ plan, onBack, onSuccess }: Registrati
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
       <button onClick={onBack} className="absolute top-6 left-6 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors">
-        <ArrowLeft size={20} /> {language === 'en' ? 'Back' : 'ተመለስ'}
+        <ArrowLeft size={20} /> {language === 'en' ? `Selected Package: ${getPlanName(plan, 'en')} - ${getTierName(plan, 'en')}` : `የመረጡት ፓኬጅ: ${getPlanName(plan, 'am')} - ${getTierName(plan, 'am')}`}
       </button>
 
       <div className="bg-white w-full max-w-md p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
@@ -60,8 +74,8 @@ export default function RegistrationView({ plan, onBack, onSuccess }: Registrati
           </h1>
           <p className="text-slate-500 mt-2">
             {language === 'en' 
-              ? `Selected Package: ${plan === 'RENTAL' ? 'Rental Houses' : plan === 'BUILDING' ? 'Commercial Building' : 'Real Estate'}` 
-              : `የተመረጠው ፓኬጅ: ${plan === 'RENTAL' ? 'የሚከራዩ ቤቶች' : plan === 'BUILDING' ? 'ህንፃ አስተዳደር' : 'ሪልስቴት አስተዳደር'}`}
+              ? `Selected Package: ${getPlanName(plan, 'en') + ' - ' + getTierName(plan, 'en')}` 
+              : `የተመረጠው ፓኬጅ: ${getPlanName(plan, 'am') + ' - ' + getTierName(plan, 'am')}`}
           </p>
         </div>
 

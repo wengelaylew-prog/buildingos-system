@@ -4,11 +4,14 @@ import { useLanguage } from '../../../context/LanguageContext.tsx';
 
 interface LandingViewProps {
   onLogin: () => void;
-  onSelectPlan: (plan: 'RENTAL' | 'BUILDING' | 'REAL_ESTATE') => void;
+  onSelectPlan: (plan: 'RENTAL_BASIC' | 'RENTAL_STANDARD' | 'RENTAL_PREMIUM' | 'BUILDING_BASIC' | 'BUILDING_STANDARD' | 'BUILDING_PREMIUM' | 'REAL_ESTATE_BASIC' | 'REAL_ESTATE_STANDARD' | 'REAL_ESTATE_PREMIUM') => void;
 }
 
 export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps) {
   const { t, locale: language, setLocale } = useLanguage();
+  const [rentalTier, setRentalTier] = React.useState<'BASIC' | 'STANDARD' | 'PREMIUM'>('STANDARD');
+  const [buildingTier, setBuildingTier] = React.useState<'BASIC' | 'STANDARD' | 'PREMIUM'>('STANDARD');
+  const [realEstateTier, setRealEstateTier] = React.useState<'BASIC' | 'STANDARD' | 'PREMIUM'>('STANDARD');
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
@@ -141,7 +144,7 @@ export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps)
               <p className="text-blue-100 mb-6">{language === 'en' ? 'For multi-story commercial buildings and offices.' : 'ለንግድ ህንፃዎች፣ ለቢሮዎች እና ለሱቆች የተዘጋጀ'}
               </p>
               <div className="mb-6">
-                <span className="text-4xl font-extrabold text-white">20,000</span>
+                <span className="text-4xl font-extrabold text-white">{buildingTier === 'BASIC' ? '10,000' : buildingTier === 'STANDARD' ? '20,000' : '30,000'}</span>
                 <span className="text-blue-200 font-medium"> ETB / {language === 'en' ? 'mo' : 'በወር'}</span>
               </div>
               <ul className="space-y-4 mb-8 flex-1">
@@ -150,7 +153,7 @@ export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps)
                 <li className="flex items-start gap-3"><Check size={20} className="text-blue-300 shrink-0" /> <span className="text-white font-bold">Smart AI Assistant</span></li>
                 <li className="flex items-start gap-3"><Check size={20} className="text-blue-300 shrink-0" /> <span className="text-white">Priority 24/7 Support</span></li>
               </ul>
-              <button onClick={() => onSelectPlan('BUILDING')} className="w-full py-3 rounded-xl font-bold bg-white text-blue-600 hover:bg-slate-50 transition-colors">
+              <button onClick={() => onSelectPlan(`BUILDING_${buildingTier}` as any)} className="w-full py-3 rounded-xl font-bold bg-white text-blue-600 hover:bg-slate-50 transition-colors">
                 {language === 'en' ? 'Select Building Package' : 'ይህንን ይምረጡ'}
               </button>
             </div>
@@ -161,7 +164,7 @@ export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps)
               <p className="text-slate-500 mb-6">{language === 'en' ? 'For apartment complexes and real estate developers.' : 'ለሰፋፊ የአፓርትመንት ህንፃዎች እና ለሪልስቴት አልሚዎች'}
               </p>
               <div className="mb-6">
-                <span className="text-4xl font-extrabold text-slate-900">30,000</span>
+                <span className="text-4xl font-extrabold text-slate-900">{realEstateTier === 'BASIC' ? '15,000' : realEstateTier === 'STANDARD' ? '30,000' : '50,000'}</span>
                 <span className="text-slate-500 font-medium"> ETB / {language === 'en' ? 'mo' : 'በወር'}</span>
               </div>
               <ul className="space-y-4 mb-8 flex-1">
@@ -170,7 +173,7 @@ export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps)
                 <li className="flex items-start gap-3"><Check size={20} className="text-green-500 shrink-0" /> <span className="text-slate-700">Multi-Property Support</span></li>
                 <li className="flex items-start gap-3"><Check size={20} className="text-green-500 shrink-0" /> <span className="text-slate-700">Dedicated Account Manager</span></li>
               </ul>
-              <button onClick={() => onSelectPlan('REAL_ESTATE')} className="w-full py-3 rounded-xl font-bold border-2 border-slate-200 text-slate-900 hover:border-blue-600 hover:text-blue-600 transition-colors">
+              <button onClick={() => onSelectPlan(`REAL_ESTATE_${realEstateTier}` as any)} className="w-full py-3 rounded-xl font-bold border-2 border-slate-200 text-slate-900 hover:border-blue-600 hover:text-blue-600 transition-colors">
                 {language === 'en' ? 'Select Real Estate Package' : 'ይህንን ይምረጡ'}
               </button>
             </div>
@@ -180,7 +183,7 @@ export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps)
               <p className="text-slate-500 mb-6">{language === 'en' ? 'For individual residential houses and villas.' : 'ለግል የሚከራዩ ቤቶች፣ ቪላዎች እና ጊቢዎች'}
               </p>
               <div className="mb-6">
-                <span className="text-4xl font-extrabold text-slate-900">5,000</span>
+                <span className="text-4xl font-extrabold text-slate-900">{rentalTier === 'BASIC' ? '2,500' : rentalTier === 'STANDARD' ? '5,000' : '10,000'}</span>
                 <span className="text-slate-500 font-medium"> ETB / {language === 'en' ? 'mo' : 'በወር'}</span>
               </div>
               <ul className="space-y-4 mb-8 flex-1">
@@ -189,7 +192,7 @@ export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps)
                 <li className="flex items-start gap-3"><Check size={20} className="text-green-500 shrink-0" /> <span className="text-slate-700">Utility Bills Management</span></li>
                 <li className="flex items-start gap-3"><Check size={20} className="text-green-500 shrink-0" /> <span className="text-slate-700">Standard Support</span></li>
               </ul>
-              <button onClick={() => onSelectPlan('RENTAL')} className="w-full py-3 rounded-xl font-bold border-2 border-slate-200 text-slate-900 hover:border-blue-600 hover:text-blue-600 transition-colors">
+              <button onClick={() => onSelectPlan(`RENTAL_${rentalTier}` as any)} className="w-full py-3 rounded-xl font-bold border-2 border-slate-200 text-slate-900 hover:border-blue-600 hover:text-blue-600 transition-colors">
                 {language === 'en' ? 'Select Rental Package' : 'ይህንን ይምረጡ'}
               </button>
             </div>
