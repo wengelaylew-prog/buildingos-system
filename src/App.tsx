@@ -165,13 +165,14 @@ function isTelegramWebApp(): boolean {
 import LandingView from './components/views/public/LandingView.tsx';
 import RegistrationView from './components/views/public/RegistrationView.tsx';
 import CheckoutView from './components/views/public/CheckoutView.tsx';
+import LoginView from './components/views/public/LoginView.tsx';
 
 export default function App() {
   const isTelegramRoute = window.location.pathname === '/telegram' || window.location.pathname.startsWith('/telegram/');
   const isTelegram = isTelegramRoute || isTelegramWebApp();
 
   // Simple state-based routing for public pages
-  const [currentView, setCurrentView] = useState<'LANDING' | 'REGISTER' | 'CHECKOUT' | 'APP'>('LANDING');
+  const [currentView, setCurrentView] = useState<'LANDING' | 'REGISTER' | 'LOGIN' | 'CHECKOUT' | 'APP'>('LANDING');
   const [selectedPlan, setSelectedPlan] = useState<'RENTAL' | 'BUILDING' | 'REAL_ESTATE'>('BUILDING');
 
   if (isTelegram) {
@@ -187,7 +188,7 @@ export default function App() {
       <AuthProvider>
         {currentView === 'LANDING' && (
           <LandingView 
-            onLogin={() => setCurrentView('APP')} 
+            onLogin={() => setCurrentView('LOGIN')} 
             onSelectPlan={(plan) => {
               setSelectedPlan(plan);
               setCurrentView('REGISTER');
@@ -199,7 +200,14 @@ export default function App() {
           <RegistrationView 
             plan={selectedPlan}
             onBack={() => setCurrentView('LANDING')}
-            onSuccess={() => setCurrentView('CHECKOUT')}
+            onSuccess={() => setCurrentView('APP')}
+          />
+        )}
+
+        {currentView === 'LOGIN' && (
+          <LoginView
+            onBack={() => setCurrentView('LANDING')}
+            onSuccess={() => setCurrentView('APP')}
           />
         )}
         

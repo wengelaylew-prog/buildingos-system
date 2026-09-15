@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth, googleAuthProvider } from '../lib/firebase.ts';
-import { signInWithPopup, signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { api, setApiRole, getApiRole, setApiToken } from '../api/client.ts';
 import { AuthUser } from '../types/index.ts';
 
@@ -42,79 +40,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRoleState(profile.roleCode);
       }
     } catch {
-      // Graceful fallback handled by API client role headers
+      // API client will handle the fallback or logout
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Listen to Firebase Auth state with safe iframe error handling
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      async (fbUser: FirebaseUser | null) => {
-        if (fbUser) {
-          try {
-            const token = await fbUser.getIdToken();
-            setApiToken(token);
-          } catch {
-            // Fallback to role token in sandboxed containers
-          }
-        } else {
-          setApiToken(null);
-        }
-        await fetchProfile();
-      },
-      () => {
-        // Safe recovery for sandboxed preview iframes
-        fetchProfile();
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('buildingos_token');
+      if (storedToken) {
+        setApiToken(storedToken);
+      } else {
+        setApiToken(null);
       }
-    );
+      await fetchProfile();
+    };
 
-    return () => unsubscribe();
+    initializeAuth();
   }, []);
 
-  const setActiveRole = async (newRole: string) => {
-    setRoleState(newRole);
-    setApiRole(newRole);
-    await fetchProfile();
+  const setActiveRole = (role: string) => {
+    setRoleState(role);
+    setApiRole(role);
   };
 
-  const hasPermission = (permissionCode: string): boolean => {
+  const hasPermission = (permissionCode: string) => {
     if (!user) return false;
     if (user.roleCode === 'SUPER_ADMIN') return true;
-    return user.permissions.includes(permissionCode);
+    return user.permissions?.includes(permissionCode) ?? false;
   };
 
   const signInWithGoogle = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleAuthProvider);
-      const token = await result.user.getIdToken();
-      setApiToken(token);
-      await fetchProfile();
-    } catch (error: any) {
-      console.error('Google Sign In failed:', error);
-      throw error;
-    }
+    throw new Error('Google Sign-in is temporarily disabled. Please use email and password.');
   };
 
   const login = async (email: string, password: string) => {
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      const token = await result.user.getIdToken();
-      setApiToken(token);
-      await fetchProfile();
+      const response = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      if (data.data && data.data.token) {
+        localStorage.setItem('buildingos_token', data.data.token);
+        setApiToken(data.data.token);
+        await fetchProfile();
+      }
     } catch (error: any) {
-      console.error('Email/Password Sign In failed:', error);
+      console.error('Login failed:', error);
       throw error;
     }
   };
 
   const signOut = async () => {
     try {
-      await fbSignOut(auth);
+      localStorage.removeItem('buildingos_token');
       setApiToken(null);
-      await fetchProfile();
+      setUser(null);
     } catch (error) {
       console.error('Sign Out failed:', error);
     }
@@ -141,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

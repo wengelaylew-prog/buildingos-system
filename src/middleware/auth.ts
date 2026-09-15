@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { adminAuth } from '../lib/firebase-admin.ts';
 import { db } from '../db/index.ts';
 import { users, roles, permissions, rolePermissions, auditLogs, organizations, telegramAccounts } from '../db/schema.ts';
 import { eq, and } from 'drizzle-orm';
 import { validateTelegramWebAppData } from '../lib/telegram.ts';
 import { resolveTmaSession } from '../lib/tma-session.ts';
+import jwt from 'jsonwebtoken';
 
 export interface AuthenticatedUser {
   id: string;
@@ -28,21 +28,23 @@ const DEFAULT_ORG_ID = 'a0000000-0000-0000-0000-000000000001';
 const rolePermissionsCache = new Map<string, string[]>();
 
 export async function getPermissionsForRole(roleId: string, roleCode: string): Promise<string[]> {
-  if (rolePermissionsCache.has(roleCode)) {
-    return rolePermissionsCache.get(roleCode)!;
+  if (rolePermissionsCache.has(roleId)) {
+    return rolePermissionsCache.get(roleId)!;
+  }
+  
+  if (roleCode === 'SUPER_ADMIN') {
+    return ['*'];
   }
 
   try {
-    const records = await db
-      .select({
-        code: permissions.code,
-      })
+    const result = await db
+      .select({ code: permissions.code })
       .from(rolePermissions)
       .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
       .where(eq(rolePermissions.roleId, roleId));
-
-    const codes = records.map((r) => r.code);
-    rolePermissionsCache.set(roleCode, codes);
+    
+    const codes = result.map((r) => r.code);
+    rolePermissionsCache.set(roleId, codes);
     return codes;
   } catch (error) {
     console.error('Failed to fetch role permissions:', error);
@@ -50,21 +52,10 @@ export async function getPermissionsForRole(roleId: string, roleCode: string): P
   }
 }
 
-export const authenticate = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  const authHeader = req.headers.authorization;
+export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const isProduction = process.env.NODE_ENV === 'production';
 
   try {
-    // 0. Telegram Mini App Auth
-    if (authHeader && authHeader.toUpperCase().startsWith('TMA ')) {
-      const initData = authHeader.substring(4);
-
-      // SECURITY: never fall back to a guessable bot token in production — that would let
-      // anyone forge a valid Telegram signature and impersonate a linked tenant.
       if (!process.env.TELEGRAM_BOT_TOKEN) {
         return res.status(401).json({
           error: { code: 'CONFIG_ERROR', message: 'Telegram authentication is not configured' },
@@ -176,14 +167,15 @@ export const authenticate = async (
       return next();
     }
 
-    // 1. Real Firebase Auth Token Check
-    if (authHeader && authHeader.startsWith('Bearer ') && !authHeader.includes('demo_token')) {
-      const token = authHeader.split('Bearer ')[1];
-      try {
-        const decodedToken = await adminAuth.verifyIdToken(token);
+      // 1. Custom JWT Auth Token Check
+      if (authHeader && authHeader.startsWith('Bearer ') && !authHeader.includes('demo_token')) {
+        const token = authHeader.split('Bearer ')[1];
+        try {
+          const jwt = require('jsonwebtoken');
+          const decodedToken = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key-for-jwt-signing') as any;
 
-        // A. Look up user by Firebase UID
-        let dbUser = (await db.select().from(users).where(eq(users.uid, decodedToken.uid)))[0];
+          // A. Look up user by Custom UID
+          let dbUser = (await db.select().from(users).where(eq(users.uid, decodedToken.uid)))[0];
 
         // B. If not found by UID, check if user was pre-created/invited by email
         if (!dbUser && decodedToken.email) {

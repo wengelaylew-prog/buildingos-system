@@ -19,34 +19,23 @@ export default function RegistrationView({ plan, onBack, onSuccess }: Registrati
     setLoading(true);
     setError(null);
     try {
-      // 1. Create user in Firebase FIRST using client SDK
-      const { auth } = await import('../../../lib/firebase.ts');
-      const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
-      
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      await updateProfile(userCredential.user, { displayName: formData.fullName });
-      
-      const idToken = await userCredential.user.getIdToken();
-
-      // 2. Register in our PostgreSQL database
+      // 1. Register in our PostgreSQL database using custom JWT auth
       const res = await fetch('/api/v1/auth/register', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
         },
-        body: JSON.stringify({ ...formData, plan, uid: userCredential.user.uid })
+        body: JSON.stringify({ ...formData, plan })
       });
       
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Registration failed');
       
-      // Auto-login or set token logic here if required by checkout,
-      // For now, we assume checkout is public with ID or we just registered successfully.
-      // Wait, checkout requires AuthRequest in backend!
-      // This means the user must login to checkout. Or backend register should return a token.
-      // Let's just proceed to success, and prompt them to login to complete payment, 
-      // OR we just do it immediately.
+      // Save the returned token
+      if (data.data?.token) {
+        localStorage.setItem('buildingos_token', data.data.token);
+      }
+      
       onSuccess();
     } catch (err: any) {
       setError(err.message);

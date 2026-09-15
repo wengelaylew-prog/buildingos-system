@@ -3,9 +3,10 @@ import { createPool } from './index.ts';
 // Migration 0003: TMA Auth - otp_codes channel/identifier schema
 // Runs automatically at server startup and is idempotent (safe to re-run).
 export const MIGRATION_SQL = `
--- Step 1: Add phone columns to users (idempotent)
+-- Step 1: Add phone and password_hash columns to users (idempotent)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 DROP INDEX IF EXISTS uq_users_email_password_auth;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_users_phone ON users (phone) WHERE phone IS NOT NULL;
 

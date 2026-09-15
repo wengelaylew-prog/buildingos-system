@@ -68,8 +68,9 @@ export const rolePermissions = pgTable(
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').references(() => organizations.id),
-  uid: text('uid').notNull().unique(), // Firebase Auth UID (Admin Web only)
+  uid: text('uid').notNull().unique(), // We'll keep this but generate our own UUID if not Firebase
   email: text('email').notNull(),
+  passwordHash: text('password_hash'),
   fullName: text('full_name').notNull(),
   avatarUrl: text('avatar_url'),
   roleId: uuid('role_id').references(() => roles.id),
