@@ -15,6 +15,9 @@ import {
   Clock,
   ArrowRight,
   Box,
+  MessageSquare,
+  Send,
+  Phone
 } from 'lucide-react';
 import { api } from '../../api/client.ts';
 import { Unit, Building, Floor, Tenant, Contract, Payment, MaintenanceRequest, Document, AuditLog } from '../../types/index.ts';
@@ -986,8 +989,36 @@ export const UnitsView: React.FC<UnitsViewProps> = ({
                         <div className="text-sm font-bold text-slate-900">{unitDetails.tenant.fullName}</div>
                         <div className="text-slate-500 text-[11px]">{unitDetails.tenant.phone} • {unitDetails.tenant.email}</div>
                       </div>
-                      <Badge status="OCCUPIED" />
-                    </div>
+                      
+                        <Badge status="OCCUPIED" />
+                      </div>
+                      
+                      {/* FAST COMMUNICATION INTEGRATION */}
+                      <div className="flex items-center gap-2 pt-2">
+                        <a 
+                          href={`https://wa.me/${(unitDetails.tenant.phone || '').replace(/\D/g, '')}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 rounded-md transition-colors"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" /> <span className="font-medium">WhatsApp</span>
+                        </a>
+                        <a 
+                          href={`https://t.me/+${(unitDetails.tenant.phone || '').replace(/\D/g, '')}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 rounded-md transition-colors"
+                        >
+                          <Send className="w-3.5 h-3.5" /> <span className="font-medium">Telegram</span>
+                        </a>
+                        <a 
+                          href={`tel:${unitDetails.tenant.phone}`} 
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-md transition-colors"
+                        >
+                          <Phone className="w-3.5 h-3.5" /> <span className="font-medium">Call</span>
+                        </a>
+                      </div>
+
                     {unitDetails.contract && (
                       <div className="pt-3 border-t border-slate-200 grid grid-cols-3 gap-2">
                         <div>

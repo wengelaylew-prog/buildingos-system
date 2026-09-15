@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Activity, Plus, Users, ArrowRight } from 'lucide-react';
+import { Activity, Plus, Users, ArrowRight, MoreVertical } from 'lucide-react';
 import { api } from '../../api/client.ts';
 import { Badge } from '../common/Badge.tsx';
+import { TenantQuickProfileModal } from '../common/TenantQuickProfileModal.tsx';
+import { MessageSquare } from 'lucide-react';
 
 type UtilityTab = 'OVERVIEW' | 'BILLS' | 'READINGS' | 'SHARED';
 
@@ -10,6 +12,17 @@ export const UtilityManagementView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<any>(null);
   const [bills, setBills] = useState<any[]>([]);
+  const [selectedTenant, setSelectedTenant] = useState<any>(null);
+  const [selectedUnit, setSelectedUnit] = useState<any>(null);
+  const [selectedBill, setSelectedBill] = useState<any>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const openProfile = (tenant: any, unit: any, bill: any) => {
+    setSelectedTenant(tenant);
+    setSelectedUnit(unit);
+    setSelectedBill(bill);
+    setIsProfileOpen(true);
+  };
   
   useEffect(() => {
     loadData();
@@ -159,8 +172,16 @@ export const UtilityManagementView: React.FC = () => {
                       <tr key={bill.id} className="hover:bg-slate-800/30 transition-colors">
                         <td className="py-4 px-5 font-mono text-xs text-slate-400">{bill.billNumber}</td>
                         <td className="py-4 px-5">
-                          <div className="font-bold text-slate-200">{unit?.unitNumber || 'Shared (የጋራ)'}</div>
-                          <div className="text-xs text-slate-500 mt-1">{tenant?.fullName || '-'}</div>
+                          <button 
+                            onClick={() => tenant && openProfile(tenant, unit, bill)}
+                            className="text-left group"
+                            disabled={!tenant}
+                          >
+                            <div className="font-bold text-slate-200 group-hover:text-indigo-400 transition-colors">{unit?.unitNumber || 'Shared (የጋራ)'}</div>
+                            <div className="text-xs text-slate-500 mt-1 group-hover:text-indigo-300 transition-colors flex items-center gap-1">
+                              {tenant?.fullName || '-'}
+                            </div>
+                          </button>
                         </td>
                         <td className="py-4 px-5">
                           <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
@@ -173,6 +194,14 @@ export const UtilityManagementView: React.FC = () => {
                           {parseFloat(bill.paidAmount) > 0 && (
                             <div className="text-xs text-emerald-400 font-medium mt-1">Paid: {parseFloat(bill.paidAmount).toLocaleString()}</div>
                           )}
+                          {bill.status === 'OVERDUE' && tenant && (
+                            <button 
+                              onClick={() => openProfile(tenant, unit, bill)}
+                              className="flex items-center gap-1 text-[10px] bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded mt-1.5 hover:bg-rose-500/30 transition-colors"
+                            >
+                              <MessageSquare className="w-3 h-3" /> ላክ (Send)
+                            </button>
+                          )}
                         </td>
                         <td className="py-4 px-5">
                           <Badge status={bill.status} />
@@ -184,7 +213,7 @@ export const UtilityManagementView: React.FC = () => {
                             </button>
                           ) : (
                             <button className="text-slate-500 hover:text-white p-2">
-                              <Activity className="w-5 h-5" />
+                              <MoreVertical className="w-5 h-5" />
                             </button>
                           )}
                         </td>
@@ -235,6 +264,15 @@ export const UtilityManagementView: React.FC = () => {
           
         </div>
       )}
+      <TenantQuickProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        tenant={selectedTenant}
+        unit={selectedUnit}
+        billContext={selectedBill}
+        overdueAmount={selectedBill && selectedBill.status === 'OVERDUE' ? parseFloat(selectedBill.amount) - parseFloat(selectedBill.paidAmount) : 0}
+      />
     </div>
   );
 };
+
