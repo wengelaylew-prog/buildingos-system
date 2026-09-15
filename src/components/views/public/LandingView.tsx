@@ -67,7 +67,70 @@ export default function LandingView({ onLogin, onSelectPlan }: LandingViewProps)
             'በአንድ ሲስተም ብቻ! ህንፃ፣ ሪልስቴት እና የሚከራዩ ቤቶችን በዘመናዊ መልኩ ያስተዳድሩ። ጊዜዎን ይቆጥቡ፣ ገቢዎን ያሳድጉ።'}
         </p>
 
-        {/* Pricing Packages Embedded in Hero */}
+        
+        {/* Services Marquee / Moving Images */}
+        <div className="relative flex overflow-hidden mb-16 w-full max-w-7xl mx-auto group">
+          <style>
+            {`
+              @keyframes marquee {
+                0% { transform: translateX(0%); }
+                100% { transform: translateX(-100%); }
+              }
+              .animate-marquee {
+                animation: marquee 35s linear infinite;
+              }
+              .group:hover .animate-marquee {
+                animation-play-state: paused;
+              }
+            `}
+          </style>
+          
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="flex gap-6 px-3 animate-marquee shrink-0">
+               <div className="relative rounded-2xl overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
+                 <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=400" className="w-64 h-44 object-cover" alt="Modern Office" />
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                   <span className="text-white font-bold text-sm">{language === 'en' ? 'Smart Offices' : 'ዘመናዊ ቢሮዎች'}</span>
+                 </div>
+               </div>
+               <div className="relative rounded-2xl overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
+                 <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=400" className="w-64 h-44 object-cover" alt="Real Estate" />
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                   <span className="text-white font-bold text-sm">{language === 'en' ? 'Real Estate' : 'ሪል ስቴት'}</span>
+                 </div>
+               </div>
+               <div className="relative rounded-2xl overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
+                 <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=400" className="w-64 h-44 object-cover" alt="Commercial Building" />
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                   <span className="text-white font-bold text-sm">{language === 'en' ? 'Commercial Buildings' : 'የንግድ ህንፃዎች'}</span>
+                 </div>
+               </div>
+               <div className="relative rounded-2xl overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
+                 <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400" className="w-64 h-44 object-cover" alt="Apartment Complex" />
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                   <span className="text-white font-bold text-sm">{language === 'en' ? 'Apartments' : 'አፓርታማዎች'}</span>
+                 </div>
+               </div>
+               <div className="relative rounded-2xl overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
+                 <img src="https://images.unsplash.com/photo-1416331108676-a22ccb276eac?auto=format&fit=crop&q=80&w=400" className="w-64 h-44 object-cover" alt="Rental Villa" />
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                   <span className="text-white font-bold text-sm">{language === 'en' ? 'Rental Villas' : 'የሚከራዩ ቪላዎች'}</span>
+                 </div>
+               </div>
+               <div className="relative rounded-2xl overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
+                 <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=400" className="w-64 h-44 object-cover" alt="Modern House" />
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                   <span className="text-white font-bold text-sm">{language === 'en' ? 'Residential Homes' : 'የመኖሪያ ቤቶች'}</span>
+                 </div>
+               </div>
+            </div>
+          ))}
+
+          <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-50 to-transparent z-10 pointer-events-none"></div>
+          <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-slate-50 to-transparent z-10 pointer-events-none"></div>
+        </div>
+
+          {/* Pricing Packages Embedded in Hero */}
         <div id="packages" className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto text-left mb-16">
             {/* Building Management (Highlighted) */}
             <div className="bg-blue-600 rounded-3xl p-8 shadow-xl shadow-blue-200 border border-blue-600 flex flex-col relative transform md:-translate-y-4">
