@@ -21,6 +21,14 @@ import {
 } from './schema.ts';
 import { eq } from 'drizzle-orm';
 
+import { randomBytes, scryptSync } from 'node:crypto';
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString('hex');
+  const derivedKey = scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${derivedKey}`;
+}
+
+
 export async function seedDatabase() {
   try {
     // Check if buildings already exist
@@ -209,10 +217,11 @@ export async function seedDatabase() {
     const demoUsers = [
       {
         uid: 'user_super_admin_01',
-        email: 'admin@apexproperties.et',
-        fullName: 'Kassahun Alemayehu',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        roleId: superAdminRoleId,
+          email: 'admin@apexproperties.et',
+          fullName: 'Kassahun Alemayehu',
+          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+          roleId: superAdminRoleId,
+          passwordHash: hashPassword('Admin123!')
       },
       {
         uid: 'user_manager_01',

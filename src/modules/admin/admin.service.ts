@@ -42,32 +42,30 @@ export class AdminService {
   }
 
   static async createUser(data: { email: string, fullName: string, roleId: string, organizationId: string, password?: string }) {
-    // We dynamically require firebase-admin to avoid circular dependency issues if any
-    const { adminAuth } = require('../../lib/firebase-admin.ts');
+    const { randomBytes, scryptSync } = require('node:crypto');
     
+    // Hash function (duplicate from AuthController for simplicity in service)
+    const hashPassword = (password: string): string => {
+      const salt = randomBytes(16).toString('hex');
+      const derivedKey = scryptSync(password, salt, 64).toString('hex');
+      return `${salt}:${derivedKey}`;
+    };
+
     // Check existing
     const existing = await db.select().from(users).where(eq(users.email, data.email));
     if (existing.length > 0) throw new Error('User with this email already exists');
 
-    // Create Firebase User
-    let fbUser;
-    try {
-      fbUser = await adminAuth.createUser({
-        email: data.email,
-        password: data.password || 'TemporaryPassword123!',
-        displayName: data.fullName,
-      });
-    } catch (fbError: any) {
-      throw new Error(`Firebase Error: ${fbError.message}`);
-    }
-
     // Create DB User
+    const passwordHash = hashPassword(data.password || 'TemporaryPassword123!');
+    const uid = `custom-${randomBytes(8).toString('hex')}`;
+
     const [newUser] = await db.insert(users).values({
-      uid: fbUser.uid,
+      uid,
       email: data.email,
       fullName: data.fullName,
       organizationId: data.organizationId,
       roleId: data.roleId,
+      passwordHash,
       isActive: true,
     }).returning();
 

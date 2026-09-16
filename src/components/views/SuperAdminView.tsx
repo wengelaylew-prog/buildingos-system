@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../api/client.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
 import { useLanguage } from '../../context/LanguageContext.tsx';
-import { Server, Globe, Shield, Power, Users, CreditCard, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { Server, Globe, Shield, Power, Users, CreditCard, CheckCircle, XCircle, ExternalLink, Activity, Database, History, Building2 } from 'lucide-react';
 import { Badge } from '../common/Badge.tsx';
 
 export const SuperAdminView: React.FC = () => {
@@ -13,7 +13,8 @@ export const SuperAdminView: React.FC = () => {
   const [pendingSubscriptions, setPendingSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SUBSCRIPTIONS'>('OVERVIEW');
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'ORGANIZATIONS' | 'SUBSCRIPTIONS' | 'GLOBAL_AUDIT' | 'SYSTEM_HEALTH'>('OVERVIEW');
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
   useEffect(() => {
     if (activeRole === 'SUPER_ADMIN') {
@@ -27,11 +28,13 @@ export const SuperAdminView: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [statsData, orgsData, subsData] = await Promise.all([
+      const [statsData, orgsData, subsData, logsData] = await Promise.all([
         api.getSystemStats(),
         api.getOrganizations(),
-        api.getPendingSubscriptions()
+        api.getPendingSubscriptions(),
+        api.getGlobalAuditLogs()
       ]);
+      setAuditLogs(logsData);
       setStats(statsData);
       setOrgs(orgsData);
       setPendingSubscriptions(subsData);
