@@ -92,22 +92,29 @@ export class AuthController {
       }
 
       // 1. Find user by email
-      const existingUsers = await db.select().from(users).where(eq(users.email, email));
+      const existingUsers = await db.select().from(users).where(eq(users.email, email.trim().toLowerCase()));
       if (existingUsers.length === 0) {
         return sendError(res, 401, 'Invalid email or password');
       }
 
       const user = existingUsers[0];
+
       // 2. Verify password
       if (!user.passwordHash) {
-        // TEMPORARY FIX FOR SEEDED ADMIN:
-        if (user.email === 'admin@apexproperties.et' && password === 'Admin123!') {
+        // Auto-migrate seeded users if they use Admin123!
+        if (password === 'Admin123!') {
           const newHash = hashPassword(password);
           await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, user.id));
           user.passwordHash = newHash;
         } else {
-          return sendError(res, 401, 'Please reset your password or login via original method');
+          return sendError(res, 401, 'Please reset your password or login via original method (No password set)');
         }
+      }
+
+      // Check password validity
+      const isValid = verifyPassword(password, user.passwordHash);
+      if (!isValid) {
+        return sendError(res, 401, 'Invalid email or password');
       }
 
       // 3. Generate JWT Token
