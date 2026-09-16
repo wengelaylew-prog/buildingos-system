@@ -8,6 +8,7 @@ const router = Router();
 router.get('/stats', authenticate, AdminController.getSystemStats);
 router.get('/organizations', authenticate, AdminController.getOrganizations);
 router.patch('/organizations/:id/status', authenticate, AdminController.updateOrganizationStatus);
+router.patch('/organizations/:id', authenticate, AdminController.updateOrganization);
 router.get('/audit', authenticate, AdminController.getGlobalAuditLogs);
 
 // Global User Management (Shared with org admins but scoped internally)

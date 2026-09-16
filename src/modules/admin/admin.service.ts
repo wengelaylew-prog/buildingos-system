@@ -33,6 +33,16 @@ export class AdminService {
     return { success: true };
   }
 
+  static async updateOrganization(orgId: string, data: { name?: string; subscriptionPlan?: string }) {
+    await db.update(organizations).set({
+      ...(data.name && { name: data.name }),
+      ...(data.subscriptionPlan && { subscriptionPlan: data.subscriptionPlan }),
+      updatedAt: new Date(),
+    }).where(eq(organizations.id, orgId));
+    return { success: true };
+  }
+
+
   static async getUsers(organizationId?: string) {
     if (organizationId) {
       return await db.select().from(users).where(eq(users.organizationId, organizationId));

@@ -15,6 +15,8 @@ export const SuperAdminView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'ORGANIZATIONS' | 'SUBSCRIPTIONS' | 'GLOBAL_AUDIT' | 'SYSTEM_HEALTH'>('OVERVIEW');
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [editingOrg, setEditingOrg] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ name: '', subscriptionPlan: '' });
 
   useEffect(() => {
     if (activeRole === 'SUPER_ADMIN') {
@@ -179,9 +181,19 @@ export const SuperAdminView: React.FC = () => {
                           {org.subscriptionPlan || 'FREE'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => toggleOrgStatus(org)}
+                      <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingOrg(org);
+                              setEditForm({ name: org.name, subscriptionPlan: org.subscriptionPlan || 'FREE' });
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
+                          >
+                            <Settings className="w-3 h-3" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => toggleOrgStatus(org)}
                           className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${org.status === 'ACTIVE' ? 'text-rose-600 bg-rose-50 hover:bg-rose-100' : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'}`}
                         >
                           <Power className="w-3 h-3" />

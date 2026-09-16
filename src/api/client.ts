@@ -317,6 +317,13 @@ export const api = {
     request<any>(`/api/v1/admin/organizations/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
+
+  updateOrganization: (id: string, data: { name?: string; subscriptionPlan?: string }) =>
+    request<any>(`/api/v1/admin/organizations/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
     }),
   getAdminUsers: () => request<any[]>('/api/v1/admin/users'),
   createAdminUser: (data: any) => request<any>('/api/v1/admin/users', {

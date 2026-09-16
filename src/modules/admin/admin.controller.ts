@@ -40,6 +40,19 @@ export class AdminController {
     }
   }
 
+  static async updateOrganization(req: AuthRequest, res: Response) {
+    try {
+      if (req.user?.roleCode !== 'SUPER_ADMIN') {
+        return sendError(res, 403, 'Forbidden');
+      }
+      const result = await AdminService.updateOrganization(req.params.id, req.body);
+      return sendSuccess(res, result);
+    } catch (err: any) {
+      return sendError(res, 500, 'Failed to update organization', [err.message]);
+    }
+  }
+
+
   static async getUsers(req: AuthRequest, res: Response) {
     try {
       if (req.user?.roleCode === 'TENANT') {
