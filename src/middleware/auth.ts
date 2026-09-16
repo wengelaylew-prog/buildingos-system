@@ -116,11 +116,14 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
       let userRole = dbUser.roleId ? (await db.select().from(roles).where(eq(roles.id, dbUser.roleId)))[0] : null;
       
+        
+        
+        
         const requestedDemoRole = req.headers['x-demo-role'] as string;
         let roleCode = userRole?.code || 'PROPERTY_MANAGER';
         
-        // ALLOW DEMO ROLE OVERRIDE FOR PORTFOLIO/TESTING
-        if (requestedDemoRole && requestedDemoRole !== roleCode) {
+        // ALLOW DEMO ROLE OVERRIDE FOR PORTFOLIO/TESTING (Only overrides role, NOT organization)
+        if (requestedDemoRole) {
           const overrideRole = (await db.select().from(roles).where(eq(roles.code, requestedDemoRole)))[0];
           if (overrideRole) {
             roleCode = overrideRole.code;
@@ -128,8 +131,15 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
           }
         }
 
-      const perms = userRole ? await getPermissionsForRole(userRole.id, roleCode) : [];
-      let userOrg = dbUser.organizationId ? (await db.select().from(organizations).where(eq(organizations.id, dbUser.organizationId)))[0] : null;
+        const perms = userRole ? await getPermissionsForRole(userRole.id, roleCode) : [];
+
+        // E. STRICT ORGANIZATION RESOLUTION:
+        let userOrg = dbUser.organizationId
+          ? (await db.select().from(organizations).where(eq(organizations.id, dbUser.organizationId)))[0]
+          : null;
+
+
+
 
       req.user = {
         id: dbUser.id,

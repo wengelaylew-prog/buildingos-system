@@ -78,9 +78,16 @@ export const Compact3DPreview: React.FC<Compact3DPreviewProps> = ({ onExpandToSt
             <span className="text-[11px] font-medium">Generating 3D model...</span>
           </div>
         ) : error ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 space-y-2 p-4 text-center">
-            <p className="text-xs text-rose-400">{error}</p>
-          </div>
+          error.includes('No buildings registered') ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-slate-400 p-4 text-center">
+              <Box className="w-8 h-8 text-indigo-500 mb-2 opacity-50" />
+              <p className="text-[11px] text-slate-300 font-medium">No 3D Model Available</p>
+            </div>
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 space-y-2 p-4 text-center">
+              <p className="text-xs text-rose-400">{error}</p>
+            </div>
+          )
         ) : sceneData?.building ? (
           <BuildingCanvas
             building={sceneData.building}

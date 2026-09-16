@@ -471,21 +471,35 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
             <p className="text-xs font-medium tracking-wide">{t('loadingScene')}</p>
           </div>
         ) : error ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 space-y-4 z-10 bg-slate-950 p-6 text-center">
-            <AlertCircle className="w-10 h-10 text-rose-500" />
-            <div>
-              <h3 className="text-white font-bold text-sm mb-1">{t('loadingError')}</h3>
-              <p className="text-xs text-slate-400 max-w-sm">{error}</p>
+          error.includes('No buildings registered') ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 space-y-4 z-10 bg-slate-950 p-6 text-center">
+              <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mb-2">
+                <Box className="w-8 h-8 text-indigo-500" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-lg mb-2">3D Space Twin is Empty</h3>
+                <p className="text-sm text-slate-400 max-w-sm mx-auto">
+                  Add your first property from the dashboard to instantly generate and explore its 3D digital twin.
+                </p>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => fetchScene(selectedBuildingId)}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md transition-colors flex items-center gap-1.5"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>{t('retry')}</span>
-            </button>
-          </div>
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 space-y-4 z-10 bg-slate-950 p-6 text-center">
+              <AlertCircle className="w-10 h-10 text-rose-500" />
+              <div>
+                <h3 className="text-white font-bold text-sm mb-1">{t('loadingError')}</h3>
+                <p className="text-xs text-slate-400 max-w-sm">{error}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => fetchScene(selectedBuildingId)}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md transition-colors flex items-center gap-1.5"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Retry</span>
+              </button>
+            </div>
+          )
         ) : sceneData?.building ? (
           <>
             <BuildingCanvas

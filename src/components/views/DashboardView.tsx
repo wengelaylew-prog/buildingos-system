@@ -264,7 +264,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* 3D view, Matrix view, or Chart view */}
-          {occupancyView === '3d' ? (
+          {kpis.totalBuildings === 0 ? (
+            <div className="flex-1 min-h-[220px] flex flex-col items-center justify-center bg-slate-50 border border-slate-200 border-dashed rounded-lg p-6 text-center">
+              <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mb-3">
+                <Box className="w-6 h-6" />
+              </div>
+              <h4 className="text-sm font-bold text-slate-800">Your Portfolio is Empty</h4>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                Add your first building to unlock the 3D Space Twin and visual occupancy matrix.
+              </p>
+              <button
+                onClick={() => onNavigate?.('buildings')}
+                className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold shadow-sm hover:bg-indigo-700 transition-colors"
+              >
+                + Add Building
+              </button>
+            </div>
+          ) : occupancyView === '3d' ? (
             <div className="flex-1 min-h-[220px] py-1">
               <Compact3DPreview
                 onExpandToStudio={(bldgId, unitId) => onNavigate?.('3d-viewer', bldgId, undefined, unitId)}
