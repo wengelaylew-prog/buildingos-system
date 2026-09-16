@@ -1,3 +1,5 @@
+import { X } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { api } from '../../api/client.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
