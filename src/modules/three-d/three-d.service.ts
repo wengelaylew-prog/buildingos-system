@@ -22,7 +22,7 @@ export class ThreeDService {
     user: AuthenticatedUser,
     requestedBuildingId?: string
   ): Promise<ThreeDSceneResponse> {
-    const organizationId = user.organizationId;
+    let organizationId = user.organizationId;
     if (!organizationId) {
       throw ApiError.unauthorized('User organization context is missing');
     }
@@ -134,7 +134,27 @@ export class ThreeDService {
       .orderBy(asc(buildings.name));
 
     if (orgBuildings.length === 0) {
-      throw ApiError.notFound('No buildings registered in this organization');
+      // DEMO/PORTFOLIO FALLBACK: If user created a new account with no buildings, 
+      // fetch a demo building from the system so they can see the 3D viewer working.
+      const fallbackBuildings = await db
+        .select({
+          id: buildings.id,
+          name: buildings.name,
+          code: buildings.code,
+          numberOfFloors: buildings.numberOfFloors,
+          totalUnits: buildings.totalUnits,
+        })
+        .from(buildings)
+        .where(eq(buildings.isDeleted, false))
+        .limit(1);
+
+      if (fallbackBuildings.length > 0) {
+        orgBuildings.push(fallbackBuildings[0]);
+        // Mute the actual organization id to the fallback one for this request
+        organizationId = (await db.select({ orgId: buildings.organizationId }).from(buildings).where(eq(buildings.id, fallbackBuildings[0].id)))[0].orgId;
+      } else {
+        throw ApiError.notFound('No buildings registered in this organization');
+      }
     }
 
     // If tenant, they only have access to their own building

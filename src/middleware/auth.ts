@@ -114,8 +114,20 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       // Update last_authenticated_at
       await db.update(telegramAccounts).set({ lastAuthenticatedAt: new Date() }).where(eq(telegramAccounts.id, tgAccount.id));
 
-      const userRole = dbUser.roleId ? (await db.select().from(roles).where(eq(roles.id, dbUser.roleId)))[0] : null;
-      const roleCode = userRole?.code || 'PROPERTY_MANAGER';
+      let userRole = dbUser.roleId ? (await db.select().from(roles).where(eq(roles.id, dbUser.roleId)))[0] : null;
+      
+        const requestedDemoRole = req.headers['x-demo-role'] as string;
+        let roleCode = userRole?.code || 'PROPERTY_MANAGER';
+        
+        // ALLOW DEMO ROLE OVERRIDE FOR PORTFOLIO/TESTING
+        if (requestedDemoRole && requestedDemoRole !== roleCode) {
+          const overrideRole = (await db.select().from(roles).where(eq(roles.code, requestedDemoRole)))[0];
+          if (overrideRole) {
+            roleCode = overrideRole.code;
+            userRole = overrideRole;
+          }
+        }
+
       const perms = userRole ? await getPermissionsForRole(userRole.id, roleCode) : [];
       let userOrg = dbUser.organizationId ? (await db.select().from(organizations).where(eq(organizations.id, dbUser.organizationId)))[0] : null;
 
@@ -153,7 +165,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
         });
       }
 
-      const userRole = dbUser.roleId ? (await db.select().from(roles).where(eq(roles.id, dbUser.roleId)))[0] : null;
+      let userRole = dbUser.roleId ? (await db.select().from(roles).where(eq(roles.id, dbUser.roleId)))[0] : null;
       const roleCode = userRole?.code || 'TENANT';
       const perms = userRole ? await getPermissionsForRole(userRole.id, roleCode) : [];
       const userOrg = dbUser.organizationId ? (await db.select().from(organizations).where(eq(organizations.id, dbUser.organizationId)))[0] : null;
@@ -249,7 +261,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
         }
 
         // D. Resolve User Role & Permissions
-        const userRole = dbUser.roleId
+        let userRole = dbUser.roleId
           ? (await db.select().from(roles).where(eq(roles.id, dbUser.roleId)))[0]
           : null;
 
