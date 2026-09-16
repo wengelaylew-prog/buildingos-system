@@ -1,3 +1,4 @@
+import { Box } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { api } from '../../api/client.ts';

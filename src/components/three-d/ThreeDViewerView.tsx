@@ -1,3 +1,4 @@
+import { Box } from 'lucide-react';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Building2,
