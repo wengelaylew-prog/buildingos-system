@@ -128,7 +128,7 @@ export default function CheckoutView({ plan, onBack, onDashboard }: CheckoutView
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 text-sm">Account No (አካውንት ቁጥር)</span>
-                <span className="font-mono font-bold text-blue-600 text-lg">1000123456789</span>
+                <span className="font-mono font-bold text-blue-600 text-lg">1000426252768</span>
               </div>
             </div>
           </div>
