@@ -117,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSel
           
           className="w-full text-xs font-medium bg-slate-950 text-slate-200 rounded-md border border-slate-700 py-1.5 px-2 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {AVAILABLE_ROLES.map((r) => (
+          {AVAILABLE_ROLES.filter(r => r.code !== 'SUPER_ADMIN' || user?.roleCode === 'SUPER_ADMIN').map((r) => (
             <option key={r.code} value={r.code}>
               {r.name}
             </option>
@@ -161,7 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSel
             );
           })}
 
-        {activeRole === 'SUPER_ADMIN' && (
+        {user?.roleCode === 'SUPER_ADMIN' && (
           <div className="pt-2 mt-2 border-t border-slate-800">
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-2">System Admin</div>
             <button

