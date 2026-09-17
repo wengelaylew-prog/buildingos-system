@@ -11,7 +11,7 @@ export class AIService {
    * Generates insights on late payments and financial health of the building.
    */
   static async getPaymentInsights(organizationId: string) {
-    if (process.env.NODE_ENV !== 'production' && !process.env.GEMINI_API_KEY) {
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'mock-key') {
       return {
         summary: "ይህ የሙከራ (Demo) ሪፖርት ነው። ብዙ ተከራዮች ክፍያቸውን በጊዜው እየከፈሉ ነው። သို့ግን፣ 'John Doe' እና 'Acme Corp' ክፍያቸው አዘግይተዋል። እባክዎ የማሳሰቢያ መልዕክት ይላኩላቸው።",
         actionItems: ["Send reminder to John Doe", "Check payment status for Acme Corp"],
@@ -63,7 +63,7 @@ export class AIService {
    * Analyzes recent security audit logs to detect anomalies or suspicious patterns.
    */
   static async getSecurityInsights(organizationId: string) {
-    if (process.env.NODE_ENV !== 'production' && !process.env.GEMINI_API_KEY) {
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'mock-key') {
       return {
         summary: "በህንፃዎ ላይ ምንም አይነት አጠራጣሪ እንቅስቃሴ አልተገኘም። ሁሉም መግቢያና መውጫዎች የተለመዱ ሰዓቶችን የተከተሉ ናቸው።",
         anomalies: ["Unusual access attempt at Gate A at 2:00 AM (Resolved)"],
@@ -112,7 +112,7 @@ export class AIService {
    * Interactive AI Assistant for Property Managers/Admins
    */
   static async handleAdminQuery(organizationId: string, query: string) {
-    if (process.env.NODE_ENV !== 'production' && !process.env.GEMINI_API_KEY) {
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'mock-key') {
       return {
         reply: "ይህ የሙከራ መልስ ነው። ሲስተሙ በትክክል ከ Gemini ጋር ሲገናኝ ትክክለኛ ምላሽ ይሰጣል። (Mock Mode)"
       };

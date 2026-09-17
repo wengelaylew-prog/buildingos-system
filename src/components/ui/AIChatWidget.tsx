@@ -35,7 +35,7 @@ export default function AIChatWidget() {
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('buildingos_token');
       const res = await fetch('/api/v1/ai/chat', {
         method: 'POST',
         headers: {
