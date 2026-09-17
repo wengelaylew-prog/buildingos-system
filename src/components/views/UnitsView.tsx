@@ -17,7 +17,7 @@ import {
   Box,
   MessageSquare,
   Send,
-  Phone
+  Phone,
   LayoutGrid,
   List,
   UploadCloud,
