@@ -49,7 +49,7 @@ export const BuildingsView: React.FC<BuildingsViewProps> = ({
     setIsSeeding(true);
     try {
       await api.seedDemoData();
-      await fetchBuildings();
+      await loadBuildings();
     } catch (err) {
       console.error(err);
       alert('Failed to generate demo data');
