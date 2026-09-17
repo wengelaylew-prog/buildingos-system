@@ -170,11 +170,15 @@ import CheckoutView from './components/views/public/CheckoutView.tsx';
 import LoginView from './components/views/public/LoginView.tsx';
 
 export default function App() {
+  
   const isTelegramRoute = window.location.pathname === '/telegram' || window.location.pathname.startsWith('/telegram/');
-  const isTelegram = (isTelegramRoute || isTelegramWebApp()) && !window.location.search.includes('app=admin');
+  const tgWebApp = (window as any).Telegram?.WebApp;
+  const isTelegramAdmin = window.location.href.includes('app=admin') || window.location.href.includes('startapp=admin') || tgWebApp?.initDataUnsafe?.start_param?.includes('admin');
+  const isTelegram = (isTelegramRoute || isTelegramWebApp()) && !isTelegramAdmin;
+
 
   // Simple state-based routing for public pages
-  const [currentView, setCurrentView] = useState<'LANDING' | 'REGISTER' | 'LOGIN' | 'CHECKOUT' | 'APP'>(window.location.search.includes('app=admin') ? 'LOGIN' : 'LANDING');
+  const [currentView, setCurrentView] = useState<'LANDING' | 'REGISTER' | 'LOGIN' | 'CHECKOUT' | 'APP'>(isTelegramAdmin ? 'LOGIN' : 'LANDING');
   const [selectedPlan, setSelectedPlan] = useState<'RENTAL_BASIC' | 'RENTAL_STANDARD' | 'RENTAL_PREMIUM' | 'BUILDING_BASIC' | 'BUILDING_STANDARD' | 'BUILDING_PREMIUM' | 'REAL_ESTATE_BASIC' | 'REAL_ESTATE_STANDARD' | 'REAL_ESTATE_PREMIUM'>('BUILDING_STANDARD');
 
   if (isTelegram) {
