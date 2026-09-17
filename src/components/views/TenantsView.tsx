@@ -32,7 +32,7 @@ export const TenantsView: React.FC<TenantsViewProps> = ({
   showCreateModalInitial,
   onCloseCreateModalInitial,
 }) => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
   const [tenantsList, setTenantsList] = useState<Tenant[]>([]);
   const [availableUnits, setAvailableUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
