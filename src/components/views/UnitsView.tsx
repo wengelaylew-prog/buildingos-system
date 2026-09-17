@@ -45,14 +45,14 @@ export const UnitsView: React.FC<UnitsViewProps> = ({
   onCloseCreateModalInitial,
 }) => {
   const { hasPermission } = useAuth();
-  const [unitsMenu, setUnitsList] = useState<Unit[]>([]);
-  const [buildingsMenu, setBuildingsList] = useState<Building[]>([]);
+  const [unitsList, setUnitsList] = useState<Unit[]>([]);
+  const [buildingsList, setBuildingsList] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filters
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>(initialBuildingId || 'ALL');
   const [selectedFloorId, setSelectedFloorId] = useState<string>(initialFloorId || 'ALL');
-  const [filterFloorsMenu, setFilterFloorsList] = useState<Floor[]>([]);
+  const [filterFloorsList, setFilterFloorsList] = useState<Floor[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'list' | 'floor'>('floor');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
