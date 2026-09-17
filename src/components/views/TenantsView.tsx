@@ -214,7 +214,7 @@ export const TenantsView: React.FC<TenantsViewProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={() => {
-                  const link = `https://t.me/BuildingOS_Admin_Bot/app?startapp=org_${user?.organizationId}`;
+                  const link = `https://t.me/BuildingMabot/app?startapp=org_${user?.organizationId}`;
                   navigator.clipboard.writeText(link);
                   alert('የተከራይ መጋበዣ ሊንክ ኮፒ ተደርጓል!\n' + link);
                 }}
