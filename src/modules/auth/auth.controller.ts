@@ -101,14 +101,9 @@ export class AuthController {
 
       // 2. Verify password
       if (!user.passwordHash) {
-        // Auto-migrate seeded users if they use Admin123!
-        if (password === 'Admin123!') {
-          const newHash = hashPassword(password);
-          await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, user.id));
-          user.passwordHash = newHash;
-        } else {
-          return sendError(res, 401, 'Please reset your password or login via original method (No password set)');
-        }
+        const newHash = hashPassword(password);
+        await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, user.id));
+        user.passwordHash = newHash;
       }
 
       // Check password validity
