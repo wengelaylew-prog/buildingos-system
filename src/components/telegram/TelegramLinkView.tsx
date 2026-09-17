@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Building, Loader2 } from 'lucide-react';
+import { Send, Building } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext.tsx';
 
 interface TelegramLinkViewProps {
@@ -50,7 +50,7 @@ export function TelegramLinkView({
               disabled={telegramLoading}
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#0f5132] text-white font-semibold py-3 active:opacity-90 disabled:opacity-60"
             >
-              {telegramLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+              <Send size={18} />
               {am ? 'በቴሌግራም ይግቡ' : 'Sign in with Telegram'}
             </button>
           )}
