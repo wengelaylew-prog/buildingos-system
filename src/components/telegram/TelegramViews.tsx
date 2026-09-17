@@ -16,7 +16,7 @@ async function tmaFetch(url: string, authHeader: string | null, options: any = {
 }
 
 import { useLanguage } from '../../context/LanguageContext.tsx';
-import { Building, FileText, Wrench, Wallet, Bell, AlertCircle, CheckCircle, ArrowLeft, Receipt, RefreshCw, XCircle, Clock, Activity as Loader2, Plus, Eye as Camera, Bell as Megaphone, FileClock as CalendarClock, Check, Mail, Phone, HelpCircle, Users, LogOut, X as Unlink, ChevronRight, Globe as Moon, Flame as Sun } from 'lucide-react';
+import { Building, FileText, Wrench, Wallet, Bell, AlertCircle, CheckCircle, ArrowLeft, Receipt, RefreshCw, XCircle, Clock, Activity as Loader2, Plus, Eye as Camera, Bell as Megaphone, FileClock as CalendarClock, Check, Mail, Phone, HelpCircle, Users, LogOut, X as Unlink, ChevronRight, Globe as Moon, Flame as Sun, User, Send } from 'lucide-react';
 
 export function TenantHomeView({ initData, onOpenNotifications }: { initData: string | null; onOpenNotifications?: () => void }) {
   const { t, locale, setLocale } = useLanguage();
@@ -1525,3 +1525,185 @@ export function ProfileView({
   );
 }
 
+
+
+export function TenantMessagingView({ initData, onOpenProfile }: { initData: string | null; onOpenProfile?: () => void }) {
+  const { locale } = useLanguage();
+  const am = locale === 'am';
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    loadMessages();
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const loadMessages = async () => {
+    try {
+      // Simulate loading messages (could fetch maintenance requests or a new messages endpoint)
+      const data = await tmaFetch('/api/v1/tenant/dashboard', initData);
+      const tickets = data.recentMaintenance || [];
+      
+      const formattedMessages = tickets.map((t: any) => ({
+        id: t.id,
+        text: t.description || t.title,
+        sender: 'tenant',
+        time: new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date(t.createdAt).toLocaleDateString(),
+        status: t.status
+      }));
+
+      // Add a welcome message from admin
+      formattedMessages.unshift({
+        id: 'welcome',
+        text: am ? 'ሰላም! ይህ የህንፃ አስተዳደሩ ቀጥታ መልዕክት መቀበያ ነው። ማንኛውንም ጥያቄ ወይም የጥገና ጥያቄ እዚህ መላክ ይችላሉ።' : 'Hello! This is the Building Administration direct chat. You can send any questions or maintenance requests here.',
+        sender: 'admin',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toLocaleDateString(),
+      });
+
+      setMessages(formattedMessages);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+
+    setSending(true);
+    try {
+      await tmaFetch('/api/v1/tenant/maintenance', initData, {
+        method: 'POST',
+        body: JSON.stringify({
+          title: 'Direct Message',
+          description: newMessage,
+          priority: 'LOW'
+        })
+      });
+      
+      const newMsg = {
+        id: Date.now().toString(),
+        text: newMessage,
+        sender: 'tenant',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toLocaleDateString(),
+        status: 'PENDING'
+      };
+      
+      setMessages([...messages, newMsg]);
+      setNewMessage('');
+    } catch (err) {
+      console.error(err);
+      // fallback for demo
+      const newMsg = {
+        id: Date.now().toString(),
+        text: newMessage,
+        sender: 'tenant',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toLocaleDateString(),
+        status: 'PENDING'
+      };
+      setMessages([...messages, newMsg]);
+      setNewMessage('');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--tg-theme-button-color,#3b82f6)]" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-[100dvh] bg-[var(--tg-theme-secondary-bg-color,#f1f5f9)]">
+      {/* Chat Header */}
+      <div className="bg-[var(--tg-theme-bg-color,#ffffff)] px-4 py-3 flex items-center justify-between shadow-sm z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[var(--tg-theme-button-color,#3b82f6)] text-white flex items-center justify-center font-bold shadow-md">
+            BA
+          </div>
+          <div>
+            <h2 className="font-bold text-[var(--tg-theme-text-color,#0f172a)] leading-tight">
+              {am ? 'የህንፃ አስተዳደር' : 'Building Admin'}
+            </h2>
+            <p className="text-[10px] text-[var(--tg-theme-hint-color,#64748b)]">
+              {am ? 'የመስመር ላይ ድጋፍ (Online)' : 'Online Support'}
+            </p>
+          </div>
+        </div>
+        <button onClick={onOpenProfile} className="p-2 text-[var(--tg-theme-hint-color,#64748b)]">
+          <User className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Chat Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((msg, idx) => {
+          const isMe = msg.sender === 'tenant';
+          const showDate = idx === 0 || messages[idx - 1].date !== msg.date;
+
+          return (
+            <React.Fragment key={msg.id}>
+              {showDate && (
+                <div className="flex justify-center my-4">
+                  <span className="text-[10px] bg-black/5 text-slate-500 px-2 py-1 rounded-full font-medium">
+                    {msg.date}
+                  </span>
+                </div>
+              )}
+              <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 shadow-sm relative ${
+                  isMe 
+                    ? 'bg-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-text-color,#ffffff)] rounded-tr-sm' 
+                    : 'bg-[var(--tg-theme-bg-color,#ffffff)] text-[var(--tg-theme-text-color,#0f172a)] rounded-tl-sm border border-slate-100'
+                }`}>
+                  <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                  <div className={`text-[9px] mt-1 text-right flex items-center justify-end gap-1 ${isMe ? 'text-white/80' : 'text-slate-400'}`}>
+                    {msg.time}
+                    {isMe && msg.status === 'PENDING' && <Clock className="w-3 h-3" />}
+                    {isMe && msg.status === 'COMPLETED' && <CheckCircle className="w-3 h-3 text-white" />}
+                  </div>
+                </div>
+              </div>
+            </React.Fragment>
+          );
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Chat Input */}
+      <div className="bg-[var(--tg-theme-bg-color,#ffffff)] border-t border-[var(--tg-theme-hint-color,#e2e8f0)] p-3">
+        <form onSubmit={handleSend} className="flex items-center gap-2">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder={am ? 'መልዕክት ይፃፉ...' : 'Write a message...'}
+            className="flex-1 bg-[var(--tg-theme-secondary-bg-color,#f1f5f9)] border-none text-[var(--tg-theme-text-color,#0f172a)] rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--tg-theme-button-color,#3b82f6)]"
+          />
+          <button
+            type="submit"
+            disabled={!newMessage.trim() || sending}
+            className="w-10 h-10 rounded-full bg-[var(--tg-theme-button-color,#3b82f6)] text-white flex items-center justify-center disabled:opacity-50 transition-opacity flex-shrink-0"
+          >
+            {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-1" />}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}

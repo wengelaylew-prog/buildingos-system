@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { TelegramLinkView } from './TelegramLinkView.tsx';
-import { TenantHomeView, PropertyView, LeaseView, BillingView, MaintenanceView, NotificationsView, ProfileView } from './TelegramViews.tsx';
+import { TenantMessagingView, ProfileView } from './TelegramViews.tsx';
 import { GatePassTenantView } from './GatePassTenantView.tsx';
 import LandingView from '../views/public/LandingView.tsx';
 import CheckoutView from '../views/public/CheckoutView.tsx';
-import { Building, LayoutGrid as Home, FileText, Wrench, Wallet, Bell, User, Box as Package } from 'lucide-react';
+import { User, MessageSquare, Send } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext.tsx';
 import { getTmaSessionToken, getTmaAuthHeader, tmaAuthLoginTelegram } from '../../lib/tma-client.ts';
 
@@ -13,7 +13,7 @@ export function TelegramApp() {
   const am = locale === 'am';
   const [unauthView, setUnauthView] = useState<'LINK' | 'LANDING' | 'CHECKOUT'>('LINK');
   const [selectedPlan, setSelectedPlan] = useState<'RENTAL_BASIC' | 'RENTAL_STANDARD' | 'RENTAL_PREMIUM' | 'BUILDING_BASIC' | 'BUILDING_STANDARD' | 'BUILDING_PREMIUM' | 'REAL_ESTATE_BASIC' | 'REAL_ESTATE_STANDARD' | 'REAL_ESTATE_PREMIUM'>('BUILDING_STANDARD');
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('messaging');
   const [initData, setInitData] = useState<string | null>(null);
   const [isLinked, setIsLinked] = useState<boolean>(false);
   const [telegramError, setTelegramError] = useState<string | null>(null);
@@ -142,13 +142,7 @@ export function TelegramApp() {
   return (
     <div className="flex flex-col h-screen bg-[var(--tg-theme-bg-color,#f8fafc)] text-[var(--tg-theme-text-color,#000000)] overflow-hidden font-sans">
       <div className="flex-1 overflow-y-auto p-4 pb-20">
-        {activeTab === 'dashboard' && <TenantHomeView initData={authHeader} onOpenNotifications={() => setActiveTab('notifications')} />}
-        {activeTab === 'property' && <PropertyView initData={authHeader} />}
-        {activeTab === 'lease' && <LeaseView initData={authHeader} />}
-        {activeTab === 'billing' && <BillingView initData={authHeader} />}
-        {activeTab === 'maintenance' && <MaintenanceView initData={authHeader} />}
-        {activeTab === 'notifications' && <NotificationsView initData={authHeader} onBack={() => setActiveTab('dashboard')} />}
-        {activeTab === 'gatepass' && <GatePassTenantView initData={authHeader} />}
+        {activeTab === 'messaging' && <TenantMessagingView initData={authHeader} onOpenProfile={() => setActiveTab('profile')} />}
         {activeTab === 'profile' && (
           <ProfileView
             initData={authHeader}
@@ -159,36 +153,7 @@ export function TelegramApp() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[var(--tg-theme-bg-color,#ffffff)] border-t border-[var(--tg-theme-hint-color,#e2e8f0)] flex justify-around p-2 pb-safe">
-        <button onClick={() => setActiveTab('dashboard')} className={`flex flex-col items-center p-2 ${activeTab === 'dashboard' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
-          <Home size={20} />
-          <span className="text-[10px] mt-1">{am ? 'ባሐል' : 'Home'}</span>
-        </button>
-        <button onClick={() => setActiveTab('property')} className={`flex flex-col items-center p-2 ${activeTab === 'property' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
-          <Building size={20} />
-          <span className="text-[10px] mt-1">{am ? 'ንብረት' : 'Property'}</span>
-        </button>
-        <button onClick={() => setActiveTab('lease')} className={`flex flex-col items-center p-2 ${activeTab === 'lease' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
-          <FileText size={20} />
-          <span className="text-[10px] mt-1">{am ? 'ውል' : 'Lease'}</span>
-        </button>
-        <button onClick={() => setActiveTab('billing')} className={`flex flex-col items-center p-2 ${activeTab === 'billing' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
-          <Wallet size={20} />
-          <span className="text-[10px] mt-1">{am ? 'ክፍያ' : 'Billing'}</span>
-        </button>
-        <button onClick={() => setActiveTab('maintenance')} className={`flex flex-col items-center p-2 ${activeTab === 'maintenance' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
-          <Wrench size={20} />
-          <span className="text-[10px] mt-1">{am ? 'ጥገና' : 'Fixes'}</span>
-        </button>
-        <button onClick={() => setActiveTab('gatepass')} className={`flex flex-col items-center p-2 ${activeTab === 'gatepass' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
-          <Package size={20} />
-          <span className="text-[10px] mt-1">{am ? 'እቃ መውጫ' : 'Pass'}</span>
-        </button>
-        <button onClick={() => setActiveTab('profile')} className={`flex flex-col items-center p-2 ${activeTab === 'profile' ? 'text-[var(--tg-theme-button-color,#3b82f6)]' : 'text-[var(--tg-theme-hint-color,#64748b)]'}`}>
-          <User size={20} />
-          <span className="text-[10px] mt-1">{am ? 'መገለጫ' : 'Profile'}</span>
-        </button>
-      </div>
+      {/* Navigation Removed - Messaging Only UI */}
     </div>
   );
 }
