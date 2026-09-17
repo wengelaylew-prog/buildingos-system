@@ -250,6 +250,7 @@ export interface UserRole {
 
 export interface AuthUser {
   id: string;
+  organizationId?: string;
   uid: string;
   email: string;
   fullName: string;
