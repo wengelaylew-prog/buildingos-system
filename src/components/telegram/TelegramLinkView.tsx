@@ -25,8 +25,8 @@ export function TelegramLinkView({
           <div className="w-16 h-16 bg-[#0f5132] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#0f5132]/20">
             <Building size={32} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-stone-900">BuildingOS</h1>
-          <p className="text-stone-500 mt-1">{am ? 'የተከራይ መግቢያ' : 'Tenant Portal'}</p>
+          <h1 className="text-2xl font-bold text-stone-900">{window.location.search.includes('app=admin') ? (am ? 'የህንፃ አስተዳደር' : 'Building Management') : 'BuildingOS'}</h1>
+          <p className="text-stone-500 mt-1">{window.location.search.includes('app=admin') ? (am ? 'የአስተዳዳሪ መግቢያ' : 'Admin Portal') : (am ? 'የተከራይ መግቢያ' : 'Tenant Portal')}</p>
         </div>
 
         {telegramError && (
