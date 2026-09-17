@@ -143,7 +143,7 @@ export class TelegramController {
   }
 
   
-  static async updateProfile(req: Request, res: Response) {
+  static async updateProfile(req: AuthRequest, res: Response) {
     try {
       const user = (req as any).user;
       if (!user) throw new Error('Unauthenticated');
