@@ -53,6 +53,37 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
   // New features state
   const [viewMode, setViewMode] = useState<'MANAGEMENT' | 'SECURITY'>('MANAGEMENT');
   const [showAiBuilder, setShowAiBuilder] = useState<boolean>(false);
+  const [aiStatus, setAiStatus] = useState<'idle' | 'uploading' | 'analyzing' | 'generating' | 'success'>('idle');
+  const [progress, setProgress] = useState(0);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleAiUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setAiStatus('uploading');
+      setProgress(10);
+      
+      setTimeout(() => {
+        setAiStatus('analyzing');
+        setProgress(45);
+        
+        setTimeout(() => {
+          setAiStatus('generating');
+          setProgress(85);
+          
+          setTimeout(() => {
+            setAiStatus('success');
+            setProgress(100);
+            
+            setTimeout(() => {
+              setShowAiBuilder(false);
+              setAiStatus('idle');
+              setProgress(0);
+            }, 3000);
+          }, 3500);
+        }, 3000);
+      }, 1500);
+    }
+  };
   const [isExploded, setIsExploded] = useState<boolean>(false);
   const [cameraPreset, setCameraPreset] = useState<'perspective' | 'top' | 'front'>('perspective');
   const [autoRotate, setAutoRotate] = useState<boolean>(false);
