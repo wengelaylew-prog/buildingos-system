@@ -64,6 +64,7 @@ export const api = {
 
   // Auth
   getCurrentUser: () => request<AuthUser>('/api/v1/auth/me'),
+    seedDemoData: () => request<any>('/api/v1/auth/seed-demo', { method: 'POST' }),
 
   // Dashboard
   getDashboard: () =>

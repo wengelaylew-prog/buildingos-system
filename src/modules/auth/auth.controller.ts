@@ -138,4 +138,75 @@ export class AuthController {
       return sendError(res, 500, 'Login failed', [err.message]);
     }
   }
+
+  static async seedDemo(req: any, res: Response) {
+    try {
+      const orgId = req.user?.organizationId;
+      if (!orgId) return sendError(res, 400, 'No organization ID found');
+
+      // Import tables inside the function to avoid circular dependencies at top level
+      const { buildings, floors, units, tenants, contracts } = require('../../db/schema.ts');
+      
+      // 1. Building
+      const bldg = await db.insert(buildings).values({
+        organizationId: orgId,
+        name: 'Century Mall & Residences',
+        code: 'CMR-01',
+        address: 'Bole Road, Block A',
+        city: 'Addis Ababa',
+        description: 'A premium mixed-use commercial and residential building.',
+        numberOfFloors: 3,
+        totalUnits: 6,
+        status: 'ACTIVE'
+      }).returning();
+      
+      const buildingId = bldg[0].id;
+
+      // 2. Floors
+      const flrs = await db.insert(floors).values([
+        { organizationId: orgId, buildingId, floorNumber: 0, floorName: 'Ground Floor', description: 'Retail Shops', totalUnits: 2 },
+        { organizationId: orgId, buildingId, floorNumber: 1, floorName: 'First Floor', description: 'Offices', totalUnits: 2 },
+        { organizationId: orgId, buildingId, floorNumber: 2, floorName: 'Second Floor', description: 'Apartments', totalUnits: 2 },
+      ]).returning();
+
+      // 3. Units
+      const insertedUnits = await db.insert(units).values([
+        // Ground Floor
+        { organizationId: orgId, buildingId, floorId: flrs[0].id, unitNumber: 'G-01', unitType: 'Retail', area: '120.5', baseRent: '150000.00', status: 'OCCUPIED' },
+        { organizationId: orgId, buildingId, floorId: flrs[0].id, unitNumber: 'G-02', unitType: 'Retail', area: '95.0', baseRent: '120000.00', status: 'VACANT' },
+        // First Floor
+        { organizationId: orgId, buildingId, floorId: flrs[1].id, unitNumber: '1-01', unitType: 'Office', area: '200.0', baseRent: '250000.00', status: 'OCCUPIED' },
+        { organizationId: orgId, buildingId, floorId: flrs[1].id, unitNumber: '1-02', unitType: 'Office', area: '180.0', baseRent: '230000.00', status: 'OCCUPIED' },
+        // Second Floor
+        { organizationId: orgId, buildingId, floorId: flrs[2].id, unitNumber: '2-01', unitType: 'Residential', area: '150.0', bedrooms: 3, bathrooms: 2, baseRent: '80000.00', status: 'OCCUPIED' },
+        { organizationId: orgId, buildingId, floorId: flrs[2].id, unitNumber: '2-02', unitType: 'Residential', area: '100.0', bedrooms: 2, bathrooms: 1, baseRent: '50000.00', status: 'RESERVED' },
+      ]).returning();
+
+      // 4. Tenants
+      const tnnts = await db.insert(tenants).values([
+        { organizationId: orgId, firstName: 'Abebe', lastName: 'Kebede', email: 'abebe.k@example.com', phoneNumber: '+251911000001', idType: 'NATIONAL_ID', status: 'ACTIVE' },
+        { organizationId: orgId, firstName: 'Zemen', lastName: 'Bank', email: 'branch@zemen.com', phoneNumber: '+251911000002', idType: 'BUSINESS_REGISTRATION', status: 'ACTIVE' },
+        { organizationId: orgId, firstName: 'Selam', lastName: 'Trading', email: 'contact@selam.com', phoneNumber: '+251911000003', idType: 'BUSINESS_REGISTRATION', status: 'ACTIVE' },
+        { organizationId: orgId, firstName: 'Tigist', lastName: 'Haile', email: 't.haile@example.com', phoneNumber: '+251911000004', idType: 'PASSPORT', status: 'ACTIVE' },
+      ]).returning();
+
+      // 5. Contracts
+      const d = new Date();
+      const nextYear = new Date(d);
+      nextYear.setFullYear(d.getFullYear() + 1);
+
+      await db.insert(contracts).values([
+        { organizationId: orgId, buildingId, unitId: insertedUnits[0].id, tenantId: tnnts[1].id, contractType: 'COMMERCIAL', status: 'ACTIVE', startDate: d.toISOString(), endDate: nextYear.toISOString(), monthlyRent: '150000.00', securityDeposit: '450000.00' },
+        { organizationId: orgId, buildingId, unitId: insertedUnits[2].id, tenantId: tnnts[2].id, contractType: 'COMMERCIAL', status: 'ACTIVE', startDate: d.toISOString(), endDate: nextYear.toISOString(), monthlyRent: '250000.00', securityDeposit: '750000.00' },
+        { organizationId: orgId, buildingId, unitId: insertedUnits[3].id, tenantId: tnnts[2].id, contractType: 'COMMERCIAL', status: 'ACTIVE', startDate: d.toISOString(), endDate: nextYear.toISOString(), monthlyRent: '230000.00', securityDeposit: '690000.00' },
+        { organizationId: orgId, buildingId, unitId: insertedUnits[4].id, tenantId: tnnts[3].id, contractType: 'RESIDENTIAL', status: 'ACTIVE', startDate: d.toISOString(), endDate: nextYear.toISOString(), monthlyRent: '80000.00', securityDeposit: '160000.00' },
+      ]);
+
+      return sendSuccess(res, { message: 'Demo data seeded successfully' });
+    } catch (err: any) {
+      console.error(err);
+      return sendError(res, 500, 'Failed to seed demo data', [err.message]);
+    }
+  }
+
 }

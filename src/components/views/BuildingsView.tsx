@@ -311,9 +311,19 @@ export const BuildingsView: React.FC<BuildingsViewProps> = ({
             <button
               onClick={openCreateModal}
               className="mt-4 px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700"
-            >
-              Add Building Now
-            </button>
+              >
+                Add Building Now
+              </button>
+            )}
+            
+            {hasPermission('building.create') && (
+              <button
+                onClick={handleSeedDemo}
+                disabled={isSeeding}
+                className="mt-4 ml-3 px-3 py-1.5 bg-fuchsia-600 text-white text-xs font-semibold rounded-lg hover:bg-fuchsia-700 disabled:opacity-50"
+              >
+                {isSeeding ? 'Generating...' : '✨ Generate Demo Building'}
+              </button>
           )}
         </div>
       ) : (
