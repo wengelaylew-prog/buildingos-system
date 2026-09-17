@@ -192,32 +192,16 @@ export function TelegramLinkView({ initData, telegramError, telegramLoading = fa
                 </div>
               )}
 
-              <button
-                type="button"
-                onClick={() => setMode('email')}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-stone-300 text-stone-800 font-semibold py-3 active:bg-stone-50"
-              >
-                <Mail size={18} />
-                {am ? 'በኢሜይል OTP ይግቡ' : 'Sign in with Email OTP'}
-              </button>
+              
 
-              <button
-                type="button"
-                onClick={() => setMode('phone')}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-stone-300 text-stone-800 font-semibold py-3 active:bg-stone-50"
-              >
-                <Phone size={18} />
-                {am ? 'በስልክ OTP ይግቡ' : 'Sign in with Phone OTP'}
-              </button>
+              
             </div>
             
             
           </>
         )}
 
-        {mode === 'email' && (
-          <>
-            <BackButton onClick={() => setMode('menu')} />
+         />
             <h2 className="text-lg font-bold mb-4">{am ? 'በኢሜይል OTP ይግቡ' : 'Sign in with Email OTP'}</h2>
             <form onSubmit={handleSendEmailOtp} className="space-y-3">
               <input
@@ -241,9 +225,7 @@ export function TelegramLinkView({ initData, telegramError, telegramLoading = fa
           </>
         )}
 
-        {mode === 'email-otp' && (
-          <>
-            <BackButton onClick={() => setMode('email')} />
+         />
             <h2 className="text-lg font-bold mb-2">{am ? 'ማረጋገጫ ኮድ ያስገቡ' : 'Enter Verification Code'}</h2>
             <p className="text-xs text-stone-500 mb-4">
               {am ? `ኮድ ወደ ${email} ተልኳል` : `A code was sent to ${email}`}
@@ -281,9 +263,7 @@ export function TelegramLinkView({ initData, telegramError, telegramLoading = fa
           </>
         )}
 
-        {mode === 'phone' && (
-          <>
-            <BackButton onClick={() => setMode('menu')} />
+         />
             <h2 className="text-lg font-bold mb-4">{am ? 'በስልክ OTP ይግቡ' : 'Sign in with Phone OTP'}</h2>
             <form onSubmit={handleSendPhoneOtp} className="space-y-3">
               <input
@@ -307,9 +287,7 @@ export function TelegramLinkView({ initData, telegramError, telegramLoading = fa
           </>
         )}
 
-        {mode === 'phone-otp' && (
-          <>
-            <BackButton onClick={() => setMode('phone')} />
+         />
             <h2 className="text-lg font-bold mb-2">{am ? 'ማረጋገጫ ኮድ ያስገቡ' : 'Enter Verification Code'}</h2>
             <p className="text-xs text-stone-500 mb-4">
               {am ? `ኮድ ወደ ${phone} ተልኳል` : `A code was sent to ${phone}`}
