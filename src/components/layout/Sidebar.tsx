@@ -113,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSel
         <select
           id="role-selector-dropdown"
           value={activeRole}
-          onChange={(e) => { setActiveRole(e.target.value); window.location.reload(); }}
+          onChange={(e) => { setActiveRole(e.target.value); onSelectTab?.('dashboard'); }}
           
           className="w-full text-xs font-medium bg-slate-950 text-slate-200 rounded-md border border-slate-700 py-1.5 px-2 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
