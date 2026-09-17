@@ -1353,10 +1353,11 @@ export function NotificationsView({ initData, onBack }: { initData: string | nul
 }
 
 export function ProfileView({
-  initData,
-  onDisconnected,
-  onLoggedOut,
-}: {
+    initData,
+    onDisconnected,
+    onLoggedOut,
+    onOpenGatePass,
+  }: {
   initData: string | null;
   onDisconnected?: () => void;
   onLoggedOut?: () => void;
