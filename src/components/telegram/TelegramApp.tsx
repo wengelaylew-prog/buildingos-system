@@ -123,15 +123,10 @@ export function TelegramApp() {
     
     return (
       <TelegramLinkView
-        initData={initData}
         telegramError={telegramError}
         telegramLoading={telegramLoading}
         onRetryTelegram={handleRetryTelegram}
-        onAuthenticated={() => {
-          setTelegramError(null);
-          bootstrapAuth();
-        }}
-        onRegisterClick={() => setUnauthView('LANDING')}
+        inTelegram={Boolean((window as any).Telegram?.WebApp?.initData)}
       />
     );
   }

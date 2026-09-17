@@ -24,150 +24,64 @@ async function linkTelegramAccountIfProvided(userId: string, initData?: string) 
     if (!userStr) return;
     const tgUser = JSON.parse(userStr);
     const telegramUserId = tgUser.id?.toString();
-    if (!telegramUserId) return;
-
-    await db.delete(telegramAccounts).where(
-      sql`user_id = ${userId} OR telegram_user_id = ${telegramUserId}`
-    );
-
-    await db.insert(telegramAccounts).values({
-      userId,
-      telegramUserId,
-      username: tgUser.username,
-      firstName: tgUser.first_name,
-      lastName: tgUser.last_name,
-      photoUrl: tgUser.photo_url,
-      lastAuthenticatedAt: new Date(),
-    });
-  } catch(e) {
-    console.error('Failed to link telegram account during OTP', e);
-  }
-}
-
-
-function normalizeEmail(email: string): string {
-  return (email || '').trim().toLowerCase();
-}
-
-function normalizePhone(phone: string): string {
-  return (phone || '').trim().replace(/[^\d+]/g, '');
-}
-
-async function getActiveTenantForUser(userId: string) {
-  return (
-    (await db
-      .select()
-      .from(tenants)
-      .where(and(eq(tenants.userId, userId), eq(tenants.isDeleted, false))))[0] || null
-  );
-}
-
-async function checkOtpRateLimit(channel: 'EMAIL' | 'PHONE', identifier: string) {
-  const recentCodes = await db
-    .select()
-    .from(otpCodes)
-    .where(
-      and(
-        eq(otpCodes.channel, channel),
-        eq(otpCodes.identifier, identifier),
-        gt(otpCodes.createdAt, new Date(Date.now() - 60 * 60 * 1000))
-      )
-    )
-    .orderBy(desc(otpCodes.createdAt));
-
-  if (recentCodes.length > 0 && Date.now() - recentCodes[0].createdAt.getTime() < OTP_RESEND_COOLDOWN_MS) {
-    throw new Error('Please wait before requesting another code');
-  }
-  if (recentCodes.length >= OTP_MAX_PER_HOUR) {
-    throw new Error('Too many verification requests. Please try again later.');
-  }
-}
-
-async function verifyAndConsumeOtp(channel: 'EMAIL' | 'PHONE', identifier: string, code: string) {
-  if (!identifier || !code) throw new Error(INVALID_OTP);
-
-  const candidate = (
-    await db
-      .select()
-      .from(otpCodes)
-      .where(and(eq(otpCodes.channel, channel), eq(otpCodes.identifier, identifier), isNull(otpCodes.consumedAt)))
-      .orderBy(desc(otpCodes.createdAt))
-  )[0];
-
-  if (!candidate) throw new Error(INVALID_OTP);
-  if (candidate.expiresAt.getTime() < Date.now()) throw new Error(INVALID_OTP);
-  if (candidate.attempts >= candidate.maxAttempts) throw new Error('Too many attempts. Please request a new code.');
-
-  const isValid = verifyOtpHash(code, candidate.codeHash);
-  if (!isValid) {
-    await db
-      .update(otpCodes)
-      .set({ attempts: sql`attempts + 1` })
-      .where(eq(otpCodes.id, candidate.id));
-    throw new Error(INVALID_OTP);
-  }
-
-  const consumed = await db
-    .update(otpCodes)
-    .set({ consumedAt: new Date() })
-    .where(and(eq(otpCodes.id, candidate.id), isNull(otpCodes.consumedAt)))
-    .returning();
-
-  if (consumed.length === 0) throw new Error(INVALID_OTP);
-  if (!candidate.userId) throw new Error(INVALID_OTP);
-
-  const user = (await db.select().from(users).where(eq(users.id, candidate.userId)))[0];
-  if (!user || !user.isActive) throw new Error(INVALID_OTP);
-
-  const tenant = await getActiveTenantForUser(user.id);
-  if (!tenant) throw new Error(INVALID_OTP);
-
-  return user;
-}
-
-export class TmaAuthService {
-  static async loginWithTelegram(initData: string) {
-    if (!initData) throw new Error('Missing Telegram authentication data');
-
-    if (!process.env.TELEGRAM_BOT_TOKEN) {
-      const err: any = new Error('Telegram authentication is not configured');
-      err.code = 'CONFIG_ERROR';
-      throw err;
-    }
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-
-    if (!validateTelegramWebAppData(initData, botToken)) {
-      const err: any = new Error('Invalid or expired Telegram authentication data');
-      err.code = 'UNAUTHENTICATED';
-      throw err;
-    }
-
-    const urlParams = new URLSearchParams(initData);
-    const userStr = urlParams.get('user');
-    if (!userStr) {
-      const err: any = new Error('Missing user data in Telegram initData');
-      err.code = 'UNAUTHENTICATED';
-      throw err;
-    }
-
-    let tgUser: any;
-    try {
-      tgUser = JSON.parse(userStr);
-    } catch {
-      const err: any = new Error('Invalid Telegram user payload');
-      err.code = 'UNAUTHENTICATED';
-      throw err;
-    }
-
-    const telegramUserId = tgUser.id?.toString();
-    const tgAccount = telegramUserId
+    let tgAccount = telegramUserId
       ? (await db.select().from(telegramAccounts).where(eq(telegramAccounts.telegramUserId, telegramUserId)))[0]
       : null;
 
     if (!tgAccount) {
-      const err: any = new Error('Telegram account not linked to any BuildingOS user');
-      err.code = 'TELEGRAM_NOT_LINKED';
-      throw err;
+      const startParam = urlParams.get('start_param');
+      if (startParam && startParam.startsWith('org_')) {
+        const orgId = startParam.replace('org_', '');
+        
+        // Ensure organization exists
+        const { organizations, roles, users, tenants } = require('../../db/schema.ts');
+        const org = (await db.select().from(organizations).where(eq(organizations.id, orgId)))[0];
+        
+        if (org) {
+          // Find TENANT role
+          const tenantRole = (await db.select().from(roles).where(eq(roles.name, 'TENANT')))[0];
+          
+          if (tenantRole) {
+            // Auto-register the tenant
+            const uid = 'tg_' + telegramUserId;
+            const email = `${telegramUserId}@telegram.local`;
+            const fullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Telegram User';
+            
+            const newUser = (await db.insert(users).values({
+              organizationId: orgId,
+              uid,
+              email,
+              fullName,
+              roleId: tenantRole.id,
+              isActive: true,
+            }).returning())[0];
+
+            await db.insert(tenants).values({
+              organizationId: orgId,
+              userId: newUser.id,
+              firstName: tgUser.first_name || 'Telegram',
+              lastName: tgUser.last_name || 'User',
+              email: email,
+              status: 'ACTIVE',
+            });
+
+            tgAccount = (await db.insert(telegramAccounts).values({
+              userId: newUser.id,
+              telegramUserId: telegramUserId,
+              telegramUsername: tgUser.username,
+              firstName: tgUser.first_name,
+              lastName: tgUser.last_name,
+              lastAuthenticatedAt: new Date(),
+            }).returning())[0];
+          }
+        }
+      }
+
+      if (!tgAccount) {
+        const err: any = new Error('የቴሌግራም አካውንትዎ ከማንኛውም ህንፃ ጋር አልተገናኘም። እባክዎ የአከራይዎን ሊንክ ተጠቅመው ይግቡ። (Telegram account not linked to any building. Please use your landlord\'s invite link.)');
+        err.code = 'TELEGRAM_NOT_LINKED';
+        throw err;
+      }
     }
 
     const user = (await db.select().from(users).where(eq(users.id, tgAccount.userId)))[0];

@@ -209,17 +209,29 @@ export const TenantsView: React.FC<TenantsViewProps> = ({
           />
         </form>
 
-        {hasPermission('tenant.create') && (
-          <button
-            id="create-tenant-button"
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Tenant</span>
-          </button>
-        )}
+        
+          {hasPermission('tenant.create') && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const link = `https://t.me/BuildingOS_Admin_Bot/app?startapp=org_${user?.organizationId}`;
+                  navigator.clipboard.writeText(link);
+                  alert('የተከራይ መጋበዣ ሊንክ ኮፒ ተደርጓል!\n' + link);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0f5132] hover:bg-[#157347] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors shrink-0"
+              >
+                <span>Telegram Invite Link</span>
+              </button>
+              <button
+                onClick={() => setIsCreateOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Tenant</span>
+              </button>
+            </div>
+          )}
+
       </div>
 
       {/* Tenants Table */}
