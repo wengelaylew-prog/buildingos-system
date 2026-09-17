@@ -1560,7 +1560,7 @@ export function ProfileView({
 
 
 
-export function TenantMessagingView({ initData, onOpenProfile }: { initData: string | null; onOpenProfile?: () => void }) {
+export function TenantMessagingView({ initData }: { initData: string | null; }) {
   const { locale } = useLanguage();
   const am = locale === 'am';
   const [messages, setMessages] = useState<any[]>([]);
@@ -1671,16 +1671,14 @@ export function TenantMessagingView({ initData, onOpenProfile }: { initData: str
           </div>
           <div>
             <h2 className="font-bold text-[var(--tg-theme-text-color,#0f172a)] leading-tight">
-              {am ? 'የህንፃ አስተዳደር' : 'Building Admin'}
+              {am ? 'የህንፃው አስተዳዳሪ (Admin)' : 'Building Admin'}
             </h2>
             <p className="text-[10px] text-[var(--tg-theme-hint-color,#64748b)]">
               {am ? 'የመስመር ላይ ድጋፍ (Online)' : 'Online Support'}
             </p>
           </div>
         </div>
-        <button onClick={onOpenProfile} className="p-2 text-[var(--tg-theme-hint-color,#64748b)]">
-          <User className="w-6 h-6" />
-        </button>
+        
       </div>
 
       {/* Chat Messages */}
