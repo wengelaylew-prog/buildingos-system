@@ -18,6 +18,10 @@ import {
   MessageSquare,
   Send,
   Phone
+  LayoutGrid,
+  List,
+  UploadCloud,
+  Download
 } from 'lucide-react';
 import { api } from '../../api/client.ts';
 import { Unit, Building, Floor, Tenant, Contract, Payment, MaintenanceRequest, Document, AuditLog } from '../../types/index.ts';
@@ -50,6 +54,7 @@ export const UnitsView: React.FC<UnitsViewProps> = ({
   const [selectedFloorId, setSelectedFloorId] = useState<string>(initialFloorId || 'ALL');
   const [filterFloorsList, setFilterFloorsList] = useState<Floor[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [viewMode, setViewMode] = useState<'list' | 'floor'>('floor');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [search, setSearch] = useState('');
 
@@ -413,6 +418,25 @@ export const UnitsView: React.FC<UnitsViewProps> = ({
             <option value="RESERVED">Reserved</option>
             <option value="MAINTENANCE">Maintenance</option>
           </select>
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg ml-2">
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-md flex items-center justify-center transition-colors ${viewMode === 'list' ? 'bg-white shadow-xs text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+              title="List View"
+            >
+              <List className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('floor')}
+              className={`p-1.5 rounded-md flex items-center justify-center transition-colors ${viewMode === 'floor' ? 'bg-white shadow-xs text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
+              title="Floor View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
+
 
           {/* Type Filter */}
           <select
@@ -1095,6 +1119,40 @@ export const UnitsView: React.FC<UnitsViewProps> = ({
             )}
 
             {/* Tab: Audit Log */}
+            
+            {detailTab === 'docs' && (
+              <div className="space-y-4">
+                <div className="flex justify-end">
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors border border-indigo-200">
+                    <UploadCloud className="w-4 h-4" />
+                    Upload File
+                  </button>
+                </div>
+                <div className="divide-y divide-slate-100 text-xs border border-slate-200 rounded-lg">
+                  {unitDetails.documents.length === 0 ? (
+                    <div className="py-8 text-center text-slate-400 bg-slate-50 rounded-lg">No documents organized for this unit yet.</div>
+                  ) : (
+                    unitDetails.documents.map((d) => (
+                      <div key={d.id} className="p-3 flex items-center justify-between hover:bg-slate-50">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-slate-900">{d.title}</div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">Uploaded {new Date(d.createdAt).toLocaleDateString()}</div>
+                          </div>
+                        </div>
+                        <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
             {detailTab === 'audit' && (
               <div className="divide-y divide-slate-100 text-xs max-h-60 overflow-y-auto">
                 {unitDetails.activity.map((a) => (
