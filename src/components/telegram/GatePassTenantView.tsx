@@ -7,10 +7,12 @@ export function GatePassTenantView({ initData }: { initData: string | null }) {
   const am = locale === 'am';
   const [form, setForm] = useState({ item: '', direction: 'OUT', quantity: 1 });
   const [submitted, setSubmitted] = useState(false);
+  const [token, setToken] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // tmaFetch('/api/v1/security/gate-passes', initData, { method: 'POST', body: JSON.stringify(form) })
+    const generatedToken = 'GP-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    setToken(generatedToken);
     setSubmitted(true);
   };
 
@@ -22,8 +24,12 @@ export function GatePassTenantView({ initData }: { initData: string | null }) {
         </div>
         <h2 className="text-xl font-bold">{am ? 'ጥያቄዎ ተልኳል' : 'Gate Pass Requested!'}</h2>
         <p className="text-sm text-slate-500">
-          {am ? 'እባክዎ መውጫ ላይ ለጥበቃ ያሳውቁ።' : 'Your request has been sent to security. Please present your ID at the gate.'}
+          {am ? 'ጥያቄዎ ለጥበቃ ተልኳል። እባክዎ ከታች ያለውን ማረጋገጫ ቶክን ለጥበቃ ያሳዩ።' : 'Your request has been sent to security. Please present the token below at the gate.'}
         </p>
+        <div className="my-4 p-4 bg-slate-100 rounded-xl border border-slate-200 w-full">
+          <p className="text-xs text-slate-500 mb-1">{am ? 'የእቃ ማዘዣ ቶክን (Gate Pass Token)' : 'Gate Pass Token'}</p>
+          <div className="text-2xl font-mono font-bold tracking-widest text-slate-800">{token}</div>
+        </div>
         <button 
           onClick={() => setSubmitted(false)}
           className="mt-6 w-full py-3 bg-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-text-color,#ffffff)] rounded-xl font-semibold"
