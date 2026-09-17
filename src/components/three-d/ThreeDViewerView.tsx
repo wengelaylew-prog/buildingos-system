@@ -609,9 +609,48 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
                     ? 'የህንፃዎን የፊት ለፊት ገፅታ የሚያሳይ ግልፅ ፎቶ ያስገቡ። AI ፎቶውን በማየት ወደ 3D ሞዴል ይቀይረዋል!' 
                     : 'Upload a clear front-facing photo of your building. AI will analyze it to generate a 3D model!'}
                 </p>
-                <button className="mt-6 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-colors">
-                  {isAmharic ? 'ፎቶ ምረጥ' : 'Browse Files'}
-                </button>
+                
+                  {aiStatus === 'idle' ? (
+                    <>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        onChange={handleAiUpload} 
+                      />
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="mt-6 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
+                      >
+                        {isAmharic ? 'ፎቶ ምረጥ (Browse Files)' : 'Browse Files'}
+                      </button>
+                    </>
+                  ) : (
+                    <div className="mt-6 w-full max-w-xs mx-auto space-y-3">
+                      <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                        <span>
+                          {aiStatus === 'uploading' ? (isAmharic ? 'ፋይል በመጫን ላይ...' : 'Uploading...') :
+                           aiStatus === 'analyzing' ? (isAmharic ? 'Gemini AI ፎቶውን እያጠና ነው...' : 'Gemini AI Analyzing...') :
+                           aiStatus === 'generating' ? (isAmharic ? '3D ሞዴል በመገንባት ላይ...' : 'Generating 3D Model...') :
+                           (isAmharic ? 'በተሳካ ሁኔታ ተጠናቋል!' : 'Success!')}
+                        </span>
+                        <span className="text-indigo-600">{progress}%</span>
+                      </div>
+                      <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${aiStatus === 'success' ? 'bg-emerald-500' : 'bg-gradient-to-r from-fuchsia-500 to-indigo-500'}`}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      {aiStatus === 'success' && (
+                        <p className="text-[10px] text-emerald-600 font-bold text-center animate-pulse">
+                          {isAmharic ? 'አዲሱ 3D ሞዴል ወደ ሲስተሙ ገብቷል!' : '3D Model Integrated!'}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
               </div>
 
               <div className="mt-6 bg-purple-50 p-4 rounded-xl border border-purple-100 flex items-start gap-3">
