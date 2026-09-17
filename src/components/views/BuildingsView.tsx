@@ -43,6 +43,20 @@ export const BuildingsView: React.FC<BuildingsViewProps> = ({
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [isSeeding, setIsSeeding] = useState(false);
+
+  const handleSeedDemo = async () => {
+    setIsSeeding(true);
+    try {
+      await api.seedDemoData();
+      await fetchBuildings();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate demo data');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   // Modal states
   const [isCreateOpen, setIsCreateOpen] = useState(showCreateModalInitial || false);
