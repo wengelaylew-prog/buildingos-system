@@ -363,6 +363,18 @@ export class TelegramService {
     return MessagingService.markNotificationRead(notificationId, userId);
   }
 
+  
+  static async updateProfile(userId: string, name?: string, phone?: string) {
+    const tenant = (await db.select().from(tenants).where(eq(tenants.userId, userId)))[0];
+    if (!tenant) throw new Error('Tenant profile not found');
+    
+    await db.update(tenants)
+      .set({ emergencyContactName: name || null, emergencyContactPhone: phone || null })
+      .where(eq(tenants.id, tenant.id));
+      
+    return { success: true };
+  }
+
   static async getProfile(userId: string) {
     const tenant = await this.getTenantForUser(userId);
     const user = (await db.select().from(users).where(eq(users.id, userId)))[0];

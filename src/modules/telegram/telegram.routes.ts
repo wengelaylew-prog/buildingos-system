@@ -21,5 +21,6 @@ telegramRouter.post('/maintenance', authenticate, TelegramController.createMaint
 telegramRouter.get('/notifications', authenticate, TelegramController.getNotifications);
 telegramRouter.post('/notifications/:id/read', authenticate, TelegramController.markNotificationRead);
 telegramRouter.get('/profile', authenticate, TelegramController.getProfile);
+telegramRouter.put('/profile', authenticate, TelegramController.updateProfile);
 telegramRouter.post('/disconnect', authenticate, TelegramController.disconnectTelegram);
 

@@ -16,7 +16,7 @@ async function tmaFetch(url: string, authHeader: string | null, options: any = {
 }
 
 import { useLanguage } from '../../context/LanguageContext.tsx';
-import { Building, FileText, Wrench, Wallet, Bell, AlertCircle, CheckCircle, ArrowLeft, Receipt, RefreshCw, XCircle, Clock, Activity as Loader2, Plus, Eye as Camera, Bell as Megaphone, FileClock as CalendarClock, Check, Mail, Phone, HelpCircle, Users, LogOut, X as Unlink, ChevronRight, Globe as Moon, Flame as Sun, User, Send } from 'lucide-react';
+import { Building, FileText, Wrench, Wallet, Bell, AlertCircle, CheckCircle, ArrowLeft, Receipt, RefreshCw, XCircle, Clock, Activity as Loader2, Plus, Eye as Camera, Bell as Megaphone, FileClock as CalendarClock, Check, Mail, Phone, HelpCircle, Users, LogOut, X as Unlink, ChevronRight, Box as Package, Globe as Moon, Flame as Sun, User, Send } from 'lucide-react';
 
 export function TenantHomeView({ initData, onOpenNotifications }: { initData: string | null; onOpenNotifications?: () => void }) {
   const { t, locale, setLocale } = useLanguage();
@@ -1360,6 +1360,7 @@ export function ProfileView({
   initData: string | null;
   onDisconnected?: () => void;
   onLoggedOut?: () => void;
+  onOpenGatePass?: () => void;
 }) {
   const { locale, setLocale } = useLanguage();
   const am = locale === 'am';
@@ -1481,7 +1482,15 @@ export function ProfileView({
       {/* Actions */}
       <h3 className="font-semibold px-2">{am ? 'ተጨማሪ' : 'More'}</h3>
       <div className="bg-[var(--tg-theme-bg-color,#ffffff)] rounded-xl shadow-sm border border-[var(--tg-theme-hint-color,#e2e8f0)] px-4">
-        <button onClick={() => setShowHelp((v) => !v)} className="w-full flex items-center gap-3 py-3 border-b border-[var(--tg-theme-hint-color,#e2e8f0)]">
+        
+          {onOpenGatePass && (
+            <button onClick={onOpenGatePass} className="w-full flex items-center gap-3 py-3 border-b border-[var(--tg-theme-hint-color,#e2e8f0)]">
+              <Package size={16} className="text-[var(--tg-theme-hint-color,#64748b)]" />
+              <span className="flex-1 text-left text-sm font-medium">{am ? 'እቃ ማስወጣት/ማስገባት ማዘዣ' : 'Gate Pass Request'}</span>
+              <ChevronRight size={16} className="text-[var(--tg-theme-hint-color,#64748b)]" />
+            </button>
+          )}
+          <button onClick={() => setShowHelp((v) => !v)} className="w-full flex items-center gap-3 py-3 border-b border-[var(--tg-theme-hint-color,#e2e8f0)]">
           <HelpCircle size={16} className="text-[var(--tg-theme-hint-color,#64748b)]" />
           <span className="flex-1 text-left text-sm font-medium">{am ? 'እገዛ' : 'Help'}</span>
           <ChevronRight size={16} className={`text-[var(--tg-theme-hint-color,#64748b)] transition-transform ${showHelp ? 'rotate-90' : ''}`} />
@@ -1493,21 +1502,44 @@ export function ProfileView({
           </div>
         )}
 
-        <button onClick={() => setShowContact((v) => !v)} className="w-full flex items-center gap-3 py-3 border-b border-[var(--tg-theme-hint-color,#e2e8f0)]">
-          <Users size={16} className="text-[var(--tg-theme-hint-color,#64748b)]" />
-          <span className="flex-1 text-left text-sm font-medium">{am ? 'የአደጋ ጊዜ ግንኙነት' : 'Contact Management'}</span>
-          <ChevronRight size={16} className={`text-[var(--tg-theme-hint-color,#64748b)] transition-transform ${showContact ? 'rotate-90' : ''}`} />
-        </button>
-        {showContact && (
-          <div className="pb-3 pt-1 text-xs space-y-1">
-            <p className="text-[var(--tg-theme-hint-color,#64748b)]">
-              {am ? 'ስም' : 'Name'}: <span className="font-medium text-[var(--tg-theme-text-color,#000000)]">{data.emergencyContactName || (am ? 'አልተመዘገበም' : 'Not provided')}</span>
-            </p>
-            <p className="text-[var(--tg-theme-hint-color,#64748b)]">
-              {am ? 'ስልክ' : 'Phone'}: <span className="font-medium text-[var(--tg-theme-text-color,#000000)]">{data.emergencyContactPhone || (am ? 'አልተመዘገበም' : 'Not provided')}</span>
-            </p>
-          </div>
-        )}
+        
+          <button onClick={() => setShowContact((v) => !v)} className="w-full flex items-center gap-3 py-3 border-b border-[var(--tg-theme-hint-color,#e2e8f0)]">
+            <Users size={16} className="text-[var(--tg-theme-hint-color,#64748b)]" />
+            <span className="flex-1 text-left text-sm font-medium">{am ? 'የአደጋ ጊዜ ግንኙነት' : 'Emergency Contact'}</span>
+            <ChevronRight size={16} className={`text-[var(--tg-theme-hint-color,#64748b)] transition-transform ${showContact ? 'rotate-90' : ''}`} />
+          </button>
+          {showContact && (
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                const formData = new FormData(e.target);
+                const contactName = formData.get('emergencyContactName');
+                const contactPhone = formData.get('emergencyContactPhone');
+                await tmaFetch('/api/v1/telegram/profile', initData, {
+                  method: 'PUT',
+                  body: JSON.stringify({ emergencyContactName: contactName, emergencyContactPhone: contactPhone })
+                });
+                setData({ ...data, emergencyContactName: contactName, emergencyContactPhone: contactPhone });
+                alert(am ? 'ተስተካክሏል!' : 'Updated successfully!');
+                setShowContact(false);
+              } catch (err) {
+                alert(err.message);
+              }
+            }} className="pb-3 pt-2 text-xs space-y-3 px-1 border-b border-[var(--tg-theme-hint-color,#e2e8f0)]">
+              <div>
+                <label className="block text-[var(--tg-theme-hint-color,#64748b)] mb-1">{am ? 'ስም' : 'Name'}</label>
+                <input name="emergencyContactName" defaultValue={data.emergencyContactName || ''} className="w-full bg-[var(--tg-theme-secondary-bg-color,#f1f5f9)] rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--tg-theme-button-color,#3b82f6)]" placeholder={am ? 'የአደጋ ጊዜ ተጠሪ ስም' : 'Contact Name'} />
+              </div>
+              <div>
+                <label className="block text-[var(--tg-theme-hint-color,#64748b)] mb-1">{am ? 'ስልክ' : 'Phone'}</label>
+                <input name="emergencyContactPhone" defaultValue={data.emergencyContactPhone || ''} className="w-full bg-[var(--tg-theme-secondary-bg-color,#f1f5f9)] rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--tg-theme-button-color,#3b82f6)]" placeholder={am ? 'የአደጋ ጊዜ ተጠሪ ስልክ' : 'Contact Phone'} />
+              </div>
+              <button type="submit" className="w-full bg-[var(--tg-theme-button-color,#3b82f6)] text-[var(--tg-theme-button-text-color,#ffffff)] rounded-lg py-2 font-semibold">
+                {am ? 'አስቀምጥ' : 'Save'}
+              </button>
+            </form>
+          )}
+
 
         <button onClick={handleLogout} className="w-full flex items-center gap-3 py-3 border-b border-[var(--tg-theme-hint-color,#e2e8f0)] text-red-600">
           <LogOut size={16} />

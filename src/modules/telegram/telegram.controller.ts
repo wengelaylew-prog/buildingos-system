@@ -142,6 +142,19 @@ export class TelegramController {
     }
   }
 
+  
+  static async updateProfile(req: Request, res: Response) {
+    try {
+      const user = req.user;
+      if (!user) throw new Error('Unauthenticated');
+      const { emergencyContactName, emergencyContactPhone } = req.body || {};
+      const data = await TelegramService.updateProfile(user.id, emergencyContactName, emergencyContactPhone);
+      return sendSuccess(res, data, 'Profile updated');
+    } catch (err: any) {
+      return sendError(res, 400, err.message);
+    }
+  }
+
   static async getProfile(req: AuthRequest, res: Response) {
     try {
       if (!req.user) return sendError(res, 401, 'Unauthorized');
