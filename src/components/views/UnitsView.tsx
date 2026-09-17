@@ -18,9 +18,9 @@ import {
   MessageSquare,
   Send,
   Phone,
-  LayoutGrid,
-  List,
-  UploadCloud,
+  
+  Menu,
+  
   Download
 } from 'lucide-react';
 import { api } from '../../api/client.ts';
@@ -45,14 +45,14 @@ export const UnitsView: React.FC<UnitsViewProps> = ({
   onCloseCreateModalInitial,
 }) => {
   const { hasPermission } = useAuth();
-  const [unitsList, setUnitsList] = useState<Unit[]>([]);
-  const [buildingsList, setBuildingsList] = useState<Building[]>([]);
+  const [unitsMenu, setUnitsList] = useState<Unit[]>([]);
+  const [buildingsMenu, setBuildingsList] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filters
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>(initialBuildingId || 'ALL');
   const [selectedFloorId, setSelectedFloorId] = useState<string>(initialFloorId || 'ALL');
-  const [filterFloorsList, setFilterFloorsList] = useState<Floor[]>([]);
+  const [filterFloorsMenu, setFilterFloorsList] = useState<Floor[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'list' | 'floor'>('floor');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
@@ -425,7 +425,7 @@ export const UnitsView: React.FC<UnitsViewProps> = ({
               className={`p-1.5 rounded-md flex items-center justify-center transition-colors ${viewMode === 'list' ? 'bg-white shadow-xs text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
               title="List View"
             >
-              <List className="w-4 h-4" />
+              <Menu className="w-4 h-4" />
             </button>
             <button
               type="button"
@@ -433,7 +433,7 @@ export const UnitsView: React.FC<UnitsViewProps> = ({
               className={`p-1.5 rounded-md flex items-center justify-center transition-colors ${viewMode === 'floor' ? 'bg-white shadow-xs text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
               title="Floor View"
             >
-              <LayoutGrid className="w-4 h-4" />
+              <Grid3X3 className="w-4 h-4" />
             </button>
           </div>
 
@@ -1124,7 +1124,7 @@ export const UnitsView: React.FC<UnitsViewProps> = ({
               <div className="space-y-4">
                 <div className="flex justify-end">
                   <button className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-colors border border-indigo-200">
-                    <UploadCloud className="w-4 h-4" />
+                    <FileText className="w-4 h-4" />
                     Upload File
                   </button>
                 </div>
@@ -1139,7 +1139,7 @@ export const UnitsView: React.FC<UnitsViewProps> = ({
                             <FileText className="w-4 h-4" />
                           </div>
                           <div>
-                            <div className="font-semibold text-slate-900">{d.title}</div>
+                            <div className="font-semibold text-slate-900">{d.fileName}</div>
                             <div className="text-[10px] text-slate-500 mt-0.5">Uploaded {new Date(d.createdAt).toLocaleDateString()}</div>
                           </div>
                         </div>
