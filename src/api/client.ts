@@ -402,4 +402,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ initData }),
     }),
+
+  getAnnouncements: () => request<any[]>('/api/v1/community/announcements'),
+  createAnnouncement: (data: { title: string; content: string; priority: string }) => 
+    request<any>('/api/v1/community/announcements', { method: 'POST', body: JSON.stringify(data) }),
+  getCommunityPosts: () => request<any[]>('/api/v1/community/posts'),
+  createCommunityPost: (data: { content: string; postType: string }) => 
+    request<any>('/api/v1/community/posts', { method: 'POST', body: JSON.stringify(data) }),
 };

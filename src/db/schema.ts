@@ -271,6 +271,18 @@ export const documents = pgTable('documents', {
 });
 
 // 10. AUDIT LOGS
+
+// 20. COMMUNITY POSTS
+export const communityPosts = pgTable('community_posts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  content: text('content').notNull(),
+  postType: text('post_type').notNull().default('GENERAL'), // GENERAL, MARKETPLACE, EVENT
+  status: text('status').notNull().default('ACTIVE'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 export const auditLogs = pgTable('audit_logs', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').references(() => organizations.id),

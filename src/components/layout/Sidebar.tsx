@@ -1,5 +1,6 @@
 import React from 'react';
-import { Activity,
+import {
+  Bell, Activity,
   LayoutDashboard,
   Building2,
   Box,
@@ -37,6 +38,7 @@ export type ActiveTab =
   | 'messages'
   | 'documents'
   | 'reports'
+    | 'announcements'
   | 'users'
   | 'audit'
   | 'saas'
@@ -79,6 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSel
     { id: 'messages', label: 'Messages', icon: MessageSquare, phaseBadge: 'Phase 2', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER'] },
     { id: 'documents', label: 'Documents', icon: FolderArchive, permission: 'document.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER'] },
     { id: 'reports', label: 'Reports', icon: BarChart3, phaseBadge: 'Phase 2', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'ACCOUNTANT'] },
+      { id: 'announcements', label: 'Announcements', icon: Bell, allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER'] },
     { id: 'users', label: 'Users', icon: Users2, phaseBadge: 'Phase 2', allowedRoles: ['SUPER_ADMIN'] },
     { id: 'audit', label: 'Audit Trail', icon: History, permission: 'audit.read', allowedRoles: ['SUPER_ADMIN'] },
     { id: 'settings', label: 'Settings & RBAC', icon: Settings, permission: 'settings.manage', allowedRoles: ['SUPER_ADMIN'] },

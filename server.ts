@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+﻿import express, { Request, Response } from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { db } from './src/db/index.ts';
@@ -46,6 +46,7 @@ import { adminRouter } from './src/modules/admin/admin.routes.ts';
 import { telegramRouter } from './src/modules/telegram/telegram.routes.ts';
 import { tmaAuthRouter } from './src/modules/tma-auth/tma-auth.routes.ts';
 import { securityRouter } from './src/modules/security/security.routes.ts';
+import { communityRouter } from './src/modules/community/community.routes.ts';
 import { subscriptionsRouter } from './src/modules/subscriptions/subscriptions.routes.ts';
 import { authRouter } from './src/modules/auth/auth.routes.ts';
 import { aiRouter } from './src/modules/ai/ai.routes.ts';
@@ -782,6 +783,7 @@ const app = express();
 
   // SECURITY
   app.use('/api/v1/security', securityRouter);
+  app.use('/api/v1/community', communityRouter);
   app.use('/api/v1/subscriptions', subscriptionsRouter);
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/ai', aiRouter);
