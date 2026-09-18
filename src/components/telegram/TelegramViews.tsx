@@ -1567,6 +1567,9 @@ export function TenantMessagingView({ initData, onOpenProfile }: { initData: str
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+    const [payModalOpen, setPayModalOpen] = useState(false);
+    const [billingData, setBillingData] = useState<any>(null);
+    const [payLoading, setPayLoading] = useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1580,6 +1583,8 @@ export function TenantMessagingView({ initData, onOpenProfile }: { initData: str
   const loadMessages = async () => {
     try {
       const data = await tmaFetch('/api/v1/telegram/maintenance', initData);
+      const bData = await tmaFetch('/api/v1/telegram/billing', initData);
+      setBillingData(bData);
       const tickets = Array.isArray(data) ? data : (data?.data || []);
       
       const formattedMessages = tickets.map((t: any) => ({
@@ -1697,7 +1702,17 @@ export function TenantMessagingView({ initData, onOpenProfile }: { initData: str
           <h3 className="text-sm font-bold mb-2 text-[var(--tg-theme-text-color,#000000)]">
             {am ? 'ፈጣን አገልግሎቶች (Quick Actions)' : 'Quick Actions'}
           </h3>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
+              <button 
+                onClick={() => setPayModalOpen(true)}
+                className="flex flex-col items-center justify-center p-3 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100 hover:bg-emerald-100 transition-colors"
+              >
+                <Wallet size={20} className="mb-1" />
+                <span className="text-[11px] font-bold text-center leading-tight">
+                  {am ? 'ክፍያ (Pay Rent)' : 'Pay Rent'}
+                </span>
+              </button>
+
             <button 
               onClick={onOpenProfile}
               className="flex flex-col items-center justify-center p-3 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors"
@@ -1762,7 +1777,73 @@ export function TenantMessagingView({ initData, onOpenProfile }: { initData: str
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Chat Input */}
+      
+      {/* Payment Modal */}
+      {payModalOpen && billingData && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-end justify-center sm:items-center">
+          <div className="bg-white w-full sm:w-[400px] rounded-t-2xl sm:rounded-2xl p-5 flex flex-col max-h-[85vh]">
+             <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg">{am ? 'ክፍያ (Payment)' : 'Payment'}</h3>
+                <button onClick={() => setPayModalOpen(false)} className="p-1 rounded-full bg-slate-100"><XCircle size={20}/></button>
+             </div>
+             
+             {billingData.currentInvoice ? (
+                <div className="flex-1 overflow-y-auto">
+                   <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-4 text-center">
+                      <p className="text-sm text-blue-600 mb-1">{am ? 'የሚከፈል ሂሳብ (Amount Due)' : 'Amount Due'}</p>
+                      <p className="text-3xl font-bold text-blue-900">{billingData.currentInvoice.amount} ETB</p>
+                      <p className="text-xs text-blue-500 mt-1">{am ? 'የደረሰኝ ቁጥር:' : 'Invoice ID:'} {billingData.currentInvoice.invoiceNumber}</p>
+                   </div>
+                   
+                   <p className="text-sm font-bold text-slate-700 mb-3">{am ? 'የመክፈያ መንገድ ይምረጡ' : 'Select Payment Method'}</p>
+                   
+                   <div className="space-y-3">
+                     <button 
+                       disabled={payLoading}
+                       onClick={async () => {
+                         setPayLoading(true);
+                         try {
+                           await tmaFetch(`/api/v1/telegram/invoices/${billingData.currentInvoice.id}/pay`, initData, { method: 'POST', body: JSON.stringify({ gateway: 'TELEBIRR' }) });
+                           alert(am ? 'ክፍያዎ በስኬት ተፈፅሟል! (Payment Successful)' : 'Payment Successful!');
+                           setPayModalOpen(false);
+                           loadMessages(); // reload to clear
+                         } catch (e: any) { alert(e.message); }
+                         setPayLoading(false);
+                       }}
+                       className="w-full bg-[#1da1f2] hover:bg-[#1a90d9] text-white py-3 rounded-xl font-bold flex justify-center items-center gap-2"
+                     >
+                       <span>{am ? 'በቴሌብር ይክፈሉ' : 'Pay with Telebirr'}</span>
+                     </button>
+                     
+                     <button 
+                       disabled={payLoading}
+                       onClick={async () => {
+                         setPayLoading(true);
+                         try {
+                           await tmaFetch(`/api/v1/telegram/invoices/${billingData.currentInvoice.id}/pay`, initData, { method: 'POST', body: JSON.stringify({ gateway: 'CHAPA' }) });
+                           alert(am ? 'ክፍያዎ በስኬት ተፈፅሟል! (Payment Successful)' : 'Payment Successful!');
+                           setPayModalOpen(false);
+                           loadMessages(); // reload to clear
+                         } catch (e: any) { alert(e.message); }
+                         setPayLoading(false);
+                       }}
+                       className="w-full bg-[#13a571] hover:bg-[#119163] text-white py-3 rounded-xl font-bold flex justify-center items-center gap-2"
+                     >
+                       <span>{am ? 'በቻፓ ይክፈሉ' : 'Pay with Chapa'}</span>
+                     </button>
+                   </div>
+                </div>
+             ) : (
+                <div className="text-center py-10 text-slate-500">
+                   <div className="text-4xl mb-3">🎉</div>
+                   <p>{am ? 'ምንም ያልተከፈለ ሂሳብ የለዎትም!' : 'You have no pending invoices!'}</p>
+                </div>
+             )}
+          </div>
+        </div>
+      )}
+
+        {/* Chat Input */}
       <div className="bg-[var(--tg-theme-bg-color,#ffffff)] border-t border-[var(--tg-theme-hint-color,#e2e8f0)] p-3">
         <form onSubmit={handleSend} className="flex items-center gap-2">
           <input

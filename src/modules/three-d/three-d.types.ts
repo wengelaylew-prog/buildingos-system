@@ -10,6 +10,7 @@ export interface SceneUnitDTO {
   monthlyRent: number;
   depositAmount: number;
   status: 'VACANT' | 'OCCUPIED' | 'RESERVED' | 'MAINTENANCE' | 'INACTIVE';
+  paymentStatus?: 'PAID' | 'PENDING' | 'OVERDUE' | 'NONE';
   description?: string | null;
   meshId?: string | null;
   transform?: any;

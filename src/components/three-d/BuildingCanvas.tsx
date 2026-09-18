@@ -704,10 +704,16 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
             isHighlighted = false;
           }
         } else if (viewMode === 'FINANCIAL') {
-          if (unit.monthlyRent > 5000) {
+          if (unit.paymentStatus === 'PAID') {
             finalHex = 0x22cc22;
             finalEmissive = 0x116611;
-          } else if (unit.monthlyRent > 0) {
+          } else if (unit.paymentStatus === 'OVERDUE') {
+              finalHex = 0xef4444;
+              finalEmissive = 0xdc2626;
+            } else if (unit.paymentStatus === 'PENDING') {
+              finalHex = 0xf59e0b;
+              finalEmissive = 0xd97706;
+            } else if (unit.monthlyRent > 0) {
             finalHex = 0x88cc88;
             finalEmissive = 0x224422;
           } else {

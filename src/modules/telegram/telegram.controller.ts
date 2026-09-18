@@ -171,6 +171,22 @@ export class TelegramController {
     }
   }
 
+  
+  static async payInvoice(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return sendError(res, 401, 'Unauthorized');
+      const { id } = req.params;
+      const { gateway } = req.body;
+      if (!['TELEBIRR', 'CHAPA'].includes(gateway)) return sendError(res, 400, 'Invalid payment gateway');
+      
+      const data = await TelegramService.payInvoice(req.user.id, id, gateway);
+      return sendSuccess(res, data, 'Payment successful');
+    } catch (err: any) {
+      return sendError(res, 400, err.message, [err.message]);
+    }
+  }
+
+
   static async getInvoiceDetail(req: AuthRequest, res: Response) {
     try {
       if (!req.user) return sendError(res, 401, 'Unauthorized');

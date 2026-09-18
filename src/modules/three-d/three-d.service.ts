@@ -8,6 +8,7 @@ import {
   contracts,
 } from '../../db/schema.ts';
 import { eq, and, desc, inArray, asc } from 'drizzle-orm';
+import { invoices } from '../../db/schema.ts';
 import { AuthenticatedUser } from '../../middleware/auth.ts';
 import { ApiError } from '../common/api-response.ts';
 import {
@@ -215,9 +216,23 @@ export class ThreeDService {
     const unitIds = buildingUnits.map((u) => u.id);
     let activeContractsMap = new Map<string, any>();
     let activeTenantsMap = new Map<string, any>();
+    const invoiceMap = new Map<string, string>();
 
     if (unitIds.length > 0) {
-      const activeContracts = await db
+      
+    const allInvoices = await db.select().from(invoices).where(eq(invoices.organizationId, organizationId));
+    const invoiceMap = new Map<string, string>();
+    allInvoices.forEach(inv => {
+       if (inv.unitId) {
+          const current = invoiceMap.get(inv.unitId);
+          // Prioritize OVERDUE > PENDING > PAID
+          if (inv.status === 'OVERDUE') invoiceMap.set(inv.unitId, 'OVERDUE');
+          else if (inv.status === 'PENDING' && current !== 'OVERDUE') invoiceMap.set(inv.unitId, 'PENDING');
+          else if (inv.status === 'PAID' && current !== 'OVERDUE' && current !== 'PENDING') invoiceMap.set(inv.unitId, 'PAID');
+       }
+    });
+
+    const activeContracts = await db
         .select({
           contract: contracts,
           tenant: tenants,
@@ -314,6 +329,7 @@ export class ThreeDService {
             isTenantUnit: false,
             tenant: null,
             contract: null,
+            paymentStatus: invoiceMap.get(u.id) as any || 'NONE',
           };
         }
 
