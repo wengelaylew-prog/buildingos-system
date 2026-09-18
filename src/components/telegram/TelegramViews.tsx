@@ -1579,9 +1579,8 @@ export function TenantMessagingView({ initData, onOpenProfile }: { initData: str
 
   const loadMessages = async () => {
     try {
-      // Simulate loading messages (could fetch maintenance requests or a new messages endpoint)
-      const data = await tmaFetch('/api/v1/tenant/dashboard', initData);
-      const tickets = data.recentMaintenance || [];
+      const data = await tmaFetch('/api/v1/telegram/maintenance', initData);
+      const tickets = Array.isArray(data) ? data : (data?.data || []);
       
       const formattedMessages = tickets.map((t: any) => ({
         id: t.id,
@@ -1595,7 +1594,7 @@ export function TenantMessagingView({ initData, onOpenProfile }: { initData: str
       // Add a welcome message from admin
       formattedMessages.unshift({
         id: 'welcome',
-        text: am ? 'ሰላም! ይህ የህንፃ አስተዳደሩ ቀጥታ መልዕክት መቀበያ ነው። ማንኛውንም ጥያቄ ወይም የጥገና ጥያቄ እዚህ መላክ ይችላሉ።' : 'Hello! This is the Building Administration direct chat. You can send any questions or maintenance requests here.',
+        text: am ? 'ሰላም! ይህ የህንፃ አስተዳደር መገናኛ ማዕከል ነው። ማንኛውንም ጥያቄ ወይም የጥገና ጥያቄ እዚህ መላክ ይችላሉ።' : 'Hello! This is the Building Administration direct chat. You can send any questions or maintenance requests here.',
         sender: 'admin',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         date: new Date().toLocaleDateString(),
@@ -1604,6 +1603,14 @@ export function TenantMessagingView({ initData, onOpenProfile }: { initData: str
       setMessages(formattedMessages);
     } catch (err) {
       console.error(err);
+      // Even if it fails, set the welcome message
+      setMessages([{
+        id: 'welcome',
+        text: am ? 'ሰላም! ይህ የህንፃው አስተዳዳሪ (Admin) መገናኛ ማዕከል ነው። ማንኛውንም ጥያቄ ወይም የጥገና ጥያቄ እዚህ መላክ ይችላሉ።' : 'Hello! This is the Building Administration direct chat. You can send any questions or maintenance requests here.',
+        sender: 'admin',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date().toLocaleDateString(),
+      }]);
     } finally {
       setLoading(false);
     }
@@ -1615,7 +1622,7 @@ export function TenantMessagingView({ initData, onOpenProfile }: { initData: str
 
     setSending(true);
     try {
-      await tmaFetch('/api/v1/tenant/maintenance', initData, {
+      await tmaFetch('/api/v1/telegram/maintenance', initData, {
         method: 'POST',
         body: JSON.stringify({
           title: 'Direct Message',
@@ -1671,7 +1678,7 @@ export function TenantMessagingView({ initData, onOpenProfile }: { initData: str
           </div>
           <div>
             <h2 className="font-bold text-[var(--tg-theme-text-color,#0f172a)] leading-tight">
-              {am ? 'የህንፃ አስተዳደር' : 'Building Admin'}
+              {am ? 'የህንፃው አስተዳዳሪ (Admin)' : 'Building Admin'}
             </h2>
             <p className="text-[10px] text-[var(--tg-theme-hint-color,#64748b)]">
               {am ? 'የመስመር ላይ ድጋፍ (Online)' : 'Online Support'}
@@ -1683,8 +1690,45 @@ export function TenantMessagingView({ initData, onOpenProfile }: { initData: str
         </button>
       </div>
 
-      {/* Chat Messages */}
+            {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Quick Actions Panel */}
+        <div className="bg-[var(--tg-theme-bg-color,#ffffff)] p-3 rounded-lg shadow-sm border border-[var(--tg-theme-hint-color,#e2e8f0)] mb-4">
+          <h3 className="text-sm font-bold mb-2 text-[var(--tg-theme-text-color,#000000)]">
+            {am ? 'ፈጣን አገልግሎቶች (Quick Actions)' : 'Quick Actions'}
+          </h3>
+          <div className="grid grid-cols-2 gap-2">
+            <button 
+              onClick={onOpenProfile}
+              className="flex flex-col items-center justify-center p-3 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors"
+            >
+              <Package size={20} className="mb-1" />
+              <span className="text-[11px] font-bold text-center leading-tight">
+                {am ? 'ዕቃ ማስወጫ (Gate Pass)' : 'Gate Pass'}
+              </span>
+            </button>
+            <button 
+              onClick={() => {
+                 setNewMessage(am ? 'የውሃ ቧንቧ ተበላሽቷል' : 'Plumbing issue');
+              }}
+              className="flex flex-col items-center justify-center p-3 bg-amber-50 text-amber-600 rounded-lg border border-amber-100 hover:bg-amber-100 transition-colors"
+            >
+              <Wrench size={20} className="mb-1" />
+              <span className="text-[11px] font-bold text-center leading-tight">
+                {am ? 'ጥገና መጠየቂያ (Maintenance)' : 'Maintenance'}
+              </span>
+            </button>
+          </div>
+          <div className="mt-3 p-2 bg-emerald-50 border border-emerald-100 rounded-lg flex items-start gap-2">
+             <div className="text-xl">🤖</div>
+             <div className="text-xs text-emerald-800 leading-tight">
+               {am 
+                 ? 'የኛ ዘመናዊ AI ረዳት እርስዎን ለማገልገል ዝግጁ ነው! ጥያቄዎን ወይም የጥገና ችግርዎን ከታች ይፃፉለት።' 
+                 : 'Our Smart AI Assistant is ready! Type any questions or maintenance requests below.'}
+             </div>
+          </div>
+        </div>
+
         {messages.map((msg, idx) => {
           const isMe = msg.sender === 'tenant';
           const showDate = idx === 0 || messages[idx - 1].date !== msg.date;
