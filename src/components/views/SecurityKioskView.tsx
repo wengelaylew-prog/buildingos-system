@@ -3,7 +3,7 @@ import { Html5QrcodeScanner } from 'html5-qrcode';
 import { CheckCircle, XCircle, Shield } from 'lucide-react';
 
 export const SecurityKioskView: React.FC = () => {
-  const [scanResult, setShieldResult] = useState<string | null>(null);
+  const [scanResult, setScanResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export const SecurityKioskView: React.FC = () => {
     scanner.render(
       (decodedText) => {
         // Success
-        setShieldResult(decodedText);
+        setScanResult(decodedText);
         scanner.pause(true);
       },
       (error) => {
@@ -34,7 +34,7 @@ export const SecurityKioskView: React.FC = () => {
     setTimeout(() => {
       setLoading(false);
       alert('✅ Gate Pass Verified Successfully!\nVisitor may enter.');
-      setShieldResult(null);
+      setScanResult(null);
       // Hacky way to resume scanner after alert
       window.location.reload();
     }, 1000);
@@ -45,7 +45,7 @@ export const SecurityKioskView: React.FC = () => {
       <div className="text-center mb-8">
         <Shield className="mx-auto h-12 w-12 text-slate-800 mb-4" />
         <h1 className="text-3xl font-bold text-slate-900">Security Guard Kiosk</h1>
-        <p className="text-slate-500 mt-2">Shield Visitor or Item Gate Passes</p>
+        <p className="text-slate-500 mt-2">Scan Visitor or Item Gate Passes</p>
       </div>
 
       {!scanResult ? (
@@ -55,7 +55,7 @@ export const SecurityKioskView: React.FC = () => {
       ) : (
         <div className="bg-white p-8 rounded-2xl shadow-lg border border-emerald-200 text-center animate-in zoom-in-95 duration-300">
           <CheckCircle className="mx-auto h-16 w-16 text-emerald-500 mb-4" />
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">QR Code Shieldned!</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">QR Code Scanned!</h2>
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 inline-block">
              <p className="text-sm text-slate-500 uppercase tracking-wider mb-1">Pass Token</p>
              <p className="text-3xl font-mono font-bold text-slate-800">{scanResult}</p>
@@ -81,3 +81,4 @@ export const SecurityKioskView: React.FC = () => {
     </div>
   );
 };
+

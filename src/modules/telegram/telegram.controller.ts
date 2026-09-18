@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../../middleware/auth.ts';
+
 import { TelegramService } from './telegram.service.ts';
 import { visitors } from '../../db/schema.ts';
 import { eq, and } from 'drizzle-orm';
@@ -276,6 +277,7 @@ export class TelegramController {
       const { description } = req.body;
       if (!description) return sendError(res, 400, 'Description required');
       const data = await TelegramService.createGatePass(req.user.id, description);
+      if ((global as any).io) (global as any).io.emit('new_alert', { title: 'New Gate Pass Request', message: `Item: ${description}` });
       return sendSuccess(res, data, 'Gate pass created');
     } catch (err: any) {
       return sendError(res, 400, err.message, [err.message]);

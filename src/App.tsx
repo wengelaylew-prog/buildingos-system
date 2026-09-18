@@ -24,6 +24,10 @@ import { PortfolioMapView } from './components/views/PortfolioMapView.tsx';
 import { PhasePlaceholderView } from './components/views/PhasePlaceholderView.tsx';
 import { SecurityView } from './components/views/SecurityView.tsx';
 
+import { io } from 'socket.io-client';
+import { Toaster, toast } from 'react-hot-toast';
+
+
 import { SecurityKioskView } from './components/views/SecurityKioskView.tsx';
 
 import AIChatWidget from './components/ui/AIChatWidget.tsx';

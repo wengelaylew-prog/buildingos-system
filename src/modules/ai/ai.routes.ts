@@ -8,4 +8,5 @@ export const aiRouter = Router();
 aiRouter.get('/payment-insights', authenticate, AIController.getPaymentInsights);
 aiRouter.get('/security-insights', authenticate, AIController.getSecurityInsights);
 aiRouter.post('/chat', authenticate, AIController.handleChat);
+aiRouter.post('/ocr', authenticate, AIController.scanIdCard);
 

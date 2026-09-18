@@ -1,4 +1,5 @@
 ﻿import express, { Request, Response } from 'express';
+import { Server as SocketServer } from 'socket.io';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { db } from './src/db/index.ts';
@@ -803,9 +804,18 @@ const app = express();
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Building & Tenant Management Server running on port ${PORT}`);
   });
+
+  // Attach socket.io directly as a global variable so we don't have to export it inside the async function scope
+  (global as any).io = new SocketServer(server, { cors: { origin: '*', methods: ['GET', 'POST'] } });
+  
+  (global as any).io.on('connection', (socket: any) => {
+    console.log('Client connected to socket:', socket.id);
+  });
+
 }
 
 startServer();

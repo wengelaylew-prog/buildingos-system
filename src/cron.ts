@@ -52,3 +52,4 @@ async function checkUpcomingInvoices() {
     console.error('Error in cron job checkUpcomingInvoices:', error);
   }
 }
+

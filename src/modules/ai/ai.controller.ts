@@ -4,6 +4,19 @@ import { sendSuccess, sendError } from '../common/api-response.ts';
 import { AuthRequest } from '../../middleware/auth.ts';
 
 export class AIController {
+
+  static async scanIdCard(req: AuthRequest, res: Response) {
+    try {
+      const { image } = req.body;
+      if (!image) return sendError(res, 400, 'Image is required');
+      
+      const data = await AIService.scanIdCard(image);
+      return sendSuccess(res, data, 'ID scanned successfully');
+    } catch (err: any) {
+      return sendError(res, 500, err.message);
+    }
+  }
+
   static async getPaymentInsights(req: AuthRequest, res: Response) {
     try {
       const organizationId = req.user?.organizationId;

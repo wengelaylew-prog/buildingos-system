@@ -1,3 +1,4 @@
+import { toast } from 'react-hot-toast';
 import React, { useEffect, useState } from 'react';
 import {
   Users,
@@ -57,6 +58,41 @@ export const TenantsView: React.FC<TenantsViewProps> = ({
   const [detailTab, setDetailTab] = useState<'profile' | 'lease' | 'payments' | 'docs' | 'maintenance'>('profile');
 
   // Form
+  
+  const [isScanning, setIsScanning] = useState(false);
+  const handleAIScan = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        
+        const req = await fetch('/api/v1/ai/ocr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          body: JSON.stringify({ image: reader.result })
+        });
+        const response = await req.json();
+
+        if (response.success && response.data) {
+          setFormData(prev => ({
+            ...prev,
+            fullName: response.data.fullName || prev.fullName,
+            phone: response.data.phone || prev.phone,
+            idNumber: response.data.idNumber || prev.idNumber,
+          }));
+          toast.success('ID Scanned & Auto-filled!');
+        }
+      } catch (err: any) {
+        toast.error('Failed to scan ID: ' + err.message);
+      }
+      setIsScanning(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',

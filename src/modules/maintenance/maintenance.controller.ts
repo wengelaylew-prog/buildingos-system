@@ -3,6 +3,7 @@ import { MaintenanceService } from './maintenance.service.ts';
 import { sendSuccess, sendError } from '../common/api-response.ts';
 import { AuthRequest } from '../../middleware/auth.ts';
 import { db } from '../../db/index.ts';
+
 import { tenants } from '../../db/schema.ts';
 import { eq } from 'drizzle-orm';
 
@@ -24,6 +25,7 @@ export class MaintenanceController {
         tenantId,
         reportedBy: req.user?.fullName || req.user?.email || 'Unknown',
       });
+      if ((global as any).io) (global as any).io.emit('new_alert', { title: 'New Maintenance Request', message: `Issue: ${req.body.title || 'New Issue'}` });
       return sendSuccess(res, result, 'Maintenance request created');
     } catch (err: any) {
       return sendError(res, 500, 'Failed to create maintenance request', [err.message]);

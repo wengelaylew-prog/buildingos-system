@@ -7,6 +7,48 @@ import { GoogleGenAI } from '@google/genai';
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'mock-key' });
 
 export class AIService {
+
+  static async scanIdCard(base64Image: string) {
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'mock-key') {
+      // Mock for presentation without a real key
+      return {
+        fullName: 'Wengelaylew',
+        phone: '+251 911 234567',
+        idNumber: 'ID-8723912'
+      };
+    }
+    
+    try {
+      const prompt = `Extract the person's full name, phone number (if any), and ID number from this ID card image. 
+      Return ONLY a JSON object with this exact structure, with no markdown formatting:
+      {
+        "fullName": "First Last",
+        "phone": "+251...",
+        "idNumber": "..."
+      }`;
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: [
+          prompt,
+          {
+            inlineData: {
+              data: base64Image.split(',')[1] || base64Image,
+              mimeType: 'image/jpeg'
+            }
+          }
+        ]
+      });
+
+      const text = response.text || '{}';
+      const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      return JSON.parse(cleanText);
+    } catch (error) {
+      console.error('OCR Error:', error);
+      throw new Error('Failed to read ID card');
+    }
+  }
+
   /**
    * AI Assistant for Tenants via Telegram
    */
