@@ -25,6 +25,7 @@ import { DashboardKPIs, AlertItem, AuditLog, Contract } from '../../types/index.
 import { StatCard } from '../common/StatCard.tsx';
 import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line, PieChart, Pie } from 'recharts';
 import { Compact3DPreview } from '../three-d/Compact3DPreview.tsx';
+import { useAuth } from '../../context/AuthContext.tsx';
 
 interface DashboardViewProps {
   onNavigate?: (tab: string, buildingId?: string, floorId?: string, unitId?: string) => void;
@@ -48,6 +49,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [occupancyView, setOccupancyView] = useState<'3d' | 'matrix' | 'chart'>('3d');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { activeRole } = useAuth();
+  const isRestricted = activeRole === 'RECEPTION' || activeRole === 'SECURITY' || activeRole === 'MAINTENANCE';
 
   useEffect(() => {
     loadDashboard();
