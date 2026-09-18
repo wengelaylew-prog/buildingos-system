@@ -18,7 +18,7 @@ import {
   Users2,
   History,
   Settings,
-  ShieldCheck,
+  ShieldCheck, 
   ChevronRight,
   LogOut,
   LogIn,

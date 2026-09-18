@@ -23,7 +23,7 @@ import {
 import { api } from '../../api/client.ts';
 import { DashboardKPIs, AlertItem, AuditLog, Contract } from '../../types/index.ts';
 import { StatCard } from '../common/StatCard.tsx';
-import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip, CartesianGrid, LineChart, Line, PieChart, Pie } from 'recharts';
 import { Compact3DPreview } from '../three-d/Compact3DPreview.tsx';
 
 interface DashboardViewProps {

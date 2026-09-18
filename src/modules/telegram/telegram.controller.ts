@@ -259,6 +259,30 @@ export class TelegramController {
   }
 
 
+  
+  static async getGatePasses(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return sendError(res, 401, 'Unauthorized');
+      const data = await TelegramService.getGatePasses(req.user.id);
+      return sendSuccess(res, data, 'Gate passes fetched');
+    } catch (err: any) {
+      return sendError(res, 400, err.message, [err.message]);
+    }
+  }
+
+  static async createGatePass(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return sendError(res, 401, 'Unauthorized');
+      const { description } = req.body;
+      if (!description) return sendError(res, 400, 'Description required');
+      const data = await TelegramService.createGatePass(req.user.id, description);
+      return sendSuccess(res, data, 'Gate pass created');
+    } catch (err: any) {
+      return sendError(res, 400, err.message, [err.message]);
+    }
+  }
+
+
   static async requestRenewal(req: AuthRequest, res: Response) {
     try {
       if (!req.user) return sendError(res, 401, 'Unauthorized');

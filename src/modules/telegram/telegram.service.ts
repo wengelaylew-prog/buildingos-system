@@ -1,5 +1,5 @@
 import { db } from '../../db/index.ts';
-import { tenants, tenantUnits, units, buildings, floors, contracts, maintenanceRequests, notifications, payments, invoices, receipts, telegramAccounts, users, announcements } from '../../db/schema.ts';
+import { tenants, tenantUnits, units, buildings, floors, contracts, maintenanceRequests, notifications, payments, invoices, receipts, telegramAccounts, users, announcements, gatePasses } from '../../db/schema.ts';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { validateTelegramWebAppData } from '../../lib/telegram.ts';
 import { MessagingService } from '../messaging/messaging.service.ts';
@@ -247,6 +247,37 @@ export class TelegramService {
 
     // Return the updated unit
     return (await db.select().from(units).where(eq(units.id, lease.unitId)))[0];
+  }
+
+
+  
+  static async getGatePasses(userId: string) {
+    const tenant = await this.getTenantForUser(userId);
+    return await db.select().from(gatePasses)
+      .where(eq(gatePasses.tenantId, tenant.id))
+      .orderBy(desc(gatePasses.requestedAt));
+  }
+
+  static async createGatePass(userId: string, description: string) {
+    const tenant = await this.getTenantForUser(userId);
+    const lease = (await db.select().from(contracts)
+      .where(and(eq(contracts.tenantId, tenant.id), eq(contracts.contractStatus, 'ACTIVE'))))[0];
+    
+    if (!lease) throw new Error('No active lease found to associate gate pass');
+
+    const token = 'GP-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    const [newPass] = await db.insert(gatePasses).values({
+      tenantId: tenant.id,
+      unitId: lease.unitId,
+      direction: 'IN',
+      itemDescription: description,
+      status: 'APPROVED', // Auto-approve for demo
+      token,
+      quantity: 1
+    }).returning();
+
+    return newPass;
   }
 
 
