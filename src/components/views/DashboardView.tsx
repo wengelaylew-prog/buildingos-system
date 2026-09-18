@@ -164,7 +164,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div id="dashboard-view" className="space-y-4">
       {/* 1. Top 4 Bento Stat Cards (12-col grid) */}
-      <div className="grid grid-cols-12 gap-4">
+        <div className={isRestricted ? 'hidden' : 'grid grid-cols-12 gap-4'}>
         {/* Total Portfolio */}
         <div className="col-span-12 sm:col-span-6 lg:col-span-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-all">
           <div>
@@ -220,7 +220,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* 2. Middle Bento Row: Building Occupancy Snapshot (8 cols) & Recent Activity (4 cols) */}
       <div className="grid grid-cols-12 gap-4">
         {/* Building Occupancy Snapshot */}
-        <div className="col-span-12 lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between">
+          <div className={isRestricted ? 'hidden' : 'col-span-12 lg:col-span-8 bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between'}>
           <div className="flex justify-between items-center mb-4">
             <div>
               <h3 className="font-bold text-slate-800 text-sm">Building Occupancy Snapshot</h3>
@@ -361,7 +361,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Recent Activity */}
-        <div className="col-span-12 lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between overflow-hidden">
+          <div className={`col-span-12 ${isRestricted ? 'lg:col-span-12' : 'lg:col-span-4'} bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between overflow-hidden`}>
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
             <h3 className="font-bold text-slate-800 text-sm">Recent Activity</h3>
             <button
