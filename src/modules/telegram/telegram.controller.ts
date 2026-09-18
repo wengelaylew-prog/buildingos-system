@@ -2,7 +2,9 @@ import { Request, Response } from 'express';
 import { AuthRequest } from '../../middleware/auth.ts';
 import { TelegramService } from './telegram.service.ts';
 import { visitors } from '../../db/schema.ts';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
+import { telegramAccounts, tenants, tenantUnits, maintenanceRequests } from '../../db/schema.ts';
+import { AIService } from '../ai/ai.service.ts';
 import { db } from '../../db/index.ts';
 
 const sendSuccess = (res: Response, data: any, message: string | null = null) => {
@@ -18,6 +20,57 @@ export class TelegramController {
     try {
       const update: any = req.body;
       
+      
+      if (update.message && update.message.text) {
+        const chatId = update.message.chat.id;
+        const text = update.message.text;
+
+        // 1. Find user from telegram account
+        const tgAccount = (await db.select().from(telegramAccounts).where(eq(telegramAccounts.telegramUserId, chatId.toString())))[0];
+        
+        if (tgAccount) {
+          try {
+             // 2. Find tenant record
+             const tenant = (await db.select().from(tenants).where(eq(tenants.userId, tgAccount.userId)))[0];
+             
+             if (tenant) {
+               // 3. Process message with AI
+               const aiResult = await AIService.processTenantMessage(tenant.id, text);
+               
+               // 4. Action based on Intent
+               if (aiResult.intent === 'MAINTENANCE') {
+                 // Get tenant's active unit
+                 const activeUnit = (await db.select().from(tenantUnits).where(and(eq(tenantUnits.tenantId, tenant.id), eq(tenantUnits.isCurrent, true))))[0];
+                 
+                 if (activeUnit) {
+                   await db.insert(maintenanceRequests).values({
+                     organizationId: tenant.organizationId,
+                     tenantId: tenant.id,
+                     unitId: activeUnit.unitId,
+                     title: aiResult.category + ' Issue',
+                     description: aiResult.summary || text,
+                     priority: aiResult.priority || 'MEDIUM',
+                     status: 'OPEN'
+                   });
+                 }
+               }
+
+               // 5. Send AI Reply
+               if (process.env.TELEGRAM_BOT_TOKEN) {
+                 const botToken = process.env.TELEGRAM_BOT_TOKEN;
+                 await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({ chat_id: chatId, text: aiResult.reply, parse_mode: 'HTML' })
+                 });
+               }
+             }
+          } catch(e) {
+             console.error('Error handling AI text', e);
+          }
+        }
+      }
+
       if (update.callback_query) {
         const queryId = update.callback_query.id;
         const data = update.callback_query.data; // e.g. "visitor_approve_UUID"

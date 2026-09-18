@@ -8,6 +8,53 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || 'mock-key' })
 
 export class AIService {
   /**
+   * AI Assistant for Tenants via Telegram
+   */
+  static async processTenantMessage(tenantId: string, message: string) {
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'mock-key') {
+      return {
+        intent: 'INQUIRY',
+        category: 'GENERAL',
+        priority: 'LOW',
+        summary: message,
+        reply: "ይቅርታ፣ ይህ የሙከራ (Demo) ስሪት ነው። እባክዎ API Key ያስገቡ።",
+      };
+    }
+
+    try {
+      const prompt = `
+        You are an intelligent property management assistant. A tenant has sent a message. 
+        You must analyze the message and classify the intent, extract the category, and determine the priority.
+        Also, provide a short, helpful, and empathetic reply to the tenant IN AMHARIC.
+
+        Tenant Message: "${message}"
+
+        Return the response strictly as a JSON object with this schema:
+        {
+          "intent": "MAINTENANCE" | "INQUIRY" | "COMPLAINT",
+          "category": "PLUMBING" | "ELECTRICAL" | "CLEANING" | "SECURITY" | "BILLING" | "GENERAL",
+          "priority": "LOW" | "MEDIUM" | "HIGH" | "URGENT",
+          "summary": "English summary of the issue (max 10 words)",
+          "reply": "Empathetic reply to the tenant in Amharic"
+        }
+      `;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+        }
+      });
+
+      return JSON.parse(response.text || '{}');
+    } catch (error: any) {
+      console.error('AI Tenant Message Error:', error);
+      throw new Error('Failed to process message with AI');
+    }
+  }
+
+  /**
    * Generates insights on late payments and financial health of the building.
    */
   static async getPaymentInsights(organizationId: string) {
