@@ -230,6 +230,26 @@ export class TelegramService {
   }
 
 
+  
+  static async toggleIoT(userId: string, device: 'light' | 'ac' | 'lock', state: boolean) {
+    const tenant = await this.getTenantForUser(userId);
+    const lease = (await db.select().from(contracts)
+      .where(and(eq(contracts.tenantId, tenant.id), eq(contracts.contractStatus, 'ACTIVE'))))[0];
+    
+    if (!lease) throw new Error('No active lease found');
+    
+    const updatePayload: any = {};
+    if (device === 'light') updatePayload.isLightOn = state;
+    if (device === 'ac') updatePayload.isAcOn = state;
+    if (device === 'lock') updatePayload.isLocked = state;
+
+    await db.update(units).set(updatePayload).where(eq(units.id, lease.unitId));
+
+    // Return the updated unit
+    return (await db.select().from(units).where(eq(units.id, lease.unitId)))[0];
+  }
+
+
   static async requestRenewal(userId: string) {
     const tenant = await this.getTenantForUser(userId);
     const lease = (await db.select().from(contracts)

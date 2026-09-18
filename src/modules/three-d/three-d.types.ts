@@ -14,6 +14,9 @@ export interface SceneUnitDTO {
   description?: string | null;
   meshId?: string | null;
   transform?: any;
+  isLightOn?: boolean;
+  isAcOn?: boolean;
+  isLocked?: boolean;
   isTenantUnit?: boolean;
   tenant?: {
     id: string;

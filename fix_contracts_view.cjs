@@ -20,3 +20,4 @@ cv = cv.replace(
 
 fs.writeFileSync('src/components/components/views/ContractsView.tsx', cv, 'utf8'); // Wait, src/components/views/ContractsView.tsx
 // It's src/components/views/ContractsView.tsx
+

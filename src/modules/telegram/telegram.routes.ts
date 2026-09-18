@@ -14,6 +14,7 @@ telegramRouter.get('/property', authenticate, TelegramController.getProperty);
 telegramRouter.get('/lease', authenticate, TelegramController.getLease);
 telegramRouter.post('/lease/renew', authenticate, TelegramController.requestRenewal);
   telegramRouter.post('/lease/sign', authenticate, TelegramController.signContract);
+  telegramRouter.post('/iot/toggle', authenticate, TelegramController.toggleIoT);
 telegramRouter.get('/billing', authenticate, TelegramController.getBilling);
 telegramRouter.post('/invoices/:id/pay', authenticate, TelegramController.payInvoice);
   telegramRouter.get('/invoices/:id', authenticate, TelegramController.getInvoiceDetail);

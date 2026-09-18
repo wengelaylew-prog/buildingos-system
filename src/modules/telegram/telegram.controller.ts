@@ -244,6 +244,21 @@ export class TelegramController {
   }
 
 
+  
+  static async toggleIoT(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return sendError(res, 401, 'Unauthorized');
+      const { device, state } = req.body;
+      if (!device) return sendError(res, 400, 'Device is required');
+      
+      const data = await TelegramService.toggleIoT(req.user.id, device, state);
+      return sendSuccess(res, data, 'Device toggled successfully');
+    } catch (err: any) {
+      return sendError(res, 400, err.message, [err.message]);
+    }
+  }
+
+
   static async requestRenewal(req: AuthRequest, res: Response) {
     try {
       if (!req.user) return sendError(res, 401, 'Unauthorized');

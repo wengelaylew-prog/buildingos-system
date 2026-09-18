@@ -18,7 +18,7 @@ interface BuildingCanvasProps {
   autoRotate?: boolean;
   tenantUnitId?: string | null;
   compact?: boolean;
-  viewMode?: 'MANAGEMENT' | 'SECURITY' | 'FINANCIAL' | 'MAINTENANCE';
+  viewMode?: 'MANAGEMENT' | 'SECURITY' | 'FINANCIAL' | 'MAINTENANCE' | 'ENERGY';
   isEmergencyEvacuation?: boolean;
   onSelectUnit: (unit: SceneUnitDTO) => void;
   onResetViewComplete?: () => void;
@@ -703,6 +703,27 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
             finalEmissive = 0x222222;
             isHighlighted = false;
           }
+        
+        } else if (viewMode === 'ENERGY') {
+          // If lights or AC is on, glow yellow/orange. Otherwise dark blue.
+          if (unit.isAcOn && unit.isLightOn) {
+            finalHex = 0xff6600; // Bright Orange (High consumption)
+            finalEmissive = 0xcc4400;
+            isHighlighted = true;
+          } else if (unit.isAcOn) {
+            finalHex = 0xff9900; // Orange
+            finalEmissive = 0xcc7700;
+            isHighlighted = true;
+          } else if (unit.isLightOn) {
+            finalHex = 0xffff66; // Yellow
+            finalEmissive = 0xaaaa33;
+            isHighlighted = true;
+          } else {
+            finalHex = 0x1a2b4c; // Dark Blue (Off)
+            finalEmissive = 0x0a1526;
+            isHighlighted = false;
+          }
+
         } else if (viewMode === 'FINANCIAL') {
           if (unit.paymentStatus === 'PAID') {
             finalHex = 0x22cc22;

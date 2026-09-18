@@ -51,7 +51,7 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   
   // New features state
-  const [viewMode, setViewMode] = useState<'MANAGEMENT' | 'SECURITY' | 'FINANCIAL' | 'MAINTENANCE'>('MANAGEMENT');
+  const [viewMode, setViewMode] = useState<'MANAGEMENT' | 'SECURITY' | 'FINANCIAL' | 'MAINTENANCE' | 'ENERGY'>('MANAGEMENT');
   const [isEmergencyEvacuation, setIsEmergencyEvacuation] = useState<boolean>(false);
   const [showAiBuilder, setShowAiBuilder] = useState<boolean>(false);
   const [aiStatus, setAiStatus] = useState<'idle' | 'uploading' | 'analyzing' | 'generating' | 'success'>('idle');
