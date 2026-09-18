@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import TWEEN from '@tweenjs/tween.js';
 import { SceneBuildingDTO, SceneFloorDTO, SceneUnitDTO } from '../../modules/three-d/three-d.types.ts';
 import { Badge } from '../common/Badge.tsx';
 
@@ -17,7 +18,8 @@ interface BuildingCanvasProps {
   autoRotate?: boolean;
   tenantUnitId?: string | null;
   compact?: boolean;
-  viewMode?: 'MANAGEMENT' | 'SECURITY';
+  viewMode?: 'MANAGEMENT' | 'SECURITY' | 'FINANCIAL' | 'MAINTENANCE';
+  isEmergencyEvacuation?: boolean;
   onSelectUnit: (unit: SceneUnitDTO) => void;
   onResetViewComplete?: () => void;
 }
@@ -48,6 +50,7 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
   tenantUnitId,
   compact = false,
   viewMode = 'MANAGEMENT',
+  isEmergencyEvacuation = false,
   onSelectUnit,
   onResetViewComplete,
 }) => {
@@ -197,24 +200,10 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
     scene.add(groundGroup);
 
     // Animation Loop
-    const animate = () => {
+    const animate = (time: number) => {
       animationFrameId.current = requestAnimationFrame(animate);
 
-      // Smooth camera interpolation if animating to target
-      if (cameraTargetPos.current && cameraRef.current) {
-        cameraRef.current.position.lerp(cameraTargetPos.current, 0.05);
-        if (cameraRef.current.position.distanceTo(cameraTargetPos.current) < 0.1) {
-          cameraTargetPos.current = null;
-        }
-      }
-
-      if (controlsTargetPos.current && controlsRef.current) {
-        controlsRef.current.target.lerp(controlsTargetPos.current, 0.05);
-        if (controlsRef.current.target.distanceTo(controlsTargetPos.current) < 0.1) {
-          controlsTargetPos.current = null;
-          onResetViewComplete?.();
-        }
-      }
+      TWEEN.update(time);
 
       // Smooth exploded floor vertical interpolation
       floorGroupsRef.current.forEach((group, floorId) => {
@@ -228,7 +217,7 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
       renderer.render(scene, camera);
     };
 
-    animate();
+    animate(performance.now());
 
     // Resize Handler
     const handleResize = () => {
@@ -569,7 +558,29 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
         }
       });
     });
-  }, [selectedFloorId]);
+
+    // Tween camera to focus on selected floor
+    if (selectedFloorId !== 'ALL' && controlsRef.current && cameraRef.current) {
+       const floorGroup = floorGroupsRef.current.get(selectedFloorId);
+       if (floorGroup) {
+          const worldPos = new THREE.Vector3();
+          floorGroup.getWorldPosition(worldPos);
+          
+          const tgtControl = new THREE.Vector3(0, worldPos.y, 0);
+          const tgtCam = new THREE.Vector3(28, worldPos.y + 10, 34);
+
+          new TWEEN.Tween(controlsRef.current.target)
+            .to({ x: tgtControl.x, y: tgtControl.y, z: tgtControl.z }, 1000)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+
+          new TWEEN.Tween(cameraRef.current.position)
+            .to({ x: tgtCam.x, y: tgtCam.y, z: tgtCam.z }, 1000)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+       }
+    }
+  }, [selectedFloorId, building.floors.length]);
 
   // 5. HANDLE UNIT SELECTION & CAMERA FOCUS (TWEEN TO UNIT)
   useEffect(() => {
@@ -583,12 +594,22 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
     mesh.getWorldPosition(worldPos);
 
     // Calculate camera focus target position
-    controlsTargetPos.current = new THREE.Vector3(worldPos.x, worldPos.y, worldPos.z);
-    cameraTargetPos.current = new THREE.Vector3(
+    const tgtControl = new THREE.Vector3(worldPos.x, worldPos.y, worldPos.z);
+    const tgtCam = new THREE.Vector3(
       worldPos.x + 12,
       worldPos.y + 6,
       worldPos.z + 14
     );
+
+    new TWEEN.Tween(controlsRef.current.target)
+      .to({ x: tgtControl.x, y: tgtControl.y, z: tgtControl.z }, 1000)
+      .easing(TWEEN.Easing.Cubic.InOut)
+      .start();
+
+    new TWEEN.Tween(cameraRef.current.position)
+      .to({ x: tgtCam.x, y: tgtCam.y, z: tgtCam.z }, 1000)
+      .easing(TWEEN.Easing.Cubic.InOut)
+      .start();
 
     // Emissive highlight on mesh
     mesh.traverse((c) => {
@@ -617,19 +638,30 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
     if (!controlsRef.current || !cameraRef.current) return;
 
     const centerY = (building.floors.length * FLOOR_HEIGHT) / 2;
-    controlsTargetPos.current = new THREE.Vector3(0, centerY, 0);
+    const tgtControl = new THREE.Vector3(0, centerY, 0);
+    let tgtCam = new THREE.Vector3(28, centerY + 10, 34);
 
     if (cameraPreset === 'top') {
       // Architectural Floorplan Top View
-      cameraTargetPos.current = new THREE.Vector3(0, centerY + 45, 0.001);
+      tgtCam = new THREE.Vector3(0, centerY + 45, 0.001);
     } else if (cameraPreset === 'front') {
       // Elevation View
-      cameraTargetPos.current = new THREE.Vector3(0, centerY + 2, 44);
-    } else {
-      // Isometric Perspective
-      cameraTargetPos.current = new THREE.Vector3(28, centerY + 10, 34);
+      tgtCam = new THREE.Vector3(0, centerY + 2, 44);
     }
-  }, [cameraPreset, building]);
+
+    new TWEEN.Tween(controlsRef.current.target)
+      .to({ x: tgtControl.x, y: tgtControl.y, z: tgtControl.z }, 1000)
+      .easing(TWEEN.Easing.Cubic.InOut)
+      .onComplete(() => {
+        onResetViewComplete?.();
+      })
+      .start();
+
+    new TWEEN.Tween(cameraRef.current.position)
+      .to({ x: tgtCam.x, y: tgtCam.y, z: tgtCam.z }, 1000)
+      .easing(TWEEN.Easing.Cubic.InOut)
+      .start();
+  }, [cameraPreset, building, onResetViewComplete]);
 
   // 7. AUTO-ROTATE
   useEffect(() => {
@@ -638,7 +670,7 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
     }
   }, [autoRotate]);
 
-  // 8. UNIT SEARCH & STATUS HIGHLIGHTING
+  // 8. UNIT SEARCH, STATUS & VIEW MODE HIGHLIGHTING
   useEffect(() => {
     const query = searchQuery.trim().toLowerCase();
 
@@ -657,14 +689,43 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
       const mat = mesh.material as THREE.MeshStandardMaterial;
 
       if (mat) {
-        if (isMatch) {
+        let finalHex = mesh.userData.originalColor;
+        let finalEmissive = mesh.userData.originalEmissive;
+        let isHighlighted = isMatch;
+
+        if (viewMode === 'MAINTENANCE') {
+          if (unit.status === 'MAINTENANCE') {
+            finalHex = 0xff3333;
+            finalEmissive = 0x990000;
+            isHighlighted = true;
+          } else {
+            finalHex = 0x555555;
+            finalEmissive = 0x222222;
+            isHighlighted = false;
+          }
+        } else if (viewMode === 'FINANCIAL') {
+          if (unit.monthlyRent > 5000) {
+            finalHex = 0x22cc22;
+            finalEmissive = 0x116611;
+          } else if (unit.monthlyRent > 0) {
+            finalHex = 0x88cc88;
+            finalEmissive = 0x224422;
+          } else {
+            finalHex = 0x555555;
+            finalEmissive = 0x222222;
+          }
+        }
+
+        mat.color.setHex(finalHex);
+
+        if (isHighlighted) {
           mat.opacity = 0.95;
-          if (query && matchesSearch) {
+          if (query && matchesSearch && viewMode !== 'MAINTENANCE' && viewMode !== 'FINANCIAL') {
             mat.emissive = new THREE.Color(0xfacc15); // Golden glow for search matches
             mat.emissiveIntensity = 0.5;
           } else {
-            mat.emissive = new THREE.Color(mesh.userData.originalEmissive || 0x000000);
-            mat.emissiveIntensity = 0.1;
+            mat.emissive = new THREE.Color(finalEmissive || 0x000000);
+            mat.emissiveIntensity = 0.15;
           }
         } else {
           mat.opacity = 0.15; // Dim non-matching units
@@ -673,7 +734,72 @@ export const BuildingCanvas: React.FC<BuildingCanvasProps> = ({
         }
       }
     });
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, viewMode]);
+
+  // 8.5 EMERGENCY EVACUATION PATH
+  const evacuationGroupRef = useRef<THREE.Group | null>(null);
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    
+    if (evacuationGroupRef.current) {
+       scene.remove(evacuationGroupRef.current);
+       evacuationGroupRef.current.children.forEach(c => {
+         (c as THREE.Mesh).geometry?.dispose();
+         ((c as THREE.Mesh).material as THREE.Material)?.dispose();
+       });
+       evacuationGroupRef.current = null;
+    }
+
+    if (isEmergencyEvacuation && selectedUnitId) {
+       const mesh = unitMeshesRef.current.get(selectedUnitId);
+       if (!mesh) return;
+
+       const startPos = new THREE.Vector3();
+       mesh.getWorldPosition(startPos);
+       
+       const evacGroup = new THREE.Group();
+       
+       // Create path points
+       const points: THREE.Vector3[] = [];
+       points.push(startPos.clone());
+       
+       // Move out of unit to hallway (towards center Z=0 usually, or X=0)
+       points.push(new THREE.Vector3(startPos.x, startPos.y, 0));
+       
+       // Move to central core (elevator/stairs)
+       points.push(new THREE.Vector3(0, startPos.y, 0));
+       
+       // Move down the core to the ground
+       points.push(new THREE.Vector3(0, SLAB_THICKNESS + 0.5, 0));
+       
+       // Move out to the plaza (exit)
+       points.push(new THREE.Vector3(0, SLAB_THICKNESS + 0.5, FLOOR_DEPTH / 2 + 5));
+
+       const material = new THREE.LineBasicMaterial({
+          color: 0xff0000,
+          linewidth: 5,
+       });
+
+       // Create spheres along path
+       const sphereGeo = new THREE.SphereGeometry(0.3, 16, 16);
+       const sphereMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+       
+       points.forEach(p => {
+          const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+          sphere.position.copy(p);
+          evacGroup.add(sphere);
+       });
+
+       const pathGeo = new THREE.BufferGeometry().setFromPoints(points);
+       const line = new THREE.Line(pathGeo, material);
+       evacGroup.add(line);
+       
+       scene.add(evacGroup);
+       evacuationGroupRef.current = evacGroup;
+    }
+  }, [isEmergencyEvacuation, selectedUnitId]);
 
   // 9. MOUSE EVENT HANDLERS (HOVER & CLICK DETECTION VIA RAYCASTER)
   const handlePointerMove = useCallback(

@@ -68,7 +68,34 @@ async function startServer() {
   // Run DB migrations before accepting traffic
   await runMigrations();
 
-  const app = express();
+  
+// Auto-migrate on startup for specific new schema additions
+async function applyMigrations() {
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS visitors (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL REFERENCES organizations(id),
+        tenant_id UUID NOT NULL REFERENCES tenants(id),
+        name TEXT NOT NULL,
+        phone TEXT,
+        purpose TEXT,
+        status TEXT NOT NULL DEFAULT 'PENDING_APPROVAL',
+        logged_by UUID REFERENCES users(id),
+        arrived_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        departed_at TIMESTAMP,
+        telegram_message_id TEXT
+      );
+    `);
+    await db.execute(sql`ALTER TABLE gate_passes ADD COLUMN IF NOT EXISTS token TEXT;`);
+    console.log('Database auto-migrations applied successfully.');
+  } catch (err) {
+    console.error('Failed to apply database migrations:', err);
+  }
+}
+applyMigrations();
+
+const app = express();
 
   // DEBUG MIGRATIONS ENDPOINT
   app.get('/api/v1/internal/debug-run-migrations', async (req, res) => {

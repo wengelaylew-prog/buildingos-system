@@ -5,6 +5,49 @@ import { validateTelegramWebAppData } from '../../lib/telegram.ts';
 import { MessagingService } from '../messaging/messaging.service.ts';
 
 export class TelegramService {
+  static async sendVisitorApprovalRequest(userId: string, visitor: { visitorId: string, visitorName: string, purpose: string }) {
+    if (!process.env.TELEGRAM_BOT_TOKEN) return;
+    
+    // Find linked telegram account
+    const tgAccount = (await db.select().from(telegramAccounts).where(eq(telegramAccounts.userId, userId)))[0];
+    if (!tgAccount || !tgAccount.telegramUserId) return;
+
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+    const message = `🚨 <b>Visitor Alert</b>\n\n👤 <b>Name:</b> ${visitor.visitorName}\n🎯 <b>Purpose:</b> ${visitor.purpose}\n\nDo you want to allow this visitor entry?`;
+    
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          { text: "✅ Allow Entry", callback_data: `visitor_approve_${visitor.visitorId}` },
+          { text: "❌ Deny", callback_data: `visitor_deny_${visitor.visitorId}` }
+        ]
+      ]
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: tgAccount.telegramUserId,
+          text: message,
+          parse_mode: 'HTML',
+          reply_markup: replyMarkup
+        })
+      });
+      
+      const data = await response.json();
+      if (data.ok && data.result.message_id) {
+         // Optionally store the message_id in the visitor record
+         // await db.update(visitors).set({ telegramMessageId: data.result.message_id.toString() }).where(eq(visitors.id, visitor.visitorId));
+      }
+    } catch(e) {
+      console.error('Failed to send visitor approval via Telegram API', e);
+    }
+  }
+
   /**
    * Helper to resolve the active tenant record for a user
    */

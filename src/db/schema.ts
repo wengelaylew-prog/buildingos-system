@@ -467,11 +467,28 @@ export const gatePasses = pgTable('gate_passes', {
   quantity: integer('quantity').notNull().default(1),
   status: text('status').notNull().default('PENDING'), // PENDING, APPROVED, REJECTED, COMPLETED
   qrCodeUrl: text('qr_code_url'), // Link to generated QR code for the pass
+  token: text('token'), // e.g. GP-W7XY
   requestedAt: timestamp('requested_at').defaultNow().notNull(),
   scheduledDate: timestamp('scheduled_date'),
   approvedBy: uuid('approved_by').references(() => users.id),
   verifiedAt: timestamp('verified_at'),
   notes: text('notes'),
+});
+
+
+// 15b. VISITORS
+export const visitors = pgTable('visitors', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  name: text('name').notNull(),
+  phone: text('phone'),
+  purpose: text('purpose'),
+  status: text('status').notNull().default('PENDING_APPROVAL'), // PENDING_APPROVAL, APPROVED, DENIED, COMPLETED
+  loggedBy: uuid('logged_by').references(() => users.id),
+  arrivedAt: timestamp('arrived_at').defaultNow().notNull(),
+  departedAt: timestamp('departed_at'),
+  telegramMessageId: text('telegram_message_id'), // To edit the message once approved
 });
 
 // 16. SECURITY LOGS (Visitor & Tenant Entry/Exit)
@@ -710,6 +727,13 @@ export const gatePassesRelations = relations(gatePasses, ({ one }) => ({
   tenant: one(tenants, { fields: [gatePasses.tenantId], references: [tenants.id] }),
   unit: one(units, { fields: [gatePasses.unitId], references: [units.id] }),
   approver: one(users, { fields: [gatePasses.approvedBy], references: [users.id] }),
+}));
+
+
+export const visitorsRelations = relations(visitors, ({ one }) => ({
+  organization: one(organizations, { fields: [visitors.organizationId], references: [organizations.id] }),
+  tenant: one(tenants, { fields: [visitors.tenantId], references: [tenants.id] }),
+  guard: one(users, { fields: [visitors.loggedBy], references: [users.id] }),
 }));
 
 export const securityLogsRelations = relations(securityLogs, ({ one }) => ({

@@ -54,6 +54,12 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
+  // Security
+  getVisitors: () => request<any>('/api/v1/security/visitors'),
+  getGatePasses: () => request<any>('/api/v1/security/gate-passes'),
+  verifyGatePass: (token: string) => request<any>('/api/v1/security/gate-passes/verify', { method: 'POST', body: JSON.stringify({ token }) }),
+  logVisitor: (data: any) => request<any>('/api/v1/security/visitors/check-in', { method: 'POST', body: JSON.stringify(data) }),
+
   // Utilities
   getUtilitySummary: () => request<any>('/api/v1/utilities/summary'),
   getUtilityBills: () => request<any>('/api/v1/utilities/bills'),

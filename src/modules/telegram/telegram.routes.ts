@@ -24,3 +24,7 @@ telegramRouter.get('/profile', authenticate, TelegramController.getProfile);
 telegramRouter.put('/profile', authenticate, TelegramController.updateProfile);
 telegramRouter.post('/disconnect', authenticate, TelegramController.disconnectTelegram);
 
+
+
+// Webhook for receiving updates from Telegram
+telegramRouter.post('/webhook', TelegramController.handleWebhook);

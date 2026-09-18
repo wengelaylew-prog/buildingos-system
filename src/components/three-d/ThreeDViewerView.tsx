@@ -51,7 +51,8 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   
   // New features state
-  const [viewMode, setViewMode] = useState<'MANAGEMENT' | 'SECURITY'>('MANAGEMENT');
+  const [viewMode, setViewMode] = useState<'MANAGEMENT' | 'SECURITY' | 'FINANCIAL' | 'MAINTENANCE'>('MANAGEMENT');
+  const [isEmergencyEvacuation, setIsEmergencyEvacuation] = useState<boolean>(false);
   const [showAiBuilder, setShowAiBuilder] = useState<boolean>(false);
   const [aiStatus, setAiStatus] = useState<'idle' | 'uploading' | 'analyzing' | 'generating' | 'success'>('idle');
   const [progress, setProgress] = useState(0);
@@ -351,6 +352,28 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
                 </button>
                 <button
                   type="button"
+                  onClick={() => setViewMode('FINANCIAL')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    viewMode === 'FINANCIAL'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {isAmharic ? 'ፋይናንስ' : 'Financial'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('MAINTENANCE')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    viewMode === 'MAINTENANCE'
+                      ? 'bg-rose-600 text-white shadow-sm'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  {isAmharic ? 'ጥገና' : 'Maintenance'}
+                </button>
+                <button
+                  type="button"
                   onClick={() => setViewMode('SECURITY')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
                     viewMode === 'SECURITY'
@@ -362,6 +385,20 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
                   {isAmharic ? 'ሴኪዩሪቲ' : 'Security'}
                 </button>
               </div>
+
+              {/* Emergency Evacuation Toggle */}
+              <button
+                type="button"
+                onClick={() => setIsEmergencyEvacuation(!isEmergencyEvacuation)}
+                className={`px-3 py-1.5 rounded-xl border flex items-center gap-2 text-xs font-semibold transition-all mr-2 ${
+                  isEmergencyEvacuation
+                    ? 'bg-red-600 border-red-600 text-white shadow-xs animate-pulse'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-red-50 hover:text-red-600'
+                }`}
+              >
+                <AlertCircle className="w-4 h-4" />
+                <span>{isAmharic ? 'አደጋ' : 'Emergency Evacuation'}</span>
+              </button>
 
               {/* Explode View */}
               <button
@@ -545,6 +582,7 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
               autoRotate={autoRotate}
               tenantUnitId={sceneData.tenantUnitId}
               viewMode={viewMode}
+              isEmergencyEvacuation={isEmergencyEvacuation}
               onSelectUnit={handleSelectUnit}
             />
 
