@@ -244,6 +244,8 @@ export const contracts = pgTable('contracts', {
   contractStatus: text('contract_status').notNull().default('ACTIVE'), // DRAFT, ACTIVE, EXPIRING, EXPIRED, TERMINATED, CANCELLED
   renewalOf: uuid('renewal_of').references((): any => contracts.id),
   documentUrl: text('document_url'),
+    signatureUrl: text('signature_url'),
+    signatureDate: timestamp('signature_date'),
   notes: text('notes'),
   isDeleted: boolean('is_deleted').notNull().default(false),
   deletedAt: timestamp('deleted_at'),

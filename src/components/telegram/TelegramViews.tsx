@@ -15,6 +15,7 @@ async function tmaFetch(url: string, authHeader: string | null, options: any = {
   return json.data;
 }
 
+import SignatureCanvas from 'react-signature-canvas';
 import { useLanguage } from '../../context/LanguageContext.tsx';
 import { Building, FileText, Wrench, Wallet, Bell, AlertCircle, CheckCircle, ArrowLeft, Receipt, RefreshCw, XCircle, Clock, Activity as Loader2, Plus, Eye as Camera, Bell as Megaphone, FileClock as CalendarClock, Check, Mail, Phone, HelpCircle, Users, LogOut, X as Unlink, ChevronRight, Box as Package, Globe as Moon, Flame as Sun, User, Send } from 'lucide-react';
 

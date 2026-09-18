@@ -20,6 +20,8 @@ export interface LeaseEntity {
   contractStatus: string;
   renewalOf: string | null;
   documentUrl: string | null;
+  signatureUrl?: string | null;
+  signatureDate?: Date | null;
   notes: string | null;
   isDeleted: boolean;
   deletedAt: Date | null;

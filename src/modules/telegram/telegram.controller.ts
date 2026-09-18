@@ -229,6 +229,21 @@ export class TelegramController {
     }
   }
 
+  
+  static async signContract(req: AuthRequest, res: Response) {
+    try {
+      if (!req.user) return sendError(res, 401, 'Unauthorized');
+      const { signature } = req.body;
+      if (!signature) return sendError(res, 400, 'Signature is required');
+      
+      const data = await TelegramService.signContract(req.user.id, signature);
+      return sendSuccess(res, data, 'Contract signed successfully');
+    } catch (err: any) {
+      return sendError(res, 400, err.message, [err.message]);
+    }
+  }
+
+
   static async requestRenewal(req: AuthRequest, res: Response) {
     try {
       if (!req.user) return sendError(res, 401, 'Unauthorized');

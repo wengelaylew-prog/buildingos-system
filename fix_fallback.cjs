@@ -28,3 +28,4 @@ tds = tds.replace(
 fs.writeFileSync('src/modules/three-d/three-d.service.ts', tds, 'utf8');
 
 // I will just use PowerShell if this script is too complex, no wait, Amharic. Let me just write a very specific script.
+

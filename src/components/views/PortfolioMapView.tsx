@@ -121,3 +121,4 @@ export function PortfolioMapView({ onNavigateTo3D }: PortfolioMapViewProps) {
     </div>
   );
 }
+

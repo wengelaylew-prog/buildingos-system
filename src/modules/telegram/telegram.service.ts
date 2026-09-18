@@ -212,6 +212,24 @@ export class TelegramService {
     };
   }
 
+  
+  static async signContract(userId: string, signatureDataUrl: string) {
+    const tenant = await this.getTenantForUser(userId);
+    const lease = (await db.select().from(contracts)
+      .where(and(eq(contracts.tenantId, tenant.id), eq(contracts.contractStatus, 'ACTIVE'))))[0];
+    
+    if (!lease) throw new Error('No active lease found');
+    if (lease.signatureUrl) throw new Error('Contract is already signed');
+
+    await db.update(contracts).set({
+      signatureUrl: signatureDataUrl,
+      signatureDate: new Date()
+    }).where(eq(contracts.id, lease.id));
+
+    return { success: true };
+  }
+
+
   static async requestRenewal(userId: string) {
     const tenant = await this.getTenantForUser(userId);
     const lease = (await db.select().from(contracts)
