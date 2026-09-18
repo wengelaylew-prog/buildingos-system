@@ -108,6 +108,8 @@ export const buildings = pgTable('buildings', {
   city: text('city').notNull(),
   description: text('description'),
   numberOfFloors: integer('number_of_floors').notNull().default(1),
+  latitude: numeric('latitude', { precision: 10, scale: 6 }),
+  longitude: numeric('longitude', { precision: 10, scale: 6 }),
   totalUnits: integer('total_units').notNull().default(0),
   status: text('status').notNull().default('ACTIVE'), // ACTIVE, INACTIVE, UNDER_CONSTRUCTION
   isDeleted: boolean('is_deleted').notNull().default(false),

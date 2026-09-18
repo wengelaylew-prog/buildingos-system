@@ -64,6 +64,8 @@ export interface ThreeDSceneResponse {
     code: string;
     numberOfFloors: number;
     totalUnits: number;
+    latitude?: number;
+    longitude?: number;
   }>;
   kpis: {
     totalUnits: number;

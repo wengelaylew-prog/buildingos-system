@@ -160,11 +160,11 @@ export class ThreeDService {
 
     // If tenant, they only have access to their own building
     const accessibleBuildings = isTenant && targetBuildingId
-      ? orgBuildings.filter((b) => b.id === targetBuildingId)
+      ? (orgBuildings as any[]).filter((b) => b.id === targetBuildingId)
       : orgBuildings;
 
     // Resolve target building
-    if (!targetBuildingId || !accessibleBuildings.some((b) => b.id === targetBuildingId)) {
+    if (!targetBuildingId || !(accessibleBuildings as any[]).some((b) => b.id === targetBuildingId)) {
       targetBuildingId = accessibleBuildings[0].id;
     }
 
@@ -397,7 +397,7 @@ export class ThreeDService {
 
     return {
       building: buildingDTO,
-      allBuildings: accessibleBuildings,
+      allBuildings: (accessibleBuildings as any[]).map(b => ({ ...b, latitude: Number(b.latitude) || 9.005401, longitude: Number(b.longitude) || 38.763611 })),
       kpis: {
         totalUnits: totalCount,
         vacantUnits: vacantCount,

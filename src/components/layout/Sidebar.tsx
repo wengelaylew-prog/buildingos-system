@@ -1,5 +1,7 @@
 import React from 'react';
 import {
+  Globe,
+  
   Bell, Activity,
   LayoutDashboard,
   Building2,
@@ -39,6 +41,7 @@ export type ActiveTab =
   | 'documents'
   | 'reports'
     | 'announcements'
+    | 'portfolio-map'
   | 'users'
   | 'audit'
   | 'saas'

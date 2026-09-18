@@ -20,6 +20,7 @@ import { ReportsView } from './components/views/ReportsView.tsx';
 import { SuperAdminView } from './components/views/SuperAdminView.tsx';
 import { UsersView } from './components/views/UsersView.tsx';
 import { AnnouncementsView } from './components/views/AnnouncementsView.tsx';
+import { PortfolioMapView } from './components/views/PortfolioMapView.tsx';
 import { PhasePlaceholderView } from './components/views/PhasePlaceholderView.tsx';
 import { SecurityView } from './components/views/SecurityView.tsx';
 import AIChatWidget from './components/ui/AIChatWidget.tsx';
