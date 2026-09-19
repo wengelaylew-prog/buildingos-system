@@ -51,6 +51,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const { activeRole } = useAuth();
   const isRestricted = activeRole === 'RECEPTION' || activeRole === 'SECURITY' || activeRole === 'MAINTENANCE';
+  const isSecurity = activeRole === 'SECURITY';
+  const isReception = activeRole === 'RECEPTION';
+  const isMaintenance = activeRole === 'MAINTENANCE';
 
   useEffect(() => {
     loadDashboard();
@@ -406,7 +409,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* 3. Bottom Bento Row: Expiring Contracts (6 cols) & Quick Actions (6 cols) */}
-      <div className="grid grid-cols-12 gap-4">
+        <div className={(isSecurity || isMaintenance) ? 'hidden' : 'grid grid-cols-12 gap-4'}>
         {/* Expiring Contracts */}
         <div className="col-span-12 lg:col-span-6 bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between">
           <div>
@@ -487,11 +490,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           <div className="grid grid-cols-2 gap-3 flex-1">
             <div
-              onClick={() => {
-                if (onQuickAction) onQuickAction('new-building');
-                else navigateTo('buildings');
-              }}
-              className="p-3 bg-slate-50 rounded-lg hover:bg-indigo-50/80 cursor-pointer border border-transparent hover:border-indigo-100 flex items-center gap-3 transition-all group"
+              onClick={() => { if (onQuickAction) onQuickAction('new-building'); else navigateTo('buildings'); }}
+              className={`p-3 bg-slate-50 rounded-lg cursor-pointer border border-transparent flex items-center gap-3 transition-all group hover:bg-indigo-50/80 hover:border-indigo-100 ${isReception ? 'hidden' : ''}`}
             >
               <div className="w-8 h-8 bg-indigo-100 rounded flex items-center justify-center text-indigo-600 shrink-0 font-bold group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                 <Plus className="w-4 h-4" />
@@ -507,7 +507,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 if (onQuickAction) onQuickAction('new-tenant');
                 else navigateTo('tenants');
               }}
-              className="p-3 bg-slate-50 rounded-lg hover:bg-indigo-50/80 cursor-pointer border border-transparent hover:border-indigo-100 flex items-center gap-3 transition-all group"
+              className={`p-3 bg-slate-50 rounded-lg cursor-pointer border border-transparent flex items-center gap-3 transition-all group hover:bg-indigo-50/80 hover:border-indigo-100`}
             >
               <div className="w-8 h-8 bg-indigo-100 rounded flex items-center justify-center text-indigo-600 shrink-0 font-bold group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                 <Users className="w-4 h-4" />
@@ -523,7 +523,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 if (onQuickAction) onQuickAction('new-contract');
                 else navigateTo('contracts');
               }}
-              className="p-3 bg-slate-50 rounded-lg hover:bg-indigo-50/80 cursor-pointer border border-transparent hover:border-indigo-100 flex items-center gap-3 transition-all group"
+              className={`p-3 bg-slate-50 rounded-lg cursor-pointer border border-transparent flex items-center gap-3 transition-all group hover:bg-indigo-50/80 hover:border-indigo-100`}
             >
               <div className="w-8 h-8 bg-indigo-100 rounded flex items-center justify-center text-indigo-600 shrink-0 font-bold group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                 <FileText className="w-4 h-4" />
@@ -536,7 +536,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             <div
               onClick={() => navigateTo('payments')}
-              className="p-3 bg-slate-50 rounded-lg hover:bg-indigo-50/80 cursor-pointer border border-transparent hover:border-indigo-100 flex items-center gap-3 transition-all group"
+              className={`p-3 bg-slate-50 rounded-lg cursor-pointer border border-transparent flex items-center gap-3 transition-all group hover:bg-indigo-50/80 hover:border-indigo-100`}
             >
               <div className="w-8 h-8 bg-indigo-100 rounded flex items-center justify-center text-indigo-600 shrink-0 font-bold group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                 <CreditCard className="w-4 h-4" />
@@ -578,7 +578,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div
                   key={alert.id}
                   id={`alert-card-${alert.id}`}
-                  className={`p-3.5 rounded-xl border ${bgClass} flex flex-col justify-between transition-all hover:shadow-xs`}
+                  className={`p-3.5 rounded-xl border ${bgClass} flex flex-col justify-between transition-all hover:shadow-xs ${(isSecurity) || (isMaintenance && !alert.title.includes('Maintenance')) || (isReception && !alert.title.includes('Contract')) ? 'hidden' : ''}`}
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1">
