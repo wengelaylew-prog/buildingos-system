@@ -170,9 +170,20 @@ const app = express();
 
   // ONE-TIME PUSH ENDPOINT
   // Runs drizzle-kit push from inside the Render network
+  
+  app.post('/api/v1/internal/migrate-contracts', async (req, res) => {
+    try {
+      await db.execute('ALTER TABLE contracts ADD COLUMN signature_url TEXT;');
+      await db.execute('ALTER TABLE contracts ADD COLUMN signature_date TIMESTAMP;');
+      return res.json({ success: true, message: "Columns added" });
+    } catch(err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   app.post('/api/v1/internal/push', async (req, res) => {
     const { exec } = require('child_process');
-    exec('npx drizzle-kit push --config=src/db/drizzle.config.ts', (error: any, stdout: string, stderr: string) => {
+    exec('npx drizzle-kit push --config=drizzle.config.ts', (error: any, stdout: string, stderr: string) => {
       if (error) {
         return res.status(500).json({ success: false, error: error.message, stderr, stdout });
       }
