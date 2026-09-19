@@ -100,6 +100,67 @@ applyMigrations();
 const app = express();
 
   // DEBUG MIGRATIONS ENDPOINT
+  
+  // DEBUG: Check tenant records
+  app.get('/api/v1/internal/debug-tenants', async (req, res) => {
+    try {
+      const result = await db.execute(sql`
+        SELECT 
+          t.id as tenant_id, 
+          t.full_name, 
+          t.email, 
+          t.user_id,
+          t.is_deleted,
+          u.email as user_email,
+          u.id as user_id_from_users,
+          ta.telegram_user_id
+        FROM tenants t 
+        LEFT JOIN users u ON t.user_id = u.id
+        LEFT JOIN telegram_accounts ta ON ta.user_id = u.id
+        LIMIT 20
+      `);
+      return res.json({ success: true, tenants: (result as any).rows });
+    } catch(err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // ADMIN: Link a user to become a tenant record  
+  app.post('/api/v1/internal/link-user-to-tenant', async (req, res) => {
+    try {
+      const { userId, fullName, phone, email } = req.body;
+      if (!userId) return res.status(400).json({ success: false, error: 'userId required' });
+      
+      // Check if already a tenant
+      const existing = await db.execute(sql`SELECT id FROM tenants WHERE user_id = ${userId}::uuid AND is_deleted = false`);
+      const existingRows = (existing as any).rows || [];
+      if (existingRows.length > 0) {
+        return res.json({ success: true, message: 'User already is a tenant', tenantId: existingRows[0].id });
+      }
+
+      // Get org ID from user
+      const userRow = await db.execute(sql`SELECT organization_id, full_name, email FROM users WHERE id = ${userId}::uuid`);
+      const userRows = (userRow as any).rows || [];
+      if (!userRows.length) return res.status(404).json({ success: false, error: 'User not found' });
+      const userRec = userRows[0];
+      const tName = fullName || userRec.full_name || 'Unknown';
+      const tEmail = email || userRec.email || null;
+      const tPhone = phone || null;
+      const tOrgId = userRec.organization_id;
+      
+      // Create tenant record
+      const result = await db.execute(sql`
+        INSERT INTO tenants (full_name, phone, email, organization_id, user_id, is_deleted, created_at, updated_at)
+        VALUES (${tName}, ${tPhone}, ${tEmail}, ${tOrgId}::uuid, ${userId}::uuid, false, NOW(), NOW())
+        RETURNING id
+      `);
+      const resultRows = (result as any).rows || [];
+      return res.json({ success: true, message: 'Tenant record created', tenantId: resultRows[0]?.id });
+    } catch(err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   app.get('/api/v1/internal/debug-run-migrations', async (req, res) => {
     try {
       await runMigrations();
@@ -171,6 +232,63 @@ const app = express();
   // ONE-TIME PUSH ENDPOINT
   // Runs drizzle-kit push from inside the Render network
   
+  
+  app.post('/api/v1/internal/migrate-all', async (req, res) => {
+    try {
+      // 1. Add Gate Passes
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS gate_passes (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          tenant_id UUID NOT NULL REFERENCES tenants(id),
+          unit_id UUID NOT NULL REFERENCES units(id),
+          direction TEXT NOT NULL,
+          item_description TEXT NOT NULL,
+          requested_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          status TEXT NOT NULL DEFAULT 'PENDING',
+          approved_by UUID REFERENCES users(id),
+          token TEXT
+        );
+      `);
+
+      // 2. Add Security Logs
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS security_logs (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          organization_id UUID NOT NULL REFERENCES organizations(id),
+          gate_pass_id UUID REFERENCES gate_passes(id),
+          tenant_id UUID REFERENCES tenants(id),
+          scanned_by UUID NOT NULL REFERENCES users(id),
+          scanned_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          status TEXT NOT NULL DEFAULT 'SUCCESS'
+        );
+      `);
+
+      // 3. Add telegram_message_id to visitors if missing
+      try {
+        await db.execute(`ALTER TABLE visitors ADD COLUMN telegram_message_id TEXT;`);
+      } catch (e) {}
+      
+      // 4. Add scanned_id to visitors if missing
+      try {
+        await db.execute(`ALTER TABLE visitors ADD COLUMN scanned_id TEXT;`);
+      } catch (e) {}
+
+      // 5. Add direction to visitors if missing
+      try {
+        await db.execute(`ALTER TABLE visitors ADD COLUMN direction TEXT;`);
+      } catch (e) {}
+
+      // 6. Add gate_pass_id to visitors if missing
+      try {
+        await db.execute(`ALTER TABLE visitors ADD COLUMN gate_pass_id UUID REFERENCES gate_passes(id);`);
+      } catch (e) {}
+
+      return res.json({ success: true, message: "All tables and columns migrated" });
+    } catch(err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   app.post('/api/v1/internal/migrate-contracts', async (req, res) => {
     try {
       await db.execute('ALTER TABLE contracts ADD COLUMN signature_url TEXT;');
