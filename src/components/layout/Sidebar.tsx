@@ -70,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onSel
     phaseBadge?: string;
     allowedRoles?: string[];
   }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER'] },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'RECEPTION', 'SECURITY', 'MAINTENANCE', 'ACCOUNTANT'] },
     { id: '3d-viewer', label: '3D Building Viewer', icon: Box, phaseBadge: 'Phase 4', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'TENANT'] },
     { id: 'buildings', label: 'Buildings', icon: Building2, permission: 'building.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER'] },
     { id: 'units', label: 'Floors & Units', icon: Grid3X3, permission: 'unit.read', allowedRoles: ['SUPER_ADMIN', 'PROPERTY_MANAGER', 'MAINTENANCE'] },

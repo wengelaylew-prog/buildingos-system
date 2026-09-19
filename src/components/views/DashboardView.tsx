@@ -491,7 +491,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="grid grid-cols-2 gap-3 flex-1">
             <div
               onClick={() => { if (onQuickAction) onQuickAction('new-building'); else navigateTo('buildings'); }}
-              className={`p-3 bg-slate-50 rounded-lg cursor-pointer border border-transparent flex items-center gap-3 transition-all group hover:bg-indigo-50/80 hover:border-indigo-100 ${isReception ? 'hidden' : ''}`}
+              className={`p-3 bg-slate-50 rounded-lg cursor-pointer border border-transparent flex items-center gap-3 transition-all group hover:bg-indigo-50/80 hover:border-indigo-100 ${(activeRole === 'RECEPTION' || activeRole === 'ACCOUNTANT') ? 'hidden' : ''}`}
             >
               <div className="w-8 h-8 bg-indigo-100 rounded flex items-center justify-center text-indigo-600 shrink-0 font-bold group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                 <Plus className="w-4 h-4" />

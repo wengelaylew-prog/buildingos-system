@@ -65,11 +65,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setApiRole(role);
   };
 
+  
   const hasPermission = (permissionCode: string) => {
     if (!user) return false;
-    if (user.roleCode === 'SUPER_ADMIN') return true;
+    
+    // If the user is viewing the app as a specific role from the dropdown, respect that role!
+    // Real implementation should fetch the permissions array for the activeRole from a constants file or API.
+    // For this demo, we'll hardcode the basic permissions for the restricted roles.
+    
+    if (activeRole === 'SUPER_ADMIN') return true;
+    
+    if (activeRole === 'SECURITY') {
+      return permissionCode.includes('security') || permissionCode.includes('audit');
+    }
+    if (activeRole === 'RECEPTION') {
+      return permissionCode.includes('tenant.read') || permissionCode.includes('contract.read');
+    }
+    if (activeRole === 'MAINTENANCE') {
+      return permissionCode.includes('maintenance') || permissionCode.includes('unit.read');
+    }
+    if (activeRole === 'ACCOUNTANT') {
+      return permissionCode.includes('payment') || permissionCode.includes('contract') || permissionCode.includes('tenant.read') || permissionCode.includes('report');
+    }
+    if (activeRole === 'PROPERTY_MANAGER') {
+      // Allow most things except sensitive audit or system settings
+      return !permissionCode.includes('settings') && !permissionCode.includes('audit');
+    }
+    
+    // Fallback to true user permissions if activeRole matches user role
+    if (activeRole === user.roleCode && user.roleCode === 'SUPER_ADMIN') return true;
     return user.permissions?.includes(permissionCode) ?? false;
   };
+
 
   const signInWithGoogle = async () => {
     throw new Error('Google Sign-in is temporarily disabled. Please use email and password.');
