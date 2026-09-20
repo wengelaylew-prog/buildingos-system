@@ -1562,7 +1562,7 @@ export function ProfileView({
 
 
 
-export function TenantMessagingView({ initData, onOpenProfile }: { initData: string | null; onOpenProfile?: () => void }) {
+export function TenantMessagingView({ initData, onOpenProfile, onOpenGatePass, onOpenMaintenance }: { initData: string | null; onOpenProfile?: () => void; onOpenGatePass?: () => void; onOpenMaintenance?: () => void }) {
   const { locale } = useLanguage();
   const am = locale === 'am';
   const [messages, setMessages] = useState<any[]>([]);
@@ -1716,18 +1716,16 @@ export function TenantMessagingView({ initData, onOpenProfile }: { initData: str
               </button>
 
             <button 
-              onClick={onOpenProfile}
+              onClick={onOpenGatePass}
               className="flex flex-col items-center justify-center p-3 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors"
             >
               <Package size={20} className="mb-1" />
               <span className="text-[11px] font-bold text-center leading-tight">
-                {am ? 'ዕቃ ማስወጫ (Gate Pass)' : 'Gate Pass'}
+                {am ? 'የእቃ ማውጫ (Gate Pass)' : 'Gate Pass'}
               </span>
             </button>
             <button 
-              onClick={() => {
-                 setNewMessage(am ? 'የውሃ ቧንቧ ተበላሽቷል' : 'Plumbing issue');
-              }}
+              onClick={onOpenMaintenance}
               className="flex flex-col items-center justify-center p-3 bg-amber-50 text-amber-600 rounded-lg border border-amber-100 hover:bg-amber-100 transition-colors"
             >
               <Wrench size={20} className="mb-1" />

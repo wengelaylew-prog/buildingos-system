@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TelegramLinkView } from './TelegramLinkView.tsx';
-import { TenantMessagingView, ProfileView } from './TelegramViews.tsx';
+import { TenantMessagingView, ProfileView, MaintenanceView } from './TelegramViews.tsx';
 import { GatePassTenantView } from './GatePassTenantView.tsx';
 import LandingView from '../views/public/LandingView.tsx';
 import CheckoutView from '../views/public/CheckoutView.tsx';
@@ -146,12 +146,21 @@ export function TelegramApp() {
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </button>
             <h1 className="text-lg font-semibold">
-              {activeTab === 'profile' ? (am ? 'ቅንብሮች' : 'Settings') : (am ? 'እቃ ማስወጣት/ማስገባት' : 'Gate Pass')}
+              {activeTab === 'profile' ? (am ? 'ፕሮፋይል' : 'Settings') : 
+               activeTab === 'gatepass' ? (am ? 'የበር ማለፊያ' : 'Gate Pass') :
+               activeTab === 'maintenance' ? (am ? 'ጥገና' : 'Maintenance') : ''}
             </h1>
           </div>
         )}
         <div className="flex-1 overflow-y-auto p-4 pb-20">
-          {activeTab === 'messaging' && <TenantMessagingView initData={authHeader} onOpenProfile={() => setActiveTab('profile')} />}
+          {activeTab === 'messaging' && (
+            <TenantMessagingView 
+              initData={authHeader} 
+              onOpenProfile={() => setActiveTab('profile')} 
+              onOpenGatePass={() => setActiveTab('gatepass')}
+              onOpenMaintenance={() => setActiveTab('maintenance')}
+            />
+          )}
           {activeTab === 'profile' && (
             <ProfileView
               initData={authHeader}
@@ -162,6 +171,9 @@ export function TelegramApp() {
           )}
           {activeTab === 'gatepass' && (
             <GatePassTenantView initData={authHeader} />
+          )}
+          {activeTab === 'maintenance' && (
+            <MaintenanceView initData={authHeader} />
           )}
         </div>
 
