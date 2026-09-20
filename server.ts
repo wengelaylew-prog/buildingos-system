@@ -1,4 +1,4 @@
-﻿import express, { Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import { Server as SocketServer } from 'socket.io';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
@@ -159,6 +159,33 @@ const app = express();
     } catch(err) {
       return res.status(500).json({ success: false, error: err.message });
     }
+  });
+
+  
+  // PERMANENT FIX: Add missing columns using direct pg Pool
+  app.post('/api/v1/internal/fix-contracts-schema', async (req, res) => {
+    const pgPool = global._postgresPool;
+    if (!pgPool) return res.status(500).json({ success: false, error: 'Pool not ready' });
+    const results: string[] = [];
+    
+    const tryAlter = async (sql: string, label: string) => {
+      try { await pgPool.query(sql); results.push(label + ': OK'); }
+      catch(e: any) { results.push(label + ': ' + (e.message?.includes('already exists') ? 'already exists' : e.message)); }
+    };
+
+    await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS signature_url TEXT', 'signature_url');
+    await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS signature_date TIMESTAMP', 'signature_date');
+    await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS notes TEXT', 'notes');
+    await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS renewal_of UUID REFERENCES contracts(id)', 'renewal_of');
+    await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS document_url TEXT', 'document_url');
+    await tryAlter('ALTER TABLE tenants ADD COLUMN IF NOT EXISTS emergency_contact_name TEXT', 'tenant.emergency_contact_name');
+    await tryAlter('ALTER TABLE tenants ADD COLUMN IF NOT EXISTS emergency_contact_phone TEXT', 'tenant.emergency_contact_phone');
+    await tryAlter('ALTER TABLE gate_passes ADD COLUMN IF NOT EXISTS token TEXT', 'gate_passes.token');
+    await tryAlter('ALTER TABLE units ADD COLUMN IF NOT EXISTS is_light_on BOOLEAN DEFAULT false', 'units.is_light_on');
+    await tryAlter('ALTER TABLE units ADD COLUMN IF NOT EXISTS is_ac_on BOOLEAN DEFAULT false', 'units.is_ac_on');
+    await tryAlter('ALTER TABLE units ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT true', 'units.is_locked');
+
+    return res.json({ success: true, results });
   });
 
   app.get('/api/v1/internal/debug-run-migrations', async (req, res) => {
