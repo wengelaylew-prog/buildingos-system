@@ -11,6 +11,8 @@ DROP INDEX IF EXISTS uq_users_email_password_auth;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_users_phone ON users (phone) WHERE phone IS NOT NULL;
 
 -- Step 2: Create a brand new table for OTP codes to avoid any schema conflicts with old tables
+DROP TABLE IF EXISTS otp_codes;
+
 CREATE TABLE IF NOT EXISTS tma_otp_codes (
   id           UUID      PRIMARY KEY DEFAULT gen_random_uuid(),
   channel      TEXT      NOT NULL,
@@ -27,8 +29,8 @@ CREATE TABLE IF NOT EXISTS tma_otp_codes (
   request_ip   TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_otp_codes_identifier ON otp_codes(channel, identifier);
-CREATE INDEX IF NOT EXISTS idx_otp_codes_created_at ON otp_codes(created_at);
+CREATE INDEX IF NOT EXISTS idx_tma_otp_codes_identifier ON tma_otp_codes(channel, identifier);
+CREATE INDEX IF NOT EXISTS idx_tma_otp_codes_created_at ON tma_otp_codes(created_at);
 
 -- Step 3: Create tma_sessions if not exists
 CREATE TABLE IF NOT EXISTS tma_sessions (

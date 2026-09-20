@@ -68,7 +68,7 @@ async function startServer() {
   }
 
   // Run DB migrations before accepting traffic
-  await runMigrations();
+  // Removed auto-apply per instructions: await runMigrations();
 
   
 // Auto-migrate on startup for specific new schema additions
