@@ -41,6 +41,7 @@ export const TenantsView: React.FC<TenantsViewProps> = ({
 
   // Modals & Details
   const [isCreateOpen, setIsCreateOpen] = useState(showCreateModalInitial || false);
+  const [aiScanning, setAiScanning] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
@@ -184,6 +185,48 @@ export const TenantsView: React.FC<TenantsViewProps> = ({
       setTenantDetails(details);
     } catch (err) {
       console.error('Failed to load tenant profile details:', err);
+    }
+  };
+
+  const handleAiScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAiScanning(true);
+    setFormError('');
+
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const base64Image = reader.result?.toString() || '';
+        
+        const res = await fetch('/api/v1/ai/ocr', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ image: base64Image })
+        });
+
+        const json = await res.json();
+        if (json.success) {
+          setFormData(prev => ({
+            ...prev,
+            fullName: json.data.fullName || prev.fullName,
+            phone: json.data.phone || prev.phone,
+            idNumber: json.data.idNumber || prev.idNumber
+          }));
+        } else {
+          setFormError(json.error?.message || 'Failed to scan ID');
+        }
+        setAiScanning(false);
+      };
+    } catch (err) {
+      setFormError('Failed to process image');
+      setAiScanning(false);
     }
   };
 
@@ -391,6 +434,20 @@ export const TenantsView: React.FC<TenantsViewProps> = ({
               <span>{formError}</span>
             </div>
           )}
+
+          {/* AI Scanner Button */}
+          <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-indigo-900">Magic Auto-fill (AI OCR) 🪄</p>
+              <p className="text-xs text-indigo-700">Upload an ID card to automatically fill the name and details below.</p>
+            </div>
+            <label className="shrink-0">
+              <input type="file" accept="image/*" className="hidden" onChange={handleAiScan} disabled={aiScanning} />
+              <div className={`px-4 py-2 rounded-lg text-xs font-bold text-white shadow-sm cursor-pointer transition-colors ${aiScanning ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
+                {aiScanning ? 'Scanning...' : 'Upload ID Card'}
+              </div>
+            </label>
+          </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name *</label>

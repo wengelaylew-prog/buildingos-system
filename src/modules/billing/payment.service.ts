@@ -120,6 +120,14 @@ export class PaymentService {
       receiptUrl: `${process.env.APP_URL}/receipts/${receiptNumber}` // In future, generate actual PDF URL
     });
 
+    // Emit live socket notification to Admins
+    if ((global as any).io) {
+      (global as any).io.emit('new_notification', {
+        icon: '💰',
+        message: `Payment of ${payment.amount} ETB received via ${payment.paymentMethod}!`
+      });
+    }
+
     return { status: 'success', payment };
   }
 
