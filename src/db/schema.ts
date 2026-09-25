@@ -327,9 +327,11 @@ export const invoices = pgTable('invoices', {
   contractId: uuid('contract_id').references(() => contracts.id),
   tenantId: uuid('tenant_id').references(() => tenants.id),
   unitId: uuid('unit_id').references(() => units.id),
+  parentInvoiceId: uuid('parent_invoice_id').references((): any => invoices.id),
   invoiceNumber: text('invoice_number').notNull().unique(),
   type: text('type').notNull().default('RENT'), // RENT, UTILITY, LATE_FEE, OTHER
   amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  paidAmount: numeric('paid_amount', { precision: 12, scale: 2 }).notNull().default('0'),
   issueDate: text('issue_date').notNull(),
   dueDate: text('due_date').notNull(),
   status: text('status').notNull().default('PENDING'), // PENDING, PAID, OVERDUE, CANCELLED
@@ -340,6 +342,7 @@ export const invoices = pgTable('invoices', {
 // 13. PAYMENTS (Prepared for future phases & relationships)
 export const payments = pgTable('payments', {
   id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id),
   invoiceId: uuid('invoice_id').references(() => invoices.id),
   contractId: uuid('contract_id').references(() => contracts.id),
   tenantId: uuid('tenant_id').references(() => tenants.id),
@@ -348,7 +351,9 @@ export const payments = pgTable('payments', {
   paymentDate: text('payment_date').notNull(),
   paymentMethod: text('payment_method').notNull().default('Bank Transfer'), // Bank Transfer, Telebirr, CBE Birr, Cash, Check
   referenceNumber: text('reference_number'),
-  status: text('status').notNull().default('PAID'), // PAID, PENDING, OVERDUE
+  gatewayTransactionId: text('gateway_transaction_id'),
+  checkoutUrl: text('checkout_url'),
+  status: text('status').notNull().default('PAID'), // PROCESSING, PAID, PENDING, OVERDUE, FAILED, CANCELLED
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -356,6 +361,7 @@ export const payments = pgTable('payments', {
 // 13. RECEIPTS
 export const receipts = pgTable('receipts', {
   id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').references(() => organizations.id),
   paymentId: uuid('payment_id')
     .notNull()
     .references(() => payments.id, { onDelete: 'cascade' }),

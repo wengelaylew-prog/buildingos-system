@@ -118,16 +118,16 @@ export class TelegramService {
       }
     }
 
-    // Get outstanding balance
-    const outstandingPayments = await db.select().from(payments)
-      .where(and(eq(payments.tenantId, tenant.id), eq(payments.status, 'OVERDUE')));
-    const balance = outstandingPayments.reduce((sum, p) => sum + parseFloat(p.amount || '0'), 0);
+    // Get outstanding balance (from invoices)
+    const outstandingInvoices = await db.select().from(invoices)
+      .where(and(eq(invoices.tenantId, tenant.id), sql`status IN ('PENDING', 'OVERDUE', 'PARTIALLY_PAID')`));
+    const balance = outstandingInvoices.reduce((sum, i) => sum + (parseFloat(i.amount || '0') - parseFloat(i.paidAmount || '0')), 0);
 
-    // Get next payment (simplification: next pending)
-    const pendingPayments = await db.select().from(payments)
-      .where(and(eq(payments.tenantId, tenant.id), eq(payments.status, 'PENDING')))
-      .orderBy(payments.paymentDate);
-    const nextPayment = pendingPayments[0] || null;
+    // Get next payment
+    const pendingInvoices = outstandingInvoices
+      .filter(i => i.status === 'PENDING' || i.status === 'PARTIALLY_PAID')
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    const nextInvoice = pendingInvoices[0] || null;
 
     // Get recent invoice
     const recentInvoices = await db.select().from(invoices)
@@ -157,8 +157,8 @@ export class TelegramService {
       leaseStatus: lease?.contractStatus || 'No Active Lease',
       rentAmount: lease?.monthlyRent || '0',
       balance,
-      nextPaymentDate: nextPayment?.paymentDate || null,
-      nextPaymentAmount: nextPayment?.amount || null,
+      nextPaymentDate: nextInvoice?.dueDate || null,
+      nextPaymentAmount: nextInvoice ? (parseFloat(nextInvoice.amount || "0") - parseFloat(nextInvoice.paidAmount || "0")) : null,
       recentInvoice: recentInvoice ? { id: recentInvoice.id, number: recentInvoice.invoiceNumber, amount: recentInvoice.amount, status: recentInvoice.status } : null,
       recentMaintenance: recentMaintenance ? { id: recentMaintenance.id, title: recentMaintenance.title, status: recentMaintenance.status } : null,
       unreadNotifications: unreadNotifs.length,
@@ -324,31 +324,31 @@ export class TelegramService {
   }
 
   
-  static async payInvoice(userId: string, invoiceId: string, gateway: 'TELEBIRR' | 'CHAPA') {
+  // Phase 5: Initiate Payment (Creates a PROCESSING payment and returns checkout URL)
+  static async payInvoice(userId: string, invoiceId: string, gateway: 'TELEBIRR' | 'CHAPA' | 'CBE_BIRR') {
     const tenant = await this.getTenantForUser(userId);
     
-    // Verify invoice belongs to tenant
     const invList = await db.select().from(invoices).where(and(eq(invoices.id, invoiceId), eq(invoices.tenantId, tenant.id)));
     if (invList.length === 0) throw new Error('Invoice not found');
     
     const invoice = invList[0];
     if (invoice.status === 'PAID') throw new Error('Invoice is already paid');
 
-    // Mark as PAID
-    await db.update(invoices).set({ status: 'PAID' }).where(eq(invoices.id, invoiceId));
+    // MOCK GATEWAY INTEGRATION (Phase 5 Foundation)
+    const transactionId = gateway.substring(0, 3) + '-' + Math.floor(100000 + Math.random() * 900000);
+    const checkoutUrl = `https://checkout.${gateway.toLowerCase()}.com/pay/${transactionId}`;
 
-    // Create payment record
-    const paymentId = crypto.randomUUID(); // wait, db might not need this if it's defaultRandom()
-    // Let's rely on drizzle defaultRandom
     const newPayment = await db.insert(payments).values({
-      
+      organizationId: tenant.organizationId,
       invoiceId: invoice.id,
+      contractId: invoice.contractId,
       tenantId: tenant.id,
       unitId: invoice.unitId,
-      amount: invoice.amount,
+      amount: invoice.amount, // Full amount for now
       paymentMethod: gateway,
-      referenceNumber: gateway.substring(0,2) + '-' + Math.floor(100000 + Math.random() * 900000),
-      status: 'COMPLETED',
+      gatewayTransactionId: transactionId,
+      checkoutUrl: checkoutUrl,
+      status: 'PROCESSING',
       paymentDate: new Date().toISOString()
     }).returning();
 
