@@ -15,6 +15,13 @@
       "when": 1789322812424,
       "tag": "0001_supreme_doorman",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790358291481,
+      "tag": "0002_phase_5_billing_foundation",
+      "breakpoints": true
     }
   ]
 }
