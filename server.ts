@@ -1,4 +1,5 @@
 import { webhookRouter } from './src/modules/billing/webhook.routes';
+import { securityEnhancedRouter } from './src/modules/security/security-enhanced.routes';
 import express, { Request, Response } from 'express';
 import { Server as SocketServer } from 'socket.io';
 import path from 'path';
@@ -949,6 +950,7 @@ app.get('/api/v1/internal/debug-run-migrations', blockInProduction, async (req, 
 
   // SECURITY
   app.use('/api/v1/security', securityRouter);
+  app.use('/api/v1/security', securityEnhancedRouter);
   app.use('/api/v1/community', communityRouter);
   app.use('/api/v1/subscriptions', subscriptionsRouter);
   app.use('/api/v1/auth', authRouter);

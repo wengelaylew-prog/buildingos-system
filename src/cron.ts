@@ -1,9 +1,10 @@
 import { db } from './db/index.ts';
 import { invoices, tenants, telegramAccounts } from './db/schema.ts';
 import { eq, and } from 'drizzle-orm';
+import { SeismicService } from './modules/security/seismic.service.ts';
 
 export function startCronJobs() {
-  console.log('🚀 Starting Cron Jobs for Automated Reminders...');
+  console.log('🚀 Starting Cron Jobs for Automated Reminders + Seismic Monitoring...');
   
   // Run once after 10s for presentation
   setTimeout(async () => {
@@ -14,7 +15,26 @@ export function startCronJobs() {
   setInterval(async () => {
     await checkUpcomingInvoices();
   }, 24 * 60 * 60 * 1000);
+
+  // === REAL SEISMIC MONITORING — Every 5 minutes via USGS API ===
+  const runSeismicScan = async () => {
+    try {
+      const { alerts } = await SeismicService.scanGlobalEarthquakes();
+      if (alerts.length > 0) {
+        console.log(`🌍 SEISMIC: ${alerts.length} alert(s) triggered for buildings.`);
+      }
+    } catch (e) {
+      console.error('Seismic cron error:', e);
+    }
+  };
+
+  // Run once on startup (after 30s), then every 5 minutes
+  setTimeout(runSeismicScan, 30000);
+  setInterval(runSeismicScan, 5 * 60 * 1000);
+
+  console.log('📡 Real-time USGS seismic monitoring active (5-min interval).');
 }
+
 
 async function checkUpcomingInvoices() {
   try {
