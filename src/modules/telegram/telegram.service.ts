@@ -492,6 +492,14 @@ export class TelegramService {
       photoUrl: data.photoUrl,
     }).returning();
 
+    // Emit live socket notification to Admins
+    if ((global as any).io) {
+      (global as any).io.emit('new_notification', {
+        icon: '🛠️',
+        message: `New Maintenance Request from ${unit.unitNumber}: ${data.title}`
+      });
+    }
+
     return newRequest;
   }
 

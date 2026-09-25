@@ -34,6 +34,32 @@ import AIChatWidget from './components/ui/AIChatWidget.tsx';
 
 function MainLayout() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
+
+  // Phase 7: Real-Time WebSockets
+  React.useEffect(() => {
+    const socket = io('/', { path: '/socket.io' }); // Connects to same origin
+    
+    socket.on('connect', () => {
+      console.log('Connected to BuildingOS Live Notifications');
+    });
+
+    socket.on('new_notification', (data: any) => {
+      toast(data.message, {
+        icon: data.icon || '🔔',
+        style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+        },
+        duration: 5000,
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | undefined>(undefined);
   const [selectedFloorId, setSelectedFloorId] = useState<string | undefined>(undefined);
   const [selectedUnitId, setSelectedUnitId] = useState<string | undefined>(undefined);
@@ -70,6 +96,7 @@ function MainLayout() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#f8fafc] text-slate-900 antialiased selection:bg-indigo-600 selection:text-white font-sans">
+      <Toaster position="top-right" />
       {/* Structural Sidebar */}
       <Sidebar activeTab={activeTab} onSelectTab={handleNavigate} />
 
