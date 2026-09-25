@@ -99,103 +99,120 @@ applyMigrations();
 
 const app = express();
 
-  // DEBUG MIGRATIONS ENDPOINT
-  
-  // DEBUG: Check tenant records
-  app.get('/api/v1/internal/debug-tenants', async (req, res) => {
-    try {
-      const result = await db.execute(sql`
-        SELECT 
-          t.id as tenant_id, 
-          t.full_name, 
-          t.email, 
-          t.user_id,
-          t.is_deleted,
-          u.email as user_email,
-          u.id as user_id_from_users,
-          ta.telegram_user_id
-        FROM tenants t 
-        LEFT JOIN users u ON t.user_id = u.id
-        LEFT JOIN telegram_accounts ta ON ta.user_id = u.id
-        LIMIT 20
-      `);
-      return res.json({ success: true, tenants: (result as any).rows });
-    } catch(err) {
-      return res.status(500).json({ success: false, error: err.message });
-    }
-  });
+// ─────────────────────────────────────────────────────────────────────────────
+// SECURITY: Centralized fail-closed guard for ALL internal migration/debug endpoints.
+//
+// These endpoints are permanently disabled UNLESS the ENABLE_INTERNAL_ENDPOINTS=true
+// env var is explicitly set in the server environment.
+//
+// Defense-in-depth: also blocks if NODE_ENV=production.
+// Primary control: ENABLE_INTERNAL_ENDPOINTS must be explicitly opted-in.
+// Default (no env var set) = DISABLED. This protects production on Render
+// even if NODE_ENV is not configured.
+// ─────────────────────────────────────────────────────────────────────────────
+const INTERNAL_ENDPOINTS_ENABLED = process.env.ENABLE_INTERNAL_ENDPOINTS === 'true'
+  && process.env.NODE_ENV !== 'production';
 
-  // ADMIN: Link a user to become a tenant record  
-  app.post('/api/v1/internal/link-user-to-tenant', async (req, res) => {
-    try {
-      const { userId, fullName, phone, email } = req.body;
-      if (!userId) return res.status(400).json({ success: false, error: 'userId required' });
-      
-      // Check if already a tenant
-      const existing = await db.execute(sql`SELECT id FROM tenants WHERE user_id = ${userId}::uuid AND is_deleted = false`);
-      const existingRows = (existing as any).rows || [];
-      if (existingRows.length > 0) {
-        return res.json({ success: true, message: 'User already is a tenant', tenantId: existingRows[0].id });
-      }
+function blockInProduction(req: Request, res: Response, next: Function) {
+  if (!INTERNAL_ENDPOINTS_ENABLED) {
+    return res.status(403).json({
+      error: 'Forbidden: internal endpoints are disabled.',
+      hint: 'Set ENABLE_INTERNAL_ENDPOINTS=true and NODE_ENV!=production in a local dev environment only.',
+    });
+  }
+  return next();
+}
 
-      // Get org ID from user
-      const userRow = await db.execute(sql`SELECT organization_id, full_name, email FROM users WHERE id = ${userId}::uuid`);
-      const userRows = (userRow as any).rows || [];
-      if (!userRows.length) return res.status(404).json({ success: false, error: 'User not found' });
-      const userRec = userRows[0];
-      const tName = fullName || userRec.full_name || 'Unknown';
-      const tEmail = email || userRec.email || null;
-      const tPhone = phone || null;
-      const tOrgId = userRec.organization_id;
-      
-      // Create tenant record
-      const result = await db.execute(sql`
-        INSERT INTO tenants (full_name, phone, email, organization_id, user_id, is_deleted, created_at, updated_at)
-        VALUES (${tName}, ${tPhone}, ${tEmail}, ${tOrgId}::uuid, ${userId}::uuid, false, NOW(), NOW())
-        RETURNING id
-      `);
-      const resultRows = (result as any).rows || [];
-      return res.json({ success: true, message: 'Tenant record created', tenantId: resultRows[0]?.id });
-    } catch(err) {
-      return res.status(500).json({ success: false, error: err.message });
-    }
-  });
+// Internal Endpoints - guarded by blockInProduction middleware
+app.get('/api/v1/internal/debug-tenants', blockInProduction, async (req, res) => {
+  try {
+    const result = await db.execute(sql`
+      SELECT 
+        t.id as tenant_id, 
+        t.full_name, 
+        t.email, 
+        t.user_id,
+        t.is_deleted,
+        u.email as user_email,
+        u.id as user_id_from_users,
+        ta.telegram_user_id
+      FROM tenants t 
+      LEFT JOIN users u ON t.user_id = u.id
+      LEFT JOIN telegram_accounts ta ON ta.user_id = u.id
+      LIMIT 20
+    `);
+    return res.json({ success: true, tenants: (result as any).rows });
+  } catch(err) {
+    return res.status(500).json({ success: false, error: (err as Error).message });
+  }
+});
 
-  
-  // PERMANENT FIX: Add missing columns using direct pg Pool
-  app.post('/api/v1/internal/fix-contracts-schema', async (req, res) => {
-    const pgPool = global._postgresPool;
-    if (!pgPool) return res.status(500).json({ success: false, error: 'Pool not ready' });
-    const results: string[] = [];
+app.post('/api/v1/internal/link-user-to-tenant', blockInProduction, async (req, res) => {
+  try {
+    const { userId, fullName, phone, email } = req.body;
+    if (!userId) return res.status(400).json({ success: false, error: 'userId required' });
     
-    const tryAlter = async (sql: string, label: string) => {
-      try { await pgPool.query(sql); results.push(label + ': OK'); }
-      catch(e: any) { results.push(label + ': ' + (e.message?.includes('already exists') ? 'already exists' : e.message)); }
-    };
-
-    await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS signature_url TEXT', 'signature_url');
-    await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS signature_date TIMESTAMP', 'signature_date');
-    await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS notes TEXT', 'notes');
-    await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS renewal_of UUID REFERENCES contracts(id)', 'renewal_of');
-    await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS document_url TEXT', 'document_url');
-    await tryAlter('ALTER TABLE tenants ADD COLUMN IF NOT EXISTS emergency_contact_name TEXT', 'tenant.emergency_contact_name');
-    await tryAlter('ALTER TABLE tenants ADD COLUMN IF NOT EXISTS emergency_contact_phone TEXT', 'tenant.emergency_contact_phone');
-    await tryAlter('ALTER TABLE gate_passes ADD COLUMN IF NOT EXISTS token TEXT', 'gate_passes.token');
-    await tryAlter('ALTER TABLE units ADD COLUMN IF NOT EXISTS is_light_on BOOLEAN DEFAULT false', 'units.is_light_on');
-    await tryAlter('ALTER TABLE units ADD COLUMN IF NOT EXISTS is_ac_on BOOLEAN DEFAULT false', 'units.is_ac_on');
-    await tryAlter('ALTER TABLE units ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT true', 'units.is_locked');
-
-    return res.json({ success: true, results });
-  });
-
-  app.get('/api/v1/internal/debug-run-migrations', async (req, res) => {
-    try {
-      await runMigrations();
-      res.json({ success: true, message: 'Migrations ran successfully!' });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message, stack: err.stack });
+    const existing = await db.execute(sql`SELECT id FROM tenants WHERE user_id = ${userId}::uuid AND is_deleted = false`);
+    const existingRows = (existing as any).rows || [];
+    if (existingRows.length > 0) {
+      return res.json({ success: true, message: 'User already is a tenant', tenantId: existingRows[0].id });
     }
-  });
+
+    const userRow = await db.execute(sql`SELECT organization_id, full_name, email FROM users WHERE id = ${userId}::uuid`);
+    const userRows = (userRow as any).rows || [];
+    if (!userRows.length) return res.status(404).json({ success: false, error: 'User not found' });
+    const userRec = userRows[0];
+    const tName = fullName || userRec.full_name || 'Unknown';
+    const tEmail = email || userRec.email || null;
+    const tPhone = phone || null;
+    const tOrgId = userRec.organization_id;
+    
+    const result = await db.execute(sql`
+      INSERT INTO tenants (full_name, phone, email, organization_id, user_id, is_deleted, created_at, updated_at)
+      VALUES (${tName}, ${tPhone}, ${tEmail}, ${tOrgId}::uuid, ${userId}::uuid, false, NOW(), NOW())
+      RETURNING id
+    `);
+    const resultRows = (result as any).rows || [];
+    return res.json({ success: true, message: 'Tenant record created', tenantId: resultRows[0]?.id });
+  } catch(err) {
+    return res.status(500).json({ success: false, error: (err as Error).message });
+  }
+});
+
+app.post('/api/v1/internal/fix-contracts-schema', blockInProduction, async (req, res) => {
+  const pgPool = global._postgresPool;
+  if (!pgPool) return res.status(500).json({ success: false, error: 'Pool not ready' });
+  const results: string[] = [];
+  
+  const tryAlter = async (sql: string, label: string) => {
+    try { await pgPool.query(sql); results.push(label + ': OK'); }
+    catch(e: any) { results.push(label + ': ' + (e.message?.includes('already exists') ? 'already exists' : e.message)); }
+  };
+
+  await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS signature_url TEXT', 'signature_url');
+  await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS signature_date TIMESTAMP', 'signature_date');
+  await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS notes TEXT', 'notes');
+  await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS renewal_of UUID REFERENCES contracts(id)', 'renewal_of');
+  await tryAlter('ALTER TABLE contracts ADD COLUMN IF NOT EXISTS document_url TEXT', 'document_url');
+  await tryAlter('ALTER TABLE tenants ADD COLUMN IF NOT EXISTS emergency_contact_name TEXT', 'tenant.emergency_contact_name');
+  await tryAlter('ALTER TABLE tenants ADD COLUMN IF NOT EXISTS emergency_contact_phone TEXT', 'tenant.emergency_contact_phone');
+  await tryAlter('ALTER TABLE gate_passes ADD COLUMN IF NOT EXISTS token TEXT', 'gate_passes.token');
+  await tryAlter('ALTER TABLE units ADD COLUMN IF NOT EXISTS is_light_on BOOLEAN DEFAULT false', 'units.is_light_on');
+  await tryAlter('ALTER TABLE units ADD COLUMN IF NOT EXISTS is_ac_on BOOLEAN DEFAULT false', 'units.is_ac_on');
+  await tryAlter('ALTER TABLE units ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT true', 'units.is_locked');
+
+  return res.json({ success: true, results });
+});
+
+// PERMANENTLY DISABLED: debug-run-migrations must never run in production.
+app.get('/api/v1/internal/debug-run-migrations', blockInProduction, async (req, res) => {
+  try {
+    await runMigrations();
+    res.json({ success: true, message: 'Migrations ran successfully!' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message, stack: err.stack });
+  }
+});
 
 
   // PRODUCTION HARDENING (Phase 10)
@@ -240,10 +257,9 @@ const app = express();
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // ONE-TIME MIGRATION ENDPOINT
-  // Protected by MIGRATION_SECRET env var. Call once after deploy to fix DB schema.
-  // Example: POST /api/v1/internal/migrate  with header  x-migration-secret: <value>
-  app.post('/api/v1/internal/migrate', async (req, res) => {
+  // ONE-TIME MIGRATION ENDPOINT — dev only, permanently disabled in production
+  app.post('/api/v1/internal/migrate', blockInProduction, async (req, res) => {
+    // Secondary guard: also requires MIGRATION_SECRET header even in dev
     const secret = process.env.MIGRATION_SECRET;
     if (!secret || req.headers['x-migration-secret'] !== secret) {
       return res.status(403).json({ error: 'Forbidden' });
@@ -260,73 +276,64 @@ const app = express();
   // Runs drizzle-kit push from inside the Render network
   
   
-  app.post('/api/v1/internal/migrate-all', async (req, res) => {
+  app.post('/api/v1/internal/migrate-all', blockInProduction, async (req, res) => {
     try {
       // 1. Add Gate Passes
-      await db.execute(`
+      await db.execute(sql`
         CREATE TABLE IF NOT EXISTS gate_passes (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          organization_id UUID NOT NULL REFERENCES organizations(id),
           tenant_id UUID NOT NULL REFERENCES tenants(id),
-          unit_id UUID NOT NULL REFERENCES units(id),
-          direction TEXT NOT NULL,
-          item_description TEXT NOT NULL,
-          requested_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          pass_type TEXT NOT NULL,
+          description TEXT NOT NULL,
           status TEXT NOT NULL DEFAULT 'PENDING',
-          approved_by UUID REFERENCES users(id),
-          token TEXT
-        );
+          token TEXT NOT NULL,
+          valid_until TIMESTAMP NOT NULL,
+          created_at TIMESTAMP DEFAULT now() NOT NULL,
+          updated_at TIMESTAMP DEFAULT now() NOT NULL
+        )
       `);
-
+      
       // 2. Add Security Logs
-      await db.execute(`
+      await db.execute(sql`
         CREATE TABLE IF NOT EXISTS security_logs (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           organization_id UUID NOT NULL REFERENCES organizations(id),
           gate_pass_id UUID REFERENCES gate_passes(id),
           tenant_id UUID REFERENCES tenants(id),
-          scanned_by UUID NOT NULL REFERENCES users(id),
-          scanned_at TIMESTAMP NOT NULL DEFAULT NOW(),
-          status TEXT NOT NULL DEFAULT 'SUCCESS'
-        );
+          scanned_by UUID REFERENCES users(id),
+          action TEXT NOT NULL,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT now() NOT NULL
+        )
+      `);
+      
+      // 3. Fix Visitors
+      await db.execute(sql`
+        ALTER TABLE visitors ADD COLUMN IF NOT EXISTS telegram_message_id TEXT;
+        ALTER TABLE visitors ADD COLUMN IF NOT EXISTS scanned_id TEXT;
+        ALTER TABLE visitors ADD COLUMN IF NOT EXISTS direction TEXT DEFAULT 'IN';
+        ALTER TABLE visitors ADD COLUMN IF NOT EXISTS gate_pass_id UUID REFERENCES gate_passes(id);
       `);
 
-      // 3. Add telegram_message_id to visitors if missing
-      try {
-        await db.execute(`ALTER TABLE visitors ADD COLUMN telegram_message_id TEXT;`);
-      } catch (e) {}
-      
-      // 4. Add scanned_id to visitors if missing
-      try {
-        await db.execute(`ALTER TABLE visitors ADD COLUMN scanned_id TEXT;`);
-      } catch (e) {}
-
-      // 5. Add direction to visitors if missing
-      try {
-        await db.execute(`ALTER TABLE visitors ADD COLUMN direction TEXT;`);
-      } catch (e) {}
-
-      // 6. Add gate_pass_id to visitors if missing
-      try {
-        await db.execute(`ALTER TABLE visitors ADD COLUMN gate_pass_id UUID REFERENCES gate_passes(id);`);
-      } catch (e) {}
-
-      return res.json({ success: true, message: "All tables and columns migrated" });
-    } catch(err) {
+      return res.json({ success: true, message: "Migration complete" });
+    } catch(err: any) {
       return res.status(500).json({ success: false, error: err.message });
     }
   });
 
-  app.post('/api/v1/internal/migrate-contracts', async (req, res) => {
+  app.post('/api/v1/internal/migrate-contracts', blockInProduction, async (req, res) => {
     try {
-      await db.execute('ALTER TABLE contracts ADD COLUMN signature_url TEXT;');
-      await db.execute('ALTER TABLE contracts ADD COLUMN signature_date TIMESTAMP;');
+      await db.execute(sql`ALTER TABLE contracts ADD COLUMN IF NOT EXISTS signature_url TEXT;`);
+      await db.execute(sql`ALTER TABLE contracts ADD COLUMN IF NOT EXISTS signature_date TIMESTAMP;`);
       return res.json({ success: true, message: "Columns added" });
-    } catch(err) {
+    } catch(err: any) {
       return res.status(500).json({ success: false, error: err.message });
     }
   });
 
-  app.post('/api/v1/internal/push', async (req, res) => {
+  // ONE-TIME PUSH ENDPOINT — dev only, blocked in production
+  app.post('/api/v1/internal/push', blockInProduction, async (req, res) => {
     const { exec } = require('child_process');
     exec('npx drizzle-kit push --config=drizzle.config.ts', (error: any, stdout: string, stderr: string) => {
       if (error) {
