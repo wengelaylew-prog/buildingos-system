@@ -1,3 +1,4 @@
+import { webhookRouter } from './src/modules/billing/webhook.routes';
 import express, { Request, Response } from 'express';
 import { Server as SocketServer } from 'socket.io';
 import path from 'path';
@@ -560,6 +561,7 @@ app.get('/api/v1/internal/debug-run-migrations', blockInProduction, async (req, 
 
   // 6. BILLING & INVOICING (PHASE 5)
   app.use('/api/v1/billing', billingRouter);
+  app.use('/api/v1/webhooks', webhookRouter);
 
   // 6b. UTILITY PAYMENT TRACKING (PHASE 5b)
   app.use('/api/v1/utilities', utilityRouter);
