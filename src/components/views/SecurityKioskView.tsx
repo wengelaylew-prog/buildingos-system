@@ -10,6 +10,8 @@ export const SecurityKioskView: React.FC = () => {
   const [verifyStatus, setVerifyStatus] = useState<'pending' | 'success' | 'error'>('pending');
   const [errorMessage, setErrorMessage] = useState('');
   const [verifiedData, setVerifiedData] = useState<any>(null);
+  const [scanDirection, setScanDirection] = useState<'IN' | 'OUT'>('IN');
+  const [shopperAction, setShopperAction] = useState<'ENTRY' | 'EXIT_ERASED' | null>(null);
 
   useEffect(() => {
     const scanner = new Html5QrcodeScanner(
@@ -47,10 +49,27 @@ export const SecurityKioskView: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto py-8">
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <Shield className="mx-auto h-12 w-12 text-slate-800 mb-4" />
         <h1 className="text-3xl font-bold text-slate-900">Security Guard Kiosk</h1>
-        <p className="text-slate-500 mt-2">Scan Visitor or Item Gate Passes</p>
+        <p className="text-slate-500 mt-2">Scan Tenant IDs, Gate Passes, and Mall Shopper Digital IDs</p>
+      </div>
+
+      <div className="flex justify-center mb-8">
+        <div className="bg-slate-200 p-1 rounded-xl flex gap-1">
+          <button 
+            onClick={() => setScanDirection('IN')}
+            className={`px-6 py-2 rounded-lg font-bold transition-all ${scanDirection === 'IN' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            ↓ ENTRY SCAN (IN)
+          </button>
+          <button 
+            onClick={() => setScanDirection('OUT')}
+            className={`px-6 py-2 rounded-lg font-bold transition-all ${scanDirection === 'OUT' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            ↑ EXIT SCAN (OUT)
+          </button>
+        </div>
       </div>
 
       {!scanResult ? (
@@ -82,7 +101,25 @@ export const SecurityKioskView: React.FC = () => {
             <p className="text-red-500 font-bold mb-4">{errorMessage}</p>
           )}
 
-          {verifyStatus === 'success' && scanResult?.startsWith('DID-') && verifiedData?.tenant ? (
+          {verifyStatus === 'success' && shopperAction === 'ENTRY' ? (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 mb-6 inline-block text-center w-full max-w-md">
+              <CheckCircle className="mx-auto h-16 w-16 text-emerald-500 mb-4 animate-bounce" />
+              <h3 className="text-2xl font-bold text-emerald-700 mb-2">SHOPPER GRANTED ENTRY</h3>
+              <p className="text-sm text-emerald-600 font-bold mb-4">Temporary entry logged for Mall Shopper.</p>
+              <div className="bg-emerald-100 p-3 rounded text-emerald-800 font-mono text-sm break-all">
+                ID: {scanResult}
+              </div>
+            </div>
+          ) : verifyStatus === 'success' && shopperAction === 'EXIT_ERASED' ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-6 inline-block text-center w-full max-w-md">
+              <CheckCircle className="mx-auto h-16 w-16 text-amber-500 mb-4" />
+              <h3 className="text-2xl font-bold text-amber-700 mb-2">SHOPPER EXIT COMPLETED</h3>
+              <p className="text-sm text-amber-600 font-bold mb-4">Mall Shopper has exited.</p>
+              <div className="bg-red-100 border border-red-200 p-3 rounded text-red-700 font-bold text-sm">
+                🔒 Privacy Secured: Scanned ID file has been permanently erased.
+              </div>
+            </div>
+          ) : verifyStatus === 'success' && scanResult?.startsWith('DID-') && verifiedData?.tenant ? (
             <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 mb-6 inline-block text-left w-full max-w-md">
               <div className="flex items-center gap-4 border-b border-emerald-200 pb-4 mb-4">
                 <div className="h-16 w-16 bg-emerald-200 rounded-full flex items-center justify-center text-emerald-700 font-bold text-xl overflow-hidden shrink-0 shadow-inner">
@@ -110,7 +147,7 @@ export const SecurityKioskView: React.FC = () => {
             </div>
           ) : (
             <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 inline-block">
-               <p className="text-sm text-slate-500 uppercase tracking-wider mb-1">{scanResult?.startsWith('DID-') ? 'Digital ID' : 'Pass Token'}</p>
+               <p className="text-sm text-slate-500 uppercase tracking-wider mb-1">{scanResult?.startsWith('DID-') ? 'Tenant Digital ID' : scanResult?.startsWith('GP-') ? 'Gate Pass' : 'Shopper ID'}</p>
                <p className="text-2xl font-mono font-bold text-slate-800 break-all">{scanResult}</p>
             </div>
           )}

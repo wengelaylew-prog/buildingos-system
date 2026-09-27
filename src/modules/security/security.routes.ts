@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '../../db/index.ts';
-import { gatePasses, securityLogs, visitors, tenants, users, leases } from '../../db/schema.ts';
+import { gatePasses, securityLogs, visitors, tenants, users, contracts, mallShoppers } from '../../db/schema.ts';
 import { TelegramService } from '../telegram/telegram.service.ts';
 import { eq, desc } from 'drizzle-orm';
 import { authenticate, requirePermission } from '../../middleware/auth.ts';
@@ -165,7 +165,7 @@ securityRouter.post('/digital-id/verify', authenticate, requirePermission('gate_
     const tenant = await db.query.tenants.findFirst({
       where: eq(tenants.id, tenantId),
       with: {
-        leases: {
+        contracts: {
           with: { unit: true }
         }
       }
@@ -173,8 +173,8 @@ securityRouter.post('/digital-id/verify', authenticate, requirePermission('gate_
 
     if (!tenant) return res.status(404).json({ success: false, message: 'Digital ID not found or inactive tenant' });
 
-    // Ensure tenant has an active lease
-    const activeLease = tenant.leases?.find((l: any) => l.status === 'ACTIVE');
+    // Ensure tenant has an active contract
+    const activeLease = (tenant.contracts as any[])?.find((c: any) => c.status === 'ACTIVE');
     if (!activeLease) {
       return res.status(403).json({ success: false, message: 'Tenant does not have an active lease/shop.' });
     }
@@ -191,6 +191,59 @@ securityRouter.post('/digital-id/verify', authenticate, requirePermission('gate_
     });
 
     res.json({ success: true, data: { tenant, activeLease } });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+securityRouter.post('/shopper-scan', authenticate, requirePermission('gate_pass.approve'), async (req: any, res) => {
+  try {
+    const { token, direction = 'IN' } = req.body;
+    if (!token) return res.status(400).json({ success: false, message: 'Invalid Shopper Digital ID format' });
+
+    if (direction === 'IN') {
+      // Register entry
+      const newShopper = await db.insert(mallShoppers).values({
+        organizationId: req.user.organizationId,
+        digitalIdToken: token,
+        shopperData: 'Mall Shopper Entry',
+      }).returning();
+      
+      // Audit log
+      await db.insert(securityLogs).values({
+        organizationId: req.user.organizationId,
+        scanType: 'SHOPPER_ID',
+        scannedId: token,
+        direction: 'IN',
+        scannedBy: req.user.id,
+        notes: `Mall Shopper Digital ID scanned IN`
+      });
+
+      return res.json({ success: true, data: newShopper[0], message: 'Shopper entry recorded.' });
+    } else {
+      // Register exit & DELETE the record per strict privacy requirement
+      const existing = await db.query.mallShoppers.findFirst({
+        where: eq(mallShoppers.digitalIdToken, token)
+      });
+      
+      if (!existing) {
+        return res.status(404).json({ success: false, message: 'No active entry found for this Shopper ID.' });
+      }
+
+      await db.delete(mallShoppers).where(eq(mallShoppers.id, existing.id));
+
+      // Audit log
+      await db.insert(securityLogs).values({
+        organizationId: req.user.organizationId,
+        scanType: 'SHOPPER_ID',
+        scannedId: token,
+        direction: 'OUT',
+        scannedBy: req.user.id,
+        notes: `Mall Shopper Digital ID scanned OUT. Data securely erased.`
+      });
+
+      return res.json({ success: true, data: { erased: true }, message: 'Shopper exited and data erased.' });
+    }
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }

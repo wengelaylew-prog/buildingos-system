@@ -87,8 +87,19 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
   useEffect(() => {
     if (viewMode !== 'SECURITY') return;
     const fetchSeismic = () => {
-      // Addis Ababa coordinates for demo, in production this comes from the building model
-      api.getLiveSeismic(9.03, 38.74, 1000).then((res: any) => {
+      // Get exact building coordinates dynamically
+      let lat = 9.03; // Default Addis Ababa
+      let lng = 38.74;
+      if (sceneData?.allBuildings && selectedBuildingId) {
+        const currentBuilding = sceneData.allBuildings.find(b => b.id === selectedBuildingId);
+        if (currentBuilding && currentBuilding.latitude && currentBuilding.longitude) {
+          lat = Number(currentBuilding.latitude);
+          lng = Number(currentBuilding.longitude);
+        }
+      }
+      
+      // Radius reduced to 100km to only monitor earthquakes in the immediate vicinity of THIS building
+      api.getLiveSeismic(lat, lng, 100).then((res: any) => {
         if (res && res.length > 0) {
           const quake = res[0];
           setSeismicLevel(quake.magnitude);

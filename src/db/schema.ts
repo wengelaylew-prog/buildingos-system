@@ -799,3 +799,11 @@ export const invoiceItemsRelations = relations(invoiceItems, ({ one }) => ({
     references: [invoices.id],
   }),
 }));
+
+export const mallShoppers = pgTable('mall_shoppers', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  digitalIdToken: text('digital_id_token').notNull(),
+  shopperData: text('shopper_data'),
+  enteredAt: timestamp('entered_at').defaultNow().notNull(),
+});
