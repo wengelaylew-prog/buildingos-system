@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import {  CheckCircle, XCircle, Shield, RefreshCw , Settings, Cpu } from 'lucide-react';
+import {   CheckCircle, XCircle, Shield, RefreshCw , Settings, Cpu } from 'lucide-react';
 import { api } from '../../api/client.ts';
 import toast from 'react-hot-toast';
 
@@ -78,7 +78,13 @@ export const SecurityKioskView: React.FC = () => {
         </button>
         <Shield className="mx-auto h-12 w-12 text-slate-800 mb-4" />
         <h1 className="text-3xl font-bold text-slate-900">Security Guard Kiosk</h1>
-        <p className="text-slate-500 mt-2">Scan Tenant IDs, Gate Passes, and Mall Shopper Digital IDs</p>
+        <p className="text-slate-500 mt-2 flex items-center justify-center gap-2">
+          <span>Scan Tenant IDs, Gate Passes, and Mall Shopper Digital IDs</span>
+        </p>
+        <div className="mt-4 flex items-center justify-center gap-2 text-indigo-600 bg-indigo-50 py-2 px-4 rounded-full text-sm font-bold w-max mx-auto">
+          <Shield size={16} className="animate-pulse" />
+          Ready for Hardware Scanner (USB/Bluetooth)
+        </div>
       </div>
 
       <div className="flex justify-center mb-8">
