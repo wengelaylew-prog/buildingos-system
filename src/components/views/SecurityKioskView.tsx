@@ -9,6 +9,7 @@ export const SecurityKioskView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [verifyStatus, setVerifyStatus] = useState<'pending' | 'success' | 'error'>('pending');
   const [errorMessage, setErrorMessage] = useState('');
+  const [verifiedData, setVerifiedData] = useState<any>(null);
 
   useEffect(() => {
     const scanner = new Html5QrcodeScanner(
@@ -81,10 +82,38 @@ export const SecurityKioskView: React.FC = () => {
             <p className="text-red-500 font-bold mb-4">{errorMessage}</p>
           )}
 
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 inline-block">
-             <p className="text-sm text-slate-500 uppercase tracking-wider mb-1">Pass Token</p>
-             <p className="text-3xl font-mono font-bold text-slate-800">{scanResult}</p>
-          </div>
+          {verifyStatus === 'success' && scanResult?.startsWith('DID-') && verifiedData?.tenant ? (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6 mb-6 inline-block text-left w-full max-w-md">
+              <div className="flex items-center gap-4 border-b border-emerald-200 pb-4 mb-4">
+                <div className="h-16 w-16 bg-emerald-200 rounded-full flex items-center justify-center text-emerald-700 font-bold text-xl overflow-hidden shrink-0 shadow-inner">
+                  {verifiedData.tenant.profilePhoto ? (
+                    <img src={verifiedData.tenant.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    verifiedData.tenant.fullName.charAt(0)
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">{verifiedData.tenant.fullName}</h3>
+                  <p className="text-sm text-slate-500">{verifiedData.tenant.phone}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Shop / Unit</p>
+                  <p className="text-lg font-mono font-bold text-slate-800">{verifiedData.activeLease?.unit?.unitNumber || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">ID Status</p>
+                  <span className="inline-flex px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-bold">ACTIVE TENANT</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 inline-block">
+               <p className="text-sm text-slate-500 uppercase tracking-wider mb-1">{scanResult?.startsWith('DID-') ? 'Digital ID' : 'Pass Token'}</p>
+               <p className="text-2xl font-mono font-bold text-slate-800 break-all">{scanResult}</p>
+            </div>
+          )}
           
           <div className="flex gap-4 justify-center">
              <button 

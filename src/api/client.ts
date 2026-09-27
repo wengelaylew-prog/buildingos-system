@@ -63,6 +63,7 @@ export const api = {
   getVisitors: () => request<any>('/api/v1/security/visitors'),
   getGatePasses: () => request<any>('/api/v1/security/gate-passes'),
   verifyGatePass: (token: string) => request<any>('/api/v1/security/gate-passes/verify', { method: 'POST', body: JSON.stringify({ token }) }),
+  verifyDigitalId: (token: string, direction?: string) => request<any>('/api/v1/security/digital-id/verify', { method: 'POST', body: JSON.stringify({ token, direction }) }),
   logVisitor: (data: any) => request<any>('/api/v1/security/visitors/check-in', { method: 'POST', body: JSON.stringify(data) }),
 
   // Utilities

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TelegramLinkView } from './TelegramLinkView.tsx';
-import { TenantMessagingView, ProfileView, MaintenanceView } from './TelegramViews.tsx';
+import { TenantMessagingView, ProfileView, MaintenanceView, DigitalIdView } from './TelegramViews.tsx';
 import { GatePassTenantView } from './GatePassTenantView.tsx';
 import LandingView from '../views/public/LandingView.tsx';
 import CheckoutView from '../views/public/CheckoutView.tsx';
@@ -40,6 +40,12 @@ export function TelegramApp() {
     }
 
     bootstrapAuth(tg?.initData);
+  }, []);
+
+  useEffect(() => {
+    const handleNavDigitalId = () => setActiveTab('digitalid');
+    window.addEventListener('nav-digital-id', handleNavDigitalId);
+    return () => window.removeEventListener('nav-digital-id', handleNavDigitalId);
   }, []);
 
   const bootstrapAuth = async (currentInitData?: string) => {
@@ -148,7 +154,8 @@ export function TelegramApp() {
             <h1 className="text-lg font-semibold">
               {activeTab === 'profile' ? (am ? 'ፕሮፋይል' : 'Settings') : 
                activeTab === 'gatepass' ? (am ? 'የበር ማለፊያ' : 'Gate Pass') :
-               activeTab === 'maintenance' ? (am ? 'ጥገና' : 'Maintenance') : ''}
+               activeTab === 'maintenance' ? (am ? 'ጥገና' : 'Maintenance') :
+               activeTab === 'digitalid' ? (am ? 'ዲጂታል መታወቂያ' : 'Digital ID') : ''}
             </h1>
           </div>
         )}
