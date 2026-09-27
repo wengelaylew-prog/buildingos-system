@@ -4,6 +4,7 @@ import { gatePasses, securityLogs, visitors, tenants, users, contracts, mallShop
 import { TelegramService } from '../telegram/telegram.service.ts';
 import { eq, desc } from 'drizzle-orm';
 import { authenticate, requirePermission } from '../../middleware/auth.ts';
+import { TurnstileService } from './turnstile.service.ts';
 
 export const securityRouter = Router();
 
@@ -101,6 +102,9 @@ securityRouter.post('/gate-passes/verify', authenticate, requirePermission('gate
       scannedBy: req.user.id,
     });
 
+    if (req.body.gateIp) {
+      await TurnstileService.triggerRelay(req.body.gateIp, pass.direction as 'IN'|'OUT');
+    }
     res.json({ success: true, data: pass });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
@@ -190,6 +194,9 @@ securityRouter.post('/digital-id/verify', authenticate, requirePermission('gate_
       notes: `Mall Digital ID scanned (${direction}) - Shop: ${activeLease.unit?.unitNumber}`
     });
 
+    if (req.body.gateIp) {
+      await TurnstileService.triggerRelay(req.body.gateIp, direction);
+    }
     res.json({ success: true, data: { tenant, activeLease } });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
@@ -219,6 +226,9 @@ securityRouter.post('/shopper-scan', authenticate, requirePermission('gate_pass.
         notes: `Mall Shopper Digital ID scanned IN`
       });
 
+      if (req.body.gateIp) {
+        await TurnstileService.triggerRelay(req.body.gateIp, 'IN');
+      }
       return res.json({ success: true, data: newShopper[0], message: 'Shopper entry recorded.' });
     } else {
       // Register exit & DELETE the record per strict privacy requirement
@@ -242,6 +252,9 @@ securityRouter.post('/shopper-scan', authenticate, requirePermission('gate_pass.
         notes: `Mall Shopper Digital ID scanned OUT. Data securely erased.`
       });
 
+      if (req.body.gateIp) {
+        await TurnstileService.triggerRelay(req.body.gateIp, 'OUT');
+      }
       return res.json({ success: true, data: { erased: true }, message: 'Shopper exited and data erased.' });
     }
   } catch (err: any) {
