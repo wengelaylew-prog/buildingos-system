@@ -68,6 +68,73 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
     { time: new Date(Date.now()-60000).toLocaleTimeString(), msg: 'Rooftop CAM-4 motion sweep: No threat detected.', level: 'OK' },
   ]);
   const [showThreatShield, setShowThreatShield] = useState(false);
+  const [realCameras, setRealCameras] = useState<any[]>([]);
+  const [newCamUrl, setNewCamUrl] = useState('');
+  const [newCamName, setNewCamName] = useState('');
+
+  // Fetch Real Cameras on Mount
+  useEffect(() => {
+    if (viewMode === 'SECURITY') {
+      api.getSecurityCameras().then((res: any) => {
+        if (res && res.length > 0) {
+          setRealCameras(res);
+        }
+      }).catch(console.error);
+    }
+  }, [viewMode]);
+
+  // Real USGS Live Seismic Polling
+  useEffect(() => {
+    if (viewMode !== 'SECURITY') return;
+    const fetchSeismic = () => {
+      // Addis Ababa coordinates for demo, in production this comes from the building model
+      api.getLiveSeismic(9.03, 38.74, 1000).then((res: any) => {
+        if (res && res.length > 0) {
+          const quake = res[0];
+          setSeismicLevel(quake.magnitude);
+          if (quake.magnitude >= 4.0) {
+            setSeismicAlert('CRITICAL');
+            setThreatLevel('CRITICAL');
+          } else if (quake.magnitude >= 2.5) {
+            setSeismicAlert('WARNING');
+            setThreatLevel('HIGH');
+          } else {
+            setSeismicAlert('NORMAL');
+          }
+          
+          setAiThreatLog(prev => {
+            const newLog = { 
+              time: new Date(quake.time).toLocaleTimeString(), 
+              msg: `LIVE USGS DATA: M${quake.magnitude} at ${quake.location}`, 
+              level: quake.magnitude >= 4.0 ? 'CRITICAL' : 'WARNING' 
+            };
+            if (prev.some(l => l.msg === newLog.msg)) return prev;
+            return [newLog, ...prev].slice(0, 10);
+          });
+        } else {
+          setSeismicLevel(parseFloat((Math.random() * 0.1).toFixed(2))); // Tiny ambient vibration
+          setSeismicAlert('NORMAL');
+        }
+      }).catch(console.error);
+    };
+
+    fetchSeismic();
+    const interval = setInterval(fetchSeismic, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [viewMode]);
+
+  const handleAddCamera = async () => {
+    if (!newCamUrl) return;
+    const newCam = { id: Date.now().toString(), name: newCamName || 'New Camera', url: newCamUrl, status: 'OK' };
+    const updated = [...realCameras, newCam];
+    setRealCameras(updated);
+    setNewCamUrl('');
+    setNewCamName('');
+    try {
+      await api.saveSecurityCameras(updated);
+    } catch (e) { console.error(e); }
+  };
+
 
   // Seismic Simulator (real systems use accelerometer APIs; we simulate wave patterns)
   React.useEffect(() => {

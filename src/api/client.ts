@@ -54,6 +54,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
+  // Advanced Security (Phase 8)
+  getSecurityCameras: () => request<any>('/api/v1/security/cameras'),
+  saveSecurityCameras: (cameras: any[]) => request<any>('/api/v1/security/cameras', { method: 'POST', body: JSON.stringify({ cameras }) }),
+  getLiveSeismic: (lat: number, lng: number, radius: number) => request<any>(`/api/v1/security/seismic/live?lat=${lat}&lng=${lng}&radius=${radius}`),
+
   // Security
   getVisitors: () => request<any>('/api/v1/security/visitors'),
   getGatePasses: () => request<any>('/api/v1/security/gate-passes'),
