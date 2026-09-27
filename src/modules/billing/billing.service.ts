@@ -1,5 +1,5 @@
 import { db } from '../../db/index.ts';
-import { invoices, contracts, tenants, units } from '../../db/schema.ts';
+import { invoices, invoiceItems, contracts, tenants, units } from '../../db/schema.ts';
 import { eq, and, lt, sql, desc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { MessagingService } from '../messaging/messaging.service.ts';
@@ -22,8 +22,9 @@ export class BillingService {
       );
       
       if (existing.length === 0) {
+        const newInvoiceId = randomUUID();
         await db.insert(invoices).values({
-          id: randomUUID(),
+          id: newInvoiceId,
           organizationId,
           contractId: contract.id,
           tenantId: contract.tenantId,
@@ -35,6 +36,14 @@ export class BillingService {
           dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
           status: 'PENDING',
           lateFeeApplied: false
+        });
+        
+        await db.insert(invoiceItems).values({
+          id: randomUUID(),
+          invoiceId: newInvoiceId,
+          description: `Monthly Rent - ${currentMonth}`,
+          amount: contract.monthlyRent,
+          type: 'RENT'
         });
         
         const tenantInfo = await db.select().from(tenants).where(eq(tenants.id, contract.tenantId));
@@ -68,8 +77,9 @@ export class BillingService {
     let applied = 0;
     for (const inv of overdue) {
       const lateFeeAmount = (parseFloat(inv.amount) * 0.05).toFixed(2);
+      const lateFeeInvoiceId = randomUUID();
       await db.insert(invoices).values({
-        id: randomUUID(),
+        id: lateFeeInvoiceId,
         organizationId,
         contractId: inv.contractId,
         tenantId: inv.tenantId,
@@ -81,6 +91,14 @@ export class BillingService {
         dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
         status: 'PENDING',
         lateFeeApplied: false
+      });
+
+      await db.insert(invoiceItems).values({
+        id: randomUUID(),
+        invoiceId: lateFeeInvoiceId,
+        description: `Late Fee (5%) for Invoice ${inv.invoiceNumber}`,
+        amount: lateFeeAmount,
+        type: 'LATE_FEE'
       });
       await db.update(invoices)
         .set({ lateFeeApplied: true, status: 'OVERDUE' })

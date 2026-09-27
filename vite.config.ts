@@ -11,6 +11,23 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      sourcemap: false, // Ensures no source map files are generated
+      minify: 'esbuild', // Minify and mangle the code
+      chunkSizeWarningLimit: 2000,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              return 'vendor'; // Obfuscates library structure
+            }
+          }
+        }
+      }
+    },
+    esbuild: {
+      drop: ['console', 'debugger'], // Removes console.log and debugger statements from production
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.

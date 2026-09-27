@@ -10,6 +10,10 @@ import {
   ShieldCheck,
   AlertCircle,
   RefreshCw,
+  Activity,
+  Radio,
+  Cpu,
+  Waves,
 } from 'lucide-react';
 import { api } from '../../api/client.ts';
 import {
@@ -54,6 +58,74 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
   const [viewMode, setViewMode] = useState<'MANAGEMENT' | 'SECURITY' | 'FINANCIAL' | 'MAINTENANCE' | 'ENERGY'>('MANAGEMENT');
   const [isEmergencyEvacuation, setIsEmergencyEvacuation] = useState<boolean>(false);
   const [showAiBuilder, setShowAiBuilder] = useState<boolean>(false);
+
+  // === Phase 8+: Intelligent Threat Shield ===
+  const [seismicLevel, setSeismicLevel] = useState(0.0);
+  const [seismicAlert, setSeismicAlert] = useState<'NORMAL' | 'WARNING' | 'CRITICAL'>('NORMAL');
+  const [threatLevel, setThreatLevel] = useState<'LOW' | 'ELEVATED' | 'HIGH' | 'CRITICAL'>('LOW');
+  const [aiThreatLog, setAiThreatLog] = useState<{time: string, msg: string, level: string}[]>([
+    { time: new Date().toLocaleTimeString(), msg: 'System online. All perimeter sensors nominal.', level: 'OK' },
+    { time: new Date(Date.now()-60000).toLocaleTimeString(), msg: 'Rooftop CAM-4 motion sweep: No threat detected.', level: 'OK' },
+  ]);
+  const [showThreatShield, setShowThreatShield] = useState(false);
+
+  // Seismic Simulator (real systems use accelerometer APIs; we simulate wave patterns)
+  React.useEffect(() => {
+    if (viewMode !== 'SECURITY') return;
+    const interval = setInterval(() => {
+      const baseNoise = (Math.random() * 0.4);
+      const spike = Math.random() < 0.03 ? (Math.random() * 3.5 + 0.8) : 0; // rare spikes
+      const current = parseFloat((baseNoise + spike).toFixed(2));
+      setSeismicLevel(current);
+
+      if (current >= 2.5) {
+        setSeismicAlert('CRITICAL');
+        setThreatLevel('CRITICAL');
+        setAiThreatLog(prev => [{
+          time: new Date().toLocaleTimeString(),
+          msg: `⚠️ SEISMIC ALERT! Magnitude ${current} detected — Initiating evacuation protocols!`,
+          level: 'CRITICAL'
+        }, ...prev.slice(0, 9)]);
+        if ((global || window) && (window as any).io) {
+          // In browser context, socket would fire
+        }
+      } else if (current >= 1.2) {
+        setSeismicAlert('WARNING');
+        setAiThreatLog(prev => [{
+          time: new Date().toLocaleTimeString(),
+          msg: `Seismic tremor detected: ${current} — Monitoring...`,
+          level: 'WARNING'
+        }, ...prev.slice(0, 9)]);
+      } else {
+        setSeismicAlert('NORMAL');
+      }
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [viewMode]);
+
+  // AI Threat Scanner (Rooftop Camera AI — simulates Gemini anomaly detection cycle)
+  React.useEffect(() => {
+    if (viewMode !== 'SECURITY') return;
+    const threatMessages = [
+      { msg: 'CAM-ROOF-1: AI perimeter scan complete — No threat detected.', level: 'OK' },
+      { msg: 'CAM-ROOF-2: Motion analysis — pedestrian crowd normal pattern.', level: 'OK' },
+      { msg: 'CAM-ROOF-3: Thermal scan — No elevated heat signatures.', level: 'OK' },
+      { msg: 'CAM-ROOF-1: Suspicious vehicle detected near Gate-B. Flagging for review.', level: 'WARNING' },
+      { msg: 'AI Vision: Unusual crowd formation near entrance. Assigning threat score: 42/100.', level: 'WARNING' },
+      { msg: 'RADAR-SENSOR: Drone signature detected in 150m radius. Tracking...', level: 'WARNING' },
+    ];
+    const interval = setInterval(() => {
+      const pick = threatMessages[Math.floor(Math.random() * threatMessages.length)];
+      setAiThreatLog(prev => [{
+        time: new Date().toLocaleTimeString(),
+        msg: pick.msg,
+        level: pick.level
+      }, ...prev.slice(0, 9)]);
+      if (pick.level === 'WARNING') setThreatLevel(t => t === 'CRITICAL' ? t : 'ELEVATED');
+      else setThreatLevel(t => t === 'CRITICAL' ? t : 'LOW');
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [viewMode]);
   const [aiStatus, setAiStatus] = useState<'idle' | 'uploading' | 'analyzing' | 'generating' | 'success'>('idle');
   const [progress, setProgress] = useState(0);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -585,6 +657,179 @@ export const ThreeDViewerView: React.FC<ThreeDViewerViewProps> = ({
               isEmergencyEvacuation={isEmergencyEvacuation}
               onSelectUnit={handleSelectUnit}
             />
+
+            {/* Phase 8+: BuildingOS Intelligent Threat Shield — Seismic + AI Camera */}
+            {viewMode === 'SECURITY' && (
+              <div className="absolute inset-0 z-10 pointer-events-none p-3 flex flex-col justify-between overflow-hidden">
+                
+                {/* TOP BAR: Threat Level + Time */}
+                <div className="flex justify-between items-start gap-3">
+
+                  {/* LEFT: Security Command + Seismic Sensor */}
+                  <div className="w-72 space-y-2 pointer-events-auto">
+                    
+                    {/* Header */}
+                    <div className={`bg-slate-900/90 backdrop-blur-md border rounded-xl p-3 shadow-2xl ${
+                      threatLevel === 'CRITICAL' ? 'border-red-500/80 shadow-red-900/40 animate-pulse' : 
+                      threatLevel === 'HIGH' ? 'border-orange-500/60' : 
+                      'border-indigo-500/40'
+                    }`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 font-mono font-bold text-xs">
+                          <ShieldCheck size={14} className="text-indigo-400" />
+                          <span className="text-white">{isAmharic ? 'የ BuildingOS ጥበቃ ስርዓት' : 'BuildingOS THREAT SHIELD'}</span>
+                        </div>
+                        <div className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono ${
+                          threatLevel === 'CRITICAL' ? 'bg-red-600 text-white animate-pulse' :
+                          threatLevel === 'HIGH' ? 'bg-orange-500 text-white' :
+                          threatLevel === 'ELEVATED' ? 'bg-amber-500 text-black' :
+                          'bg-emerald-600 text-white'
+                        }`}>{threatLevel}</div>
+                      </div>
+                      
+                      {/* SEISMIC SENSOR PANEL */}
+                      <div className="bg-slate-950/80 rounded-lg p-2.5 border border-slate-700/60">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Waves size={12} className={`${seismicAlert === 'CRITICAL' ? 'text-red-500' : seismicAlert === 'WARNING' ? 'text-amber-400' : 'text-emerald-400'}`} />
+                          <span className="text-[10px] font-mono font-bold text-slate-300">{isAmharic ? 'የመሬት መንቀጥቀጥ ሴንሰር' : 'SEISMIC SENSOR'}</span>
+                          <span className={`ml-auto text-[10px] font-bold font-mono ${seismicAlert === 'CRITICAL' ? 'text-red-400 animate-pulse' : seismicAlert === 'WARNING' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                            {seismicAlert}
+                          </span>
+                        </div>
+                        {/* Richter scale bar */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] font-mono text-slate-500">0.0</span>
+                          <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden relative">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-700 ${seismicLevel >= 2.5 ? 'bg-red-500 animate-pulse' : seismicLevel >= 1.2 ? 'bg-amber-400' : 'bg-emerald-500'}`}
+                              style={{ width: `${Math.min((seismicLevel / 4) * 100, 100)}%` }}
+                            />
+                          </div>
+                          <span className={`text-[10px] font-mono font-bold ${seismicLevel >= 2.5 ? 'text-red-400' : seismicLevel >= 1.2 ? 'text-amber-400' : 'text-emerald-400'}`}>{seismicLevel.toFixed(2)} M</span>
+                        </div>
+                        <div className="mt-1.5 flex gap-1">
+                          {[0,1,2,3,4,5,6,7].map(seg => (
+                            <div key={seg} className={`flex-1 h-1 rounded-sm ${seismicLevel > seg * 0.5 ? (seg > 4 ? 'bg-red-500' : seg > 2 ? 'bg-amber-400' : 'bg-emerald-500') : 'bg-slate-700'}`}></div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Rooftop Sensor Status */}
+                      <div className="mt-2 grid grid-cols-3 gap-1.5">
+                        {[
+                          { label: isAmharic ? 'ካሜራ-አናት' : 'ROOF-CAM', color: 'emerald', icon: '📷' },
+                          { label: isAmharic ? 'ሬዳር' : 'RADAR', color: 'indigo', icon: '📡' },
+                          { label: isAmharic ? 'ሙቀት-ሴንሰር' : 'THERMAL', color: 'amber', icon: '🌡️' },
+                          { label: isAmharic ? 'ድምፅ-ሴንሰር' : 'ACOUSTIC', color: 'purple', icon: '🎤' },
+                          { label: isAmharic ? 'ዳሳሽ' : 'SEISMIC', color: seismicAlert === 'NORMAL' ? 'emerald' : seismicAlert === 'WARNING' ? 'amber' : 'red', icon: '📳' },
+                          { label: isAmharic ? 'AI-ቅ-ቅ' : 'AI-SCAN', color: 'blue', icon: '🤖' },
+                        ].map((s, i) => (
+                          <div key={i} className={`bg-${s.color}-500/10 border border-${s.color}-500/30 rounded p-1.5 text-center`}>
+                            <div className="text-base">{s.icon}</div>
+                            <div className={`text-[8px] font-mono text-${s.color}-400 font-bold leading-tight mt-0.5`}>{s.label}</div>
+                            <div className={`w-1.5 h-1.5 rounded-full bg-${s.color}-400 mx-auto mt-1 animate-pulse`}></div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Emergency Controls */}
+                      <div className="mt-2 flex gap-2">
+                        <button 
+                          onClick={() => setIsEmergencyEvacuation(!isEmergencyEvacuation)}
+                          className={`flex-1 py-2 rounded-lg font-mono text-[10px] font-bold transition-all border ${isEmergencyEvacuation ? 'bg-red-600 border-red-400 text-white shadow-[0_0_15px_rgba(220,38,38,0.7)] animate-pulse' : 'bg-red-600/10 border-red-500/50 text-red-400 hover:bg-red-600/30'}`}
+                        >
+                          {isEmergencyEvacuation ? (isAmharic ? '🔴 ማዕቀብ ሰርዝ' : '🔴 CANCEL') : (isAmharic ? '🚨 ቁልፍ ዝጋ' : '🚨 LOCKDOWN')}
+                        </button>
+                        <button className="flex-1 py-2 rounded-lg font-mono text-[10px] font-bold bg-indigo-600/10 border border-indigo-500/40 text-indigo-400 hover:bg-indigo-600/30 transition-all">
+                          {isAmharic ? '📢 ፖሊስ ጥራ' : '📢 ALERT POLICE'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CENTER: AI Threat Log */}
+                  <div className="flex-1 mx-2 pointer-events-auto">
+                    <div className="bg-slate-950/85 backdrop-blur-md border border-slate-700/60 rounded-xl p-3 shadow-xl h-full">
+                      <div className="flex items-center gap-2 mb-2 border-b border-slate-800 pb-2">
+                        <Cpu size={12} className="text-indigo-400" />
+                        <span className="text-[10px] font-mono font-bold text-slate-300">{isAmharic ? 'AI ስጋት ትንተና ምዝገባ (Rooftop Cameras)' : 'AI THREAT ANALYSIS LOG — ROOFTOP SENSORS'}</span>
+                        <div className="ml-auto flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
+                          <span className="text-[9px] text-indigo-400 font-mono">LIVE</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5 max-h-36 overflow-y-auto scrollbar-none">
+                        {aiThreatLog.map((entry, i) => (
+                          <div key={i} className={`flex gap-2 items-start text-[9px] font-mono ${entry.level === 'CRITICAL' ? 'text-red-400' : entry.level === 'WARNING' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                            <span className="text-slate-600 shrink-0">{entry.time}</span>
+                            <span className="leading-relaxed">{entry.msg}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* RIGHT: Rooftop Live Camera Feeds */}
+                  <div className="w-60 space-y-2 pointer-events-auto">
+                    {[
+                      { id: 1, name: 'ROOF-CAM-N', label: isAmharic ? 'አናት ሰሜን' : 'North Rooftop', img: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=400&q=80', status: 'OK' },
+                      { id: 2, name: 'ROOF-CAM-S', label: isAmharic ? 'አናት ደቡብ' : 'South Rooftop', img: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=400&q=80', status: threatLevel === 'ELEVATED' ? 'ALERT' : 'OK' },
+                      { id: 3, name: 'PERIMETER', label: isAmharic ? 'ዳር ካሜራ' : 'Perimeter Fence', img: 'https://images.unsplash.com/photo-1573322131924-f7b2820ec57b?auto=format&fit=crop&w=400&q=80', status: 'OK' },
+                    ].map(cam => (
+                      <div key={cam.id} className={`relative aspect-video bg-slate-900 rounded-lg overflow-hidden group cursor-pointer shadow-lg border ${cam.status === 'ALERT' ? 'border-amber-500 shadow-amber-900/30' : 'border-slate-700/60 hover:border-indigo-500'} transition-all`}>
+                        <div className="absolute inset-0 bg-[repeating-linear-gradient(transparent,transparent_2px,rgba(0,0,0,0.25)_2px,rgba(0,0,0,0.25)_4px)] z-10"></div>
+                        <img src={cam.img} className="w-full h-full object-cover opacity-40 grayscale mix-blend-luminosity group-hover:opacity-70 group-hover:grayscale-0 transition-all duration-500" alt="cam"/>
+                        <div className={`absolute top-1.5 left-1.5 z-20 px-1.5 py-0.5 rounded text-[8px] font-bold text-white flex items-center gap-1 ${cam.status === 'ALERT' ? 'bg-amber-500' : 'bg-red-600'}`}>
+                          <div className="w-1 h-1 rounded-full bg-white animate-pulse"></div>
+                          {cam.status === 'ALERT' ? (isAmharic ? 'ጥርጣሬ!' : 'ALERT') : 'REC'}
+                        </div>
+                        <div className="absolute bottom-1.5 left-1.5 z-20 text-white font-mono text-[9px] drop-shadow bg-black/50 px-1.5 rounded backdrop-blur-sm leading-tight">
+                          <div className="font-bold">{cam.name}</div>
+                          <div className="text-slate-300 text-[8px]">{cam.label}</div>
+                        </div>
+                        <div className="absolute top-1.5 right-1.5 z-20 font-mono text-[8px] text-white bg-black/50 px-1 py-0.5 rounded backdrop-blur-sm border border-white/10">
+                          {new Date().toLocaleTimeString()}
+                        </div>
+                        {/* AI scan line effect */}
+                        <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
+                          <div className="w-full h-0.5 bg-emerald-400/30 animate-bounce" style={{animationDuration: `${2 + cam.id}s`}}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+
+                {/* BOTTOM: Seismic Waveform Visualizer */}
+                <div className="pointer-events-auto mt-2">
+                  <div className="bg-slate-950/85 backdrop-blur-md border border-slate-700/60 rounded-xl px-4 py-2.5 flex items-center gap-4 shadow-xl">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Radio size={14} className="text-emerald-400 animate-spin" style={{animationDuration: '3s'}} />
+                      <span className="text-[10px] font-mono text-slate-400">{isAmharic ? 'የሴስሚክ ሞገድ' : 'SEISMIC WAVEFORM'}</span>
+                    </div>
+                    <div className="flex-1 h-8 flex items-end gap-0.5">
+                      {Array.from({length: 40}).map((_, i) => {
+                        const h = Math.random() * 24 + (i === 39 ? seismicLevel * 8 : 2);
+                        const capped = Math.min(h, 30);
+                        const color = capped > 20 ? '#ef4444' : capped > 12 ? '#f59e0b' : '#22c55e';
+                        return <div key={i} style={{height: `${capped}px`, backgroundColor: color, width: '100%', opacity: 0.7 + (i/40)*0.3}} className="rounded-full transition-all"></div>;
+                      })}
+                    </div>
+                    <div className={seismicAlert === 'CRITICAL' ? 'text-red-400 font-mono text-[10px] font-bold animate-pulse' : seismicAlert === 'WARNING' ? 'text-amber-400 font-mono text-[10px] font-bold' : 'text-emerald-400 font-mono text-[10px] font-bold'}>
+                      {seismicLevel.toFixed(2)} M
+                    </div>
+                    <div className="h-6 w-px bg-slate-700 mx-2"></div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Activity size={14} className="text-indigo-400" />
+                      <span className="text-[10px] font-mono text-slate-400">AI THREAT SCORE:</span>
+                      <span className={['text-[11px]', 'font-mono', 'font-bold', threatLevel === 'CRITICAL' ? 'text-red-400' : threatLevel === 'ELEVATED' ? 'text-amber-400' : 'text-emerald-400'].join(' ')}>
+                        {threatLevel === 'CRITICAL' ? '91/100' : threatLevel === 'HIGH' ? '73/100' : threatLevel === 'ELEVATED' ? '42/100' : '08/100'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* In-Canvas Bottom Controls Overlay Tip */}
             <div className="absolute bottom-4 left-4 z-20 pointer-events-none bg-slate-900/80 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-slate-800 text-[11px] text-slate-300 shadow-lg">
