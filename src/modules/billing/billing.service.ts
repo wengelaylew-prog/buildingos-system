@@ -23,27 +23,29 @@ export class BillingService {
       
       if (existing.length === 0) {
         const newInvoiceId = randomUUID();
-        await db.insert(invoices).values({
-          id: newInvoiceId,
-          organizationId,
-          contractId: contract.id,
-          tenantId: contract.tenantId,
-          unitId: contract.unitId,
-          invoiceNumber: `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          type: 'RENT',
-          amount: contract.monthlyRent,
-          issueDate: new Date().toISOString(),
-          dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'PENDING',
-          lateFeeApplied: false
-        });
-        
-        await db.insert(invoiceItems).values({
-          id: randomUUID(),
-          invoiceId: newInvoiceId,
-          description: `Monthly Rent - ${currentMonth}`,
-          amount: contract.monthlyRent,
-          type: 'RENT'
+        await db.transaction(async (tx) => {
+          await tx.insert(invoices).values({
+            id: newInvoiceId,
+            organizationId,
+            contractId: contract.id,
+            tenantId: contract.tenantId,
+            unitId: contract.unitId,
+            invoiceNumber: `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            type: 'RENT',
+            amount: contract.monthlyRent,
+            issueDate: new Date().toISOString(),
+            dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'PENDING',
+            lateFeeApplied: false
+          });
+          
+          await tx.insert(invoiceItems).values({
+            id: randomUUID(),
+            invoiceId: newInvoiceId,
+            description: `Monthly Rent - ${currentMonth}`,
+            amount: contract.monthlyRent,
+            type: 'RENT'
+          });
         });
         
         const tenantInfo = await db.select().from(tenants).where(eq(tenants.id, contract.tenantId));
@@ -78,31 +80,34 @@ export class BillingService {
     for (const inv of overdue) {
       const lateFeeAmount = (parseFloat(inv.amount) * 0.05).toFixed(2);
       const lateFeeInvoiceId = randomUUID();
-      await db.insert(invoices).values({
-        id: lateFeeInvoiceId,
-        organizationId,
-        contractId: inv.contractId,
-        tenantId: inv.tenantId,
-        unitId: inv.unitId,
-        invoiceNumber: `LF-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        type: 'LATE_FEE',
-        amount: lateFeeAmount,
-        issueDate: new Date().toISOString(),
-        dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'PENDING',
-        lateFeeApplied: false
-      });
+      await db.transaction(async (tx) => {
+        await tx.insert(invoices).values({
+          id: lateFeeInvoiceId,
+          organizationId,
+          contractId: inv.contractId,
+          tenantId: inv.tenantId,
+          unitId: inv.unitId,
+          invoiceNumber: `LF-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          type: 'LATE_FEE',
+          amount: lateFeeAmount,
+          issueDate: new Date().toISOString(),
+          dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'PENDING',
+          lateFeeApplied: false
+        });
 
-      await db.insert(invoiceItems).values({
-        id: randomUUID(),
-        invoiceId: lateFeeInvoiceId,
-        description: `Late Fee (5%) for Invoice ${inv.invoiceNumber}`,
-        amount: lateFeeAmount,
-        type: 'LATE_FEE'
+        await tx.insert(invoiceItems).values({
+          id: randomUUID(),
+          invoiceId: lateFeeInvoiceId,
+          description: `Late Fee (5%) for Invoice ${inv.invoiceNumber}`,
+          amount: lateFeeAmount,
+          type: 'LATE_FEE'
+        });
+        
+        await tx.update(invoices)
+          .set({ lateFeeApplied: true, status: 'OVERDUE' })
+          .where(eq(invoices.id, inv.id));
       });
-      await db.update(invoices)
-        .set({ lateFeeApplied: true, status: 'OVERDUE' })
-        .where(eq(invoices.id, inv.id));
       applied++;
     }
     return { applied };

@@ -2,7 +2,7 @@ import { db } from '../../db/index.ts';
 import {
   utilityReadings,
   utilityBills,
-  invoices,
+  invoices, invoiceItems,
   contracts,
   tenants,
   units,
@@ -140,24 +140,33 @@ export class UtilityService {
       .where(and(eq(contracts.unitId, unitId), eq(contracts.contractStatus, 'ACTIVE')))
       .limit(1);
 
-    // Create the utility invoice in the invoices table
+    // Create the utility invoice & invoice items atomically
     let invoiceId: string | null = null;
     if (contract) {
-      const [invoice] = await db.insert(invoices).values({
-        id: randomUUID(),
-        organizationId,
-        contractId: contract.id,
-        tenantId: contract.tenantId,
-        unitId,
-        invoiceNumber: `INV-UTIL-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        type: 'UTILITY',
-        amount: String(totalAmount),
-        issueDate: new Date().toISOString().slice(0, 10),
-        dueDate: dueDate(dueDaysFromNow),
-        status: 'PENDING',
-        lateFeeApplied: false,
-      }).returning();
-      invoiceId = invoice.id;
+      invoiceId = randomUUID();
+      await db.transaction(async (tx) => {
+        await tx.insert(invoices).values({
+          id: invoiceId as string,
+          organizationId,
+          contractId: contract.id,
+          tenantId: contract.tenantId,
+          unitId,
+          invoiceNumber: `INV-UTIL-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          type: 'UTILITY',
+          amount: String(totalAmount),
+          issueDate: new Date().toISOString().slice(0, 10),
+          dueDate: dueDate(dueDaysFromNow),
+          status: 'PENDING',
+          lateFeeApplied: false,
+        });
+        await tx.insert(invoiceItems).values({
+          id: randomUUID(),
+          invoiceId: invoiceId as string,
+          description: `Utility Bill (${utilityType}) - ${billingPeriod}`,
+          amount: String(totalAmount),
+          type: 'UTILITY'
+        });
+      });
     }
 
     // Create the utility bill record

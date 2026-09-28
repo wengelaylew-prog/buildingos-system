@@ -1,5 +1,5 @@
 import { db } from '../../db/index.ts';
-import { maintenanceRequests, units, buildings, invoices } from '../../db/schema.ts';
+import { invoiceItems, maintenanceRequests, units, buildings, invoices } from '../../db/schema.ts';
 import { eq, and, desc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 
@@ -72,19 +72,28 @@ export class MaintenanceService {
     // Optional integration with billing for billable repairs
     if (data.isBillable && data.cost && data.status === 'RESOLVED' && !invoiceId && req[0].tenantId) {
       invoiceId = randomUUID();
-      await db.insert(invoices).values({
-        id: invoiceId,
-        organizationId,
-        contractId: null as any, // Ad-hoc maintenance invoices may not link to a contract directly
-        tenantId: req[0].tenantId,
-        unitId: req[0].unitId,
-        invoiceNumber: `MAINT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        type: 'OTHER',
-        amount: String(data.cost),
-        issueDate: new Date().toISOString(),
-        dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'PENDING',
-        lateFeeApplied: false
+      await db.transaction(async (tx) => {
+        await tx.insert(invoices).values({
+          id: invoiceId as string,
+          organizationId,
+          contractId: null as any, // Ad-hoc maintenance invoices may not link to a contract directly
+          tenantId: req[0].tenantId,
+          unitId: req[0].unitId,
+          invoiceNumber: `MAINT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          type: 'MAINTENANCE',
+          amount: String(data.cost),
+          issueDate: new Date().toISOString(),
+          dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'PENDING',
+          lateFeeApplied: false
+        });
+        await tx.insert(invoiceItems).values({
+          id: randomUUID(),
+          invoiceId: invoiceId as string,
+          description: `Maintenance Repair Fee - Request #${req[0].id.substring(0,8)}`,
+          amount: String(data.cost),
+          type: 'MAINTENANCE'
+        });
       });
     }
 
