@@ -977,6 +977,17 @@ app.get('/api/v1/internal/debug-run-migrations', blockInProduction, async (req, 
   
   const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Building & Tenant Management Server running on port ${PORT}`);
+
+    // Automatically register Telegram Webhook if token and URL are present
+    if (process.env.TELEGRAM_BOT_TOKEN && (process.env.APP_URL || process.env.FRONTEND_URL)) {
+      const baseUrl = process.env.APP_URL || process.env.FRONTEND_URL || 'https://buildingos-app.onrender.com';
+      const webhookUrl = `${baseUrl}/api/v1/telegram/webhook`;
+      console.log(`Registering Telegram Webhook: ${webhookUrl}`);
+      fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/setWebhook?url=${webhookUrl}`)
+        .then(r => r.json())
+        .then(data => console.log('Telegram Webhook Setup Result:', data))
+        .catch(err => console.error('Failed to set Telegram Webhook:', err));
+    }
   });
 
   // Attach socket.io directly as a global variable so we don't have to export it inside the async function scope
