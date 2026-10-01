@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { webhookRouter } from './src/modules/billing/webhook.routes';
 import { securityEnhancedRouter } from './src/modules/security/security-enhanced.routes';
 import express, { Request, Response } from 'express';
@@ -49,6 +50,7 @@ import { adminRouter } from './src/modules/admin/admin.routes.ts';
 import { telegramRouter } from './src/modules/telegram/telegram.routes.ts';
 import { tmaAuthRouter } from './src/modules/tma-auth/tma-auth.routes.ts';
 import { securityRouter } from './src/modules/security/security.routes.ts';
+import { emergencyRouter } from './src/modules/security/emergency.routes.ts';
 import { communityRouter } from './src/modules/community/community.routes.ts';
 import { subscriptionsRouter } from './src/modules/subscriptions/subscriptions.routes.ts';
 import { authRouter } from './src/modules/auth/auth.routes.ts';
@@ -950,6 +952,7 @@ app.get('/api/v1/internal/debug-run-migrations', blockInProduction, async (req, 
 
   // SECURITY
   app.use('/api/v1/security', securityRouter);
+  app.use('/api/v1/emergency', emergencyRouter);
   app.use('/api/v1/security', securityEnhancedRouter);
   app.use('/api/v1/community', communityRouter);
   app.use('/api/v1/subscriptions', subscriptionsRouter);

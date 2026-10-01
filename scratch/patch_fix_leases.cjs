@@ -32,3 +32,4 @@ code = code.replace(badLogic, goodLogic);
 
 fs.writeFileSync('src/modules/security/security.routes.ts', code);
 console.log('Fixed contracts relation in security.routes.ts');
+

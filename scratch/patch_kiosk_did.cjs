@@ -117,3 +117,4 @@ code = code.replace(renderTarget, renderReplacement);
 
 fs.writeFileSync('src/components/views/SecurityKioskView.tsx', code);
 console.log('SecurityKioskView patched for Digital ID.');
+

@@ -10,3 +10,4 @@ if (!client.includes('scanShopperId')) {
   fs.writeFileSync('src/api/client.ts', client);
   console.log('client.ts patched for shopper scan.');
 }
+

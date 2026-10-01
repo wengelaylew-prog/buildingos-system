@@ -127,3 +127,4 @@ code = code.replace(scanResultLabelTarget, scanResultLabelReplacement);
 
 fs.writeFileSync(file, code);
 console.log('SecurityKioskView patched for Generic Shopper Entry/Exit.');
+

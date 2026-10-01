@@ -72,3 +72,4 @@ if (!code.includes('/shopper-scan')) {
   fs.writeFileSync('src/modules/security/security.routes.ts', code);
   console.log('Added shopper-scan route to security.routes.ts');
 }
+

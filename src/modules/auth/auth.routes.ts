@@ -6,6 +6,8 @@ export const authRouter = Router();
 
 authRouter.post('/register', AuthController.register);
 authRouter.post('/login', AuthController.login);
+authRouter.post('/login/otp-request', AuthController.requestOtpLogin);
+authRouter.post('/login/otp-verify', AuthController.verifyOtpLogin);
 
 
 authRouter.post('/seed-demo', authenticate, AuthController.seedDemo);

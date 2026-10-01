@@ -10,3 +10,4 @@ if (!client.includes('verifyDigitalId')) {
   fs.writeFileSync('src/api/client.ts', client);
   console.log('client.ts patched.');
 }
+

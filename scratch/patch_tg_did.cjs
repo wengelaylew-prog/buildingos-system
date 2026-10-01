@@ -103,3 +103,4 @@ if (!tg.includes('export function DigitalIdView')) {
   fs.writeFileSync('src/components/telegram/TelegramViews.tsx', tg);
   console.log('TelegramViews patched with Digital ID.');
 }
+

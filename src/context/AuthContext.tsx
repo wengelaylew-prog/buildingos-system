@@ -9,6 +9,8 @@ interface AuthContextType {
   hasPermission: (permissionCode: string) => boolean;
   signInWithGoogle: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  requestOtp: (email: string) => Promise<void>;
+  verifyOtp: (email: string, otp: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   loading: boolean;
@@ -129,6 +131,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const requestOtp = async (email: string) => {
+    try {
+      const response = await fetch('/api/v1/auth/login/otp-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to request OTP');
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const verifyOtp = async (email: string, otp: string) => {
+    try {
+      const response = await fetch('/api/v1/auth/login/otp-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Invalid OTP');
+      }
+      if (data.data && data.data.token) {
+        localStorage.setItem('buildingos_token', data.data.token);
+        setApiToken(data.data.token);
+        await fetchProfile();
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     try {
       localStorage.removeItem('buildingos_token');
@@ -148,6 +187,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         hasPermission,
         signInWithGoogle,
         login,
+        requestOtp,
+        verifyOtp,
         signOut,
         refreshUser: fetchProfile,
         loading,

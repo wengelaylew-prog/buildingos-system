@@ -54,3 +54,4 @@ if (!code.includes('/digital-id/verify')) {
   fs.writeFileSync('src/modules/security/security.routes.ts', code);
   console.log('security.routes.ts patched.');
 }
+

@@ -82,3 +82,4 @@ if (tg.includes('grid-cols-3')) {
 } else {
   console.log('Quick Actions target not found.');
 }
+

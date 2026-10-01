@@ -807,3 +807,15 @@ export const mallShoppers = pgTable('mall_shoppers', {
   shopperData: text('shopper_data'),
   enteredAt: timestamp('entered_at').defaultNow().notNull(),
 });
+
+export const emergencyAlerts = pgTable('emergency_alerts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  buildingId: uuid('building_id').references(() => buildings.id),
+  type: text('type').notNull().default('FIRE'), // FIRE, SEISMIC, SECURITY
+  status: text('status').notNull().default('ACTIVE'), // ACTIVE, RESOLVED
+  locationDetails: text('location_details'),
+  reportedAt: timestamp('reported_at').defaultNow().notNull(),
+  resolvedAt: timestamp('resolved_at'),
+  resolvedBy: uuid('resolved_by').references(() => users.id)
+});

@@ -17,3 +17,4 @@ if (!schema.includes('mallShoppers')) {
   fs.writeFileSync('src/db/schema.ts', schema);
   console.log('Added mallShoppers table to schema.ts');
 }
+

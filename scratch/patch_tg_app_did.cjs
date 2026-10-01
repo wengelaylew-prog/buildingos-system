@@ -48,3 +48,4 @@ if (!code.includes('<DigitalIdView')) {
 
 fs.writeFileSync('src/components/telegram/TelegramApp.tsx', code);
 console.log('TelegramApp.tsx patched for Digital ID routing.');
+
