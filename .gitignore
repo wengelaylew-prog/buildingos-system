@@ -6,3 +6,15 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Local environment and credential files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Local backups and generated database exports
+*.backup
+*.backup.*
+*.dump
+*.sql.gz
