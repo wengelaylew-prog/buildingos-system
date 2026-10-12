@@ -1,45 +1,49 @@
 # BuildingOS
 
-BuildingOS is a property and building operations management application. This repository contains a React/TypeScript client and a Node.js/Express server, with database access and migrations managed through Drizzle ORM.
+BuildingOS is a property and building operations management platform for organizing properties, buildings, units, and tenant information.
 
-## Project areas
+## Features
 
-The codebase includes modules and interfaces for:
-- Organizations, buildings, floors, units, and tenant records
+- Organization and building management
+- Floors, units, and tenant records
 - Role-based access and tenant-scoped operations
-- Telegram Mini App authentication flows
+- Telegram Mini App authentication
 - Firebase integration
-- Building/unit visualization and related UI components
+- Building and unit visualization
 
-These bullets describe areas represented in the repository; they are not a guarantee that every workflow has been independently verified in production.
+## Tech stack
 
-## Technology
-
-- React, TypeScript, Vite
+- React, TypeScript, and Vite
 - Node.js and Express
-- PostgreSQL with Drizzle ORM
-- Firebase SDKs
-- Three.js and React Three Fiber ecosystem components where used by the UI
+- PostgreSQL and Drizzle ORM
+- Firebase
+- Three.js and React Three Fiber
 
 ## Getting started
 
-1. Install a supported Node.js LTS release and npm.
-2. Install dependencies:
+### Requirements
 
-   ```bash
-   npm install
-   ```
+- Node.js LTS
+- npm
+- A configured PostgreSQL database and any required service credentials
 
-3. Configure the environment variables required by the server, database, Firebase, and any enabled authentication integrations. Keep real credentials in a local environment file or secret manager; never commit secrets or production data.
-4. Start the development server:
+### Install
 
-   ```bash
-   npm run dev
-   ```
+```bash
+npm install
+```
 
-## Useful scripts
+Create a local environment file using `.env.example` as a reference, then set the database and service variables required by your environment.
 
-| Command | Purpose |
+### Run locally
+
+```bash
+npm run dev
+```
+
+## Available scripts
+
+| Command | Description |
 | --- | --- |
 | `npm run dev` | Start the development server |
 | `npm run build` | Build the client and bundle the server |
@@ -47,18 +51,14 @@ These bullets describe areas represented in the repository; they are not a guara
 | `npm run typecheck` | Run TypeScript checking |
 | `npm test` | Run the configured 3D system test |
 
-**Test safety:** review test configuration before running tests. Run integration tests only against an isolated test database, never a production database.
+## Database
 
-## Database and deployment
+The database schema and Drizzle migrations are maintained in the `drizzle/` directory. Use an isolated development or test database when running database-related workflows.
 
-Database schema and migration files are maintained in the repository. Review the relevant environment configuration and deployment documentation before attempting a deployment. This portfolio cleanup does not change production code, database migrations, or deployment configuration.
+## Sample data
 
-## Sample data and privacy
-
-The file `fixtures/buildingos-portfolio-sample.json` contains synthetic example data for portfolio/demo purposes. It is not a production backup and must not be used to restore a real environment.
-
-Real database backups, personal information, tokens, credentials, and environment files must remain outside the public repository. If a real backup has previously been committed, deleting the current file does not remove it from Git history; history cleanup requires a separately reviewed and authorized operation.
+A small synthetic dataset is available at `fixtures/buildingos-portfolio-sample.json` for demonstrations and portfolio review. It contains fictitious records and is not a production backup.
 
 ## Project status
 
-This repository is presented as a software project and code sample. Verify the current build, test, security, and deployment state in your own environment before relying on it operationally.
+BuildingOS is under active development. The repository provides an overview of the application's structure and implementation; available features and deployment readiness may vary by environment.
