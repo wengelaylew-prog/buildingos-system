@@ -12,27 +12,26 @@ export default defineConfig(() => {
       },
     },
     build: {
-      sourcemap: false, // Ensures no source map files are generated
-      minify: 'esbuild', // Minify and mangle the code
+      sourcemap: false, // Do not publish source maps.
+      minify: 'esbuild',
       chunkSizeWarningLimit: 2000,
       rollupOptions: {
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
-              return 'vendor'; // Obfuscates library structure
+              return 'vendor';
             }
           }
         }
       }
     },
     esbuild: {
-      drop: ['console', 'debugger'], // Removes console.log and debugger statements from production
+      drop: ['console', 'debugger'], // Remove console and debugger statements from production builds.
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Set DISABLE_HMR=true in environments where hot reloading is not needed.
       hmr: process.env.DISABLE_HMR !== 'true',
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
+      // Disable file watching when DISABLE_HMR=true.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
   };
