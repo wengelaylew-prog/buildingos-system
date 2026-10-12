@@ -4,5 +4,14 @@ dist/
 coverage/
 .DS_Store
 *.log
+
+# Local environment and credential files
 .env*
 !.env.example
+!.env.*.example
+
+# Local backups and generated database exports
+*.backup
+*.backup.*
+*.dump
+*.sql.gz
