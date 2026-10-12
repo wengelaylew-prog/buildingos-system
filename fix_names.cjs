@@ -1,10 +1,8 @@
 const fs = require('fs');
+let code = fs.readFileSync('src/components/views/UnitsView.tsx', 'utf8');
 
-const filePath = 'src/components/views/UnitsView.tsx';
-let source = fs.readFileSync(filePath, 'utf8');
+code = code.replace(/const \[unitsMenu/g, 'const [unitsList');
+code = code.replace(/const \[buildingsMenu/g, 'const [buildingsList');
+code = code.replace(/filterFloorsMenu/g, 'filterFloorsList');
 
-source = source.replace(/const \[unitsMenu/g, 'const [unitsList');
-source = source.replace(/const \[buildingsMenu/g, 'const [buildingsList');
-source = source.replace(/filterFloorsMenu/g, 'filterFloorsList');
-
-fs.writeFileSync(filePath, source, 'utf8');
+// The replacements above update the menu state and filter variable names.
