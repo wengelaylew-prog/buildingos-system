@@ -1,5 +1,7 @@
 const fs = require('fs');
-let code = fs.readFileSync('src/modules/telegram/telegram.service.ts', 'utf8');
+
+const filePath = 'src/modules/telegram/telegram.service.ts';
+let source = fs.readFileSync(filePath, 'utf8');
 
 const target = `  static async payInvoice(userId: string, invoiceId: string, gateway: 'TELEBIRR' | 'CHAPA') {
     const tenant = await this.getTenantForUser(userId);
@@ -32,7 +34,7 @@ const target = `  static async payInvoice(userId: string, invoiceId: string, gat
     return newPayment[0];
   }`;
 
-const replacement = `  // Phase 5: Initiate Payment (Creates a PROCESSING payment and returns checkout URL)
+const replacement = `  // Starts a payment and returns checkout details.
   static async payInvoice(userId: string, invoiceId: string, gateway: 'TELEBIRR' | 'CHAPA' | 'CBE_BIRR') {
     const tenant = await this.getTenantForUser(userId);
     
@@ -42,7 +44,7 @@ const replacement = `  // Phase 5: Initiate Payment (Creates a PROCESSING paymen
     const invoice = invList[0];
     if (invoice.status === 'PAID') throw new Error('Invoice is already paid');
 
-    // MOCK GATEWAY INTEGRATION (Phase 5 Foundation)
+    // Placeholder integration for payment gateway checkout.
     const transactionId = gateway.substring(0, 3) + '-' + Math.floor(100000 + Math.random() * 900000);
     const checkoutUrl = \`https://checkout.\${gateway.toLowerCase()}.com/pay/\${transactionId}\`;
 
@@ -52,7 +54,7 @@ const replacement = `  // Phase 5: Initiate Payment (Creates a PROCESSING paymen
       contractId: invoice.contractId,
       tenantId: tenant.id,
       unitId: invoice.unitId,
-      amount: invoice.amount, // Full amount for now
+      amount: invoice.amount,
       paymentMethod: gateway,
       gatewayTransactionId: transactionId,
       checkoutUrl: checkoutUrl,
@@ -63,9 +65,8 @@ const replacement = `  // Phase 5: Initiate Payment (Creates a PROCESSING paymen
     return newPayment[0];
   }`;
 
-code = code.replace(target.replace(/\r\n/g, '\n'), replacement);
-code = code.replace(target.replace(/\n/g, '\r\n'), replacement);
+source = source.replace(target.replace(/\r\n/g, '\n'), replacement);
+source = source.replace(target.replace(/\n/g, '\r\n'), replacement);
 
-fs.writeFileSync('src/modules/telegram/telegram.service.ts', code);
-console.log('patched payInvoice');
-
+fs.writeFileSync(filePath, source, 'utf8');
+console.log('Updated payInvoice implementation.');
