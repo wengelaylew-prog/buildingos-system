@@ -1,0 +1,169 @@
+{
+  "_notice": "Synthetic portfolio/demo fixture only. Not a production backup or a database restore artifact. All identities and records are fictitious.",
+  "timestamp": "2000-01-01T00:00:00.000Z",
+  "tables": {
+    "users": {
+      "rows": 1,
+      "data": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "organization_id": "00000000-0000-4000-8000-000000000002",
+          "uid": "demo-user-001",
+          "email": "demo.user@example.invalid",
+          "full_name": "Demo User",
+          "avatar_url": null,
+          "role_id": "00000000-0000-4000-8000-000000000007",
+          "is_active": true,
+          "phone": null,
+          "phone_verified": false,
+          "created_at": "2000-01-01T00:00:00.000Z",
+          "updated_at": "2000-01-01T00:00:00.000Z",
+          "password_hash": null
+        }
+      ]
+    },
+    "organizations": {
+      "rows": 1,
+      "data": [
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "name": "Example Property Group",
+          "code": "DEMO-ORG",
+          "slug": "example-property-group",
+          "status": "active",
+          "logo_url": null,
+          "created_at": "2000-01-01T00:00:00.000Z",
+          "updated_at": "2000-01-01T00:00:00.000Z",
+          "subscription_plan": "demo",
+          "subscription_status": "active",
+          "subscription_end_date": null
+        }
+      ]
+    },
+    "buildings": {
+      "rows": 1,
+      "data": [
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "organization_id": "00000000-0000-4000-8000-000000000002",
+          "name": "Example Residence",
+          "code": "DEMO-BLDG-01",
+          "address": "100 Example Street",
+          "city": "Example City",
+          "description": "Synthetic portfolio sample building",
+          "number_of_floors": 1,
+          "total_units": 1,
+          "status": "active",
+          "is_deleted": false,
+          "deleted_at": null,
+          "created_at": "2000-01-01T00:00:00.000Z",
+          "updated_at": "2000-01-01T00:00:00.000Z"
+        }
+      ]
+    },
+    "floors": {
+      "rows": 1,
+      "data": [
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "organization_id": "00000000-0000-4000-8000-000000000002",
+          "building_id": "00000000-0000-4000-8000-000000000003",
+          "floor_number": 1,
+          "floor_name": "Ground Floor",
+          "description": "Demo floor",
+          "total_units": 1,
+          "is_deleted": false,
+          "deleted_at": null,
+          "created_at": "2000-01-01T00:00:00.000Z",
+          "updated_at": "2000-01-01T00:00:00.000Z"
+        }
+      ]
+    },
+    "units": {
+      "rows": 1,
+      "data": [
+        {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "organization_id": "00000000-0000-4000-8000-000000000002",
+          "building_id": "00000000-0000-4000-8000-000000000003",
+          "floor_id": "00000000-0000-4000-8000-000000000004",
+          "unit_number": "DEMO-101",
+          "unit_type": "apartment",
+          "area": "80.00",
+          "bedrooms": 2,
+          "bathrooms": 1,
+          "monthly_rent": "0.00",
+          "deposit_amount": "0.00",
+          "status": "available",
+          "description": "Synthetic demo unit",
+          "mesh_id": null,
+          "transform": null,
+          "is_deleted": false,
+          "deleted_at": null,
+          "created_at": "2000-01-01T00:00:00.000Z",
+          "updated_at": "2000-01-01T00:00:00.000Z"
+        }
+      ]
+    },
+    "tenants": {
+      "rows": 1,
+      "data": [
+        {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "organization_id": "00000000-0000-4000-8000-000000000002",
+          "user_id": null,
+          "first_name": null,
+          "last_name": null,
+          "full_name": "Demo Tenant",
+          "phone": "000-000-0000",
+          "email": "demo.tenant@example.invalid",
+          "id_type": "demo",
+          "id_number": "DEMO-ID-001",
+          "address": "100 Example Street",
+          "emergency_contact_name": null,
+          "emergency_contact_phone": null,
+          "emergency_contact": "Not provided",
+          "notes": "Synthetic demo record only",
+          "profile_photo": "",
+          "is_deleted": false,
+          "deleted_at": null,
+          "created_at": "2000-01-01T00:00:00.000Z",
+          "updated_at": "2000-01-01T00:00:00.000Z"
+        }
+      ]
+    },
+    "roles": {
+      "rows": 1,
+      "data": [
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "name": "Demo Administrator",
+          "code": "DEMO_ADMIN",
+          "description": "Synthetic sample role; verify actual role codes before use",
+          "created_at": "2000-01-01T00:00:00.000Z",
+          "updated_at": "2000-01-01T00:00:00.000Z"
+        }
+      ]
+    },
+    "leases": {
+      "rows": 0,
+      "data": []
+    },
+    "telegram_accounts": {
+      "rows": 0,
+      "data": []
+    },
+    "tma_sessions": {
+      "rows": 0,
+      "data": []
+    },
+    "tma_otp_codes": {
+      "rows": 0,
+      "data": []
+    },
+    "subscription_requests": {
+      "rows": 0,
+      "data": []
+    }
+  }
+}
